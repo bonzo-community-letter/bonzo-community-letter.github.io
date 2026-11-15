@@ -69,22 +69,36 @@ const SLUG = /^[a-z0-9][a-z0-9-]*$/
 
 const byteLength = (s: string): number => new TextEncoder().encode(s).length
 
-/** Deterministic JSON: keys sorted, no insignificant whitespace. */
-export function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value)
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`
-  const entries = Object.entries(value as Record<string, unknown>)
-    .filter(([, v]) => v !== undefined)
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalJson(v)}`).join(',')}}`
-}
+/**
+ * The exact field order a signature message is serialised in:
+ * `accountId`, `subject`, `version`, `letterHash`, `signedAt`, `comment`.
+ *
+ * A fixed order — rather than sorted keys — is what makes the bytes
+ * reproducible: every client emits the same string for the same values.
+ */
+export const FIELD_ORDER = [
+  'accountId',
+  'subject',
+  'version',
+  'letterHash',
+  'signedAt',
+  'comment',
+] as const
 
 export function encodePayload(payload: SignaturePayload): string {
-  return canonicalJson(payload)
+  const body = FIELD_ORDER.map((key) => `${JSON.stringify(key)}:${JSON.stringify(payload[key])}`).join(',')
+  return `{${body}}`
 }
 
 export function payloadByteLength(payload: SignaturePayload): number {
   return byteLength(encodePayload(payload))
+}
+
+/** The same message as `encodePayload`, laid out for reading on a page. */
+export function prettyPayload(payload: SignaturePayload): string {
+  const ordered: Record<string, string | number> = {}
+  for (const key of FIELD_ORDER) ordered[key] = payload[key]
+  return JSON.stringify(ordered, null, 2)
 }
 
 export function commentByteLength(comment: string): number {

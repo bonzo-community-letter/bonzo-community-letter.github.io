@@ -1,6 +1,6 @@
 import { config, signingOpen } from './config'
 import { useSignatures } from './hooks/useSignatures'
-import { MAX_COMMENT_BYTES, buildSignature, topicMemo } from './lib/hcs'
+import { MAX_COMMENT_BYTES, buildSignature, prettyPayload, topicMemo } from './lib/hcs'
 import { isDraft, letterBytes, letterHash, letterText, subject } from 'virtual:letter'
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -73,7 +73,7 @@ export function App() {
           at most {MAX_COMMENT_BYTES} bytes.
         </p>
         <pre className="overflow-x-auto rounded border border-neutral-200 bg-neutral-50 p-3 text-xs leading-relaxed text-neutral-800">
-          <code>{draft.ok ? draft.encoded : `invalid: ${draft.errors.join('; ')}`}</code>
+          <code>{draft.ok ? prettyPayload(draft.payload) : `invalid: ${draft.errors.join('; ')}`}</code>
         </pre>
         <p className="mt-2 text-xs text-neutral-500">
           {draft.ok ? `${draft.bytes} of 1024 bytes used` : 'fix the inputs above'}

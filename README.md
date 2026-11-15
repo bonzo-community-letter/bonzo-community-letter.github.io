@@ -131,15 +131,17 @@ Ours keeps the parts that carry meaning for an open letter — the account, the 
 drops the parts that do not (`app`, `agreement`, a date-versioned letter id):
 
 ```json
-{"accountId":"0.0.1234","comment":"","letterHash":"<sha-256 of the letter>",
- "signedAt":"2026-11-15T18:00:00.000Z","subject":"bonzo-exploit-open-letter","version":1}
+{"accountId":"0.0.1234","subject":"bonzo-exploit-open-letter","version":1,
+ "letterHash":"<sha-256 of the letter>","signedAt":"2026-11-15T18:00:00.000Z","comment":""}
 ```
 
 - **The message carries the hash, never the letter.** Same primitive as the portal's `termsHash`, and
   small enough that one message always fits.
 - **`subject`** is the campaign slug, constant for the whole campaign; **`letterHash`** pins the exact
   version of the text. Both come from the build.
-- **Canonical JSON** — keys sorted, no whitespace — so the bytes are reproducible.
+- **Fixed field order** — `accountId`, `subject`, `version`, `letterHash`, `signedAt`, `comment` — and no
+  whitespace, so the bytes are reproducible. `FIELD_ORDER` in `src/lib/hcs.ts` is the single definition,
+  and a test asserts the exact string.
 - **`comment` is always present**, empty string when the signer writes nothing. Max
   `MAX_COMMENT_BYTES` (512) UTF-8 bytes, trimmed, no control characters other than newlines.
   `buildSignature()` returns the byte count and refuses anything that would exceed HCS's 1 KB cap, so a

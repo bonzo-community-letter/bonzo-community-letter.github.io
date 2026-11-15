@@ -2,8 +2,8 @@ import {
   HCS_MAX_MESSAGE_BYTES,
   MAX_COMMENT_BYTES,
   buildSignature,
-  canonicalJson,
   decodeMessage,
+  encodePayload,
   parseMessages,
   payloadByteLength,
   sha256Hex,
@@ -36,14 +36,17 @@ function payloadOf(overrides: Partial<typeof input> = {}): SignaturePayload {
   return result.payload
 }
 
-describe('canonicalJson', () => {
-  it('sorts keys and drops undefined, so the same payload always encodes the same', () => {
-    expect(canonicalJson({ b: 1, a: 2, c: undefined })).toBe('{"a":2,"b":1}')
-    expect(canonicalJson({ a: 2, b: 1 })).toBe(canonicalJson({ b: 1, a: 2 }))
+describe('encodePayload', () => {
+  it('serialises fields in the documented order, compactly', () => {
+    const payload = payloadOf()
+    expect(encodePayload(payload)).toBe(
+      `{"accountId":"0.0.1234","subject":"${LETTER}","version":1,"letterHash":"${HASH}",` +
+        `"signedAt":"2026-11-15T18:00:00.000Z","comment":""}`,
+    )
   })
 
-  it('is stable for nested objects and arrays', () => {
-    expect(canonicalJson({ z: [{ y: 1, x: 2 }], a: null })).toBe('{"a":null,"z":[{"x":2,"y":1}]}')
+  it('produces identical bytes for identical values', () => {
+    expect(encodePayload(payloadOf())).toBe(encodePayload(payloadOf()))
   })
 })
 
@@ -73,7 +76,7 @@ describe('buildSignature', () => {
   })
 
   it('carries the hash of the letter, never the letter itself', () => {
-    const encoded = canonicalJson(payloadOf())
+    const encoded = encodePayload(payloadOf())
     expect(encoded).toContain(HASH)
     expect(encoded).not.toContain('letterText')
   })
@@ -138,7 +141,7 @@ describe('buildSignature', () => {
 describe('decoding', () => {
   it('round-trips a payload through base64', () => {
     const payload = payloadOf()
-    expect(decodeMessage(toB64(canonicalJson(payload)))).toEqual(payload)
+    expect(decodeMessage(toB64(encodePayload(payload)))).toEqual(payload)
   })
 
   it('rejects other versions and foreign payloads', () => {
@@ -155,10 +158,10 @@ describe('parseMessages', () => {
 
   it('keeps only signatures of this exact letter version, in consensus order', () => {
     const rows = [
-      mirror(canonicalJson(payloadOf({ accountId: '0.0.2' })), 2),
-      mirror(canonicalJson(payloadOf({ accountId: '0.0.1' })), 1),
-      mirror(canonicalJson(payloadOf({ letterHash: 'b'.repeat(64) })), 3), // other draft
-      mirror(canonicalJson(payloadOf({ subject: 'other-letter' })), 4),
+      mirror(encodePayload(payloadOf({ accountId: '0.0.2' })), 2),
+      mirror(encodePayload(payloadOf({ accountId: '0.0.1' })), 1),
+      mirror(encodePayload(payloadOf({ letterHash: 'b'.repeat(64) })), 3), // other draft
+      mirror(encodePayload(payloadOf({ subject: 'other-letter' })), 4),
       mirror('{"hello":"world"}', 5),
       mirror('garbage', 6),
     ]
