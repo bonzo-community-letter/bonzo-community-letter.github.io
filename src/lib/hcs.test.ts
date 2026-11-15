@@ -15,7 +15,7 @@ import { describe, expect, it } from 'vitest'
 
 const HASH = 'a'.repeat(64)
 const LETTER = 'bonzo-exploit-open-letter'
-const input = { accountId: '0.0.1234', letter: LETTER, letterHash: HASH }
+const input = { accountId: '0.0.1234', subject: LETTER, letterHash: HASH }
 
 const toB64 = (s: string): string => {
   const bytes = new TextEncoder().encode(s)
@@ -61,13 +61,14 @@ describe('buildSignature', () => {
 
     expect(result.payload).toEqual({
       accountId: '0.0.1234',
-      letter: LETTER,
+      subject: LETTER,
       letterHash: HASH,
       signedAt: '2026-11-15T18:00:00.000Z',
       version: 1,
+      comment: '',
     })
     expect(Object.keys(result.payload).sort()).toEqual(
-      ['accountId', 'letter', 'letterHash', 'signedAt', 'version'].sort(),
+      ['accountId', 'subject', 'letterHash', 'signedAt', 'version', 'comment'].sort(),
     )
   })
 
@@ -85,12 +86,12 @@ describe('buildSignature', () => {
     expect(result.bytes).toBeLessThan(HCS_MAX_MESSAGE_BYTES)
   })
 
-  it('omits an empty comment instead of sending a blank field', () => {
+  it('always carries a comment field, empty when the signer wrote none', () => {
     const result = buildSignature({ ...input, comment: '   ' })
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.payload.comment).toBeUndefined()
-    expect(result.encoded).not.toContain('comment')
+    expect(result.payload.comment).toBe('')
+    expect(result.encoded).toContain('"comment":""')
   })
 
   it('rejects an account id that is not a Hedera account', () => {
@@ -105,9 +106,9 @@ describe('buildSignature', () => {
     }
   })
 
-  it('rejects a letter slug that is empty or malformed', () => {
-    for (const letter of ['', 'Bonzo Letter', 'BONZO', 'bonzo_letter', '-leading']) {
-      expect(buildSignature({ ...input, letter }).ok).toBe(false)
+  it('rejects a subject that is empty or malformed', () => {
+    for (const subject of ['', 'Bonzo Letter', 'BONZO', 'bonzo_letter', '-leading']) {
+      expect(buildSignature({ ...input, subject }).ok).toBe(false)
     }
   })
 
@@ -150,14 +151,14 @@ describe('decoding', () => {
 })
 
 describe('parseMessages', () => {
-  const opts = { letter: LETTER, letterHash: HASH }
+  const opts = { subject: LETTER, letterHash: HASH }
 
   it('keeps only signatures of this exact letter version, in consensus order', () => {
     const rows = [
       mirror(canonicalJson(payloadOf({ accountId: '0.0.2' })), 2),
       mirror(canonicalJson(payloadOf({ accountId: '0.0.1' })), 1),
       mirror(canonicalJson(payloadOf({ letterHash: 'b'.repeat(64) })), 3), // other draft
-      mirror(canonicalJson(payloadOf({ letter: 'other-letter' })), 4),
+      mirror(canonicalJson(payloadOf({ subject: 'other-letter' })), 4),
       mirror('{"hello":"world"}', 5),
       mirror('garbage', 6),
     ]

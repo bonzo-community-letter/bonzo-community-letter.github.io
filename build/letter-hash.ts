@@ -20,8 +20,8 @@ export const VIRTUAL_LETTER_ID = 'virtual:letter'
 const RESOLVED_ID = '\0' + VIRTUAL_LETTER_ID
 
 export interface LetterModule {
-  /** campaign slug, e.g. "bonzo-exploit-open-letter" */
-  letterSlug: string
+  /** campaign subject, e.g. "bonzo-exploit-open-letter" */
+  subject: string
   letterText: string
   /** SHA-256 of letterText, lowercase hex — the value signatures commit to */
   letterHash: string
@@ -31,7 +31,7 @@ export interface LetterModule {
 }
 
 interface RawLetterModule {
-  LETTER_SLUG?: unknown
+  SUBJECT?: unknown
   letterText?: unknown
   letterIsDraft?: unknown
 }
@@ -57,10 +57,10 @@ export async function loadLetter(root: string): Promise<LetterModule> {
   const mod = (await import(url)) as RawLetterModule
 
   const letterText = typeof mod.letterText === 'string' ? mod.letterText : ''
-  const letterSlug = typeof mod.LETTER_SLUG === 'string' ? mod.LETTER_SLUG : ''
+  const subject = typeof mod.SUBJECT === 'string' ? mod.SUBJECT : ''
 
   return {
-    letterSlug,
+    subject,
     letterText,
     letterHash: createHash('sha256').update(letterText, 'utf8').digest('hex'),
     letterBytes: Buffer.byteLength(letterText, 'utf8'),
@@ -70,7 +70,7 @@ export async function loadLetter(root: string): Promise<LetterModule> {
 
 function render(letter: LetterModule): string {
   return [
-    `export const letterSlug = ${JSON.stringify(letter.letterSlug)};`,
+    `export const subject = ${JSON.stringify(letter.subject)};`,
     `export const letterText = ${JSON.stringify(letter.letterText)};`,
     `export const letterHash = ${JSON.stringify(letter.letterHash)};`,
     `export const letterBytes = ${letter.letterBytes};`,

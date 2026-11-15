@@ -9,7 +9,7 @@ export interface SignatureState {
 }
 
 export interface SignatureQuery {
-  letter: string
+  subject: string
   letterHash: string
 }
 
@@ -20,7 +20,7 @@ export interface SignatureQuery {
  * Both the slug and the hash come from the build (virtual:letter), so the page
  * can never read a different version of the letter than the one it shows.
  */
-export function useSignatures({ letter, letterHash }: SignatureQuery): SignatureState {
+export function useSignatures({ subject, letterHash }: SignatureQuery): SignatureState {
   const [state, setState] = useState<SignatureState>({ status: 'closed', signatures: [] })
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export function useSignatures({ letter, letterHash }: SignatureQuery): Signature
         const signatures = await fetchSignatures({
           network: config.network,
           topicId: config.topicId,
-          letter,
+          subject,
           letterHash,
           signal: controller.signal,
         })
@@ -61,7 +61,7 @@ export function useSignatures({ letter, letterHash }: SignatureQuery): Signature
       controller.abort()
       window.clearInterval(timer)
     }
-  }, [letter, letterHash])
+  }, [subject, letterHash])
 
   return state
 }

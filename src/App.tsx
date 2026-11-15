@@ -1,7 +1,7 @@
 import { config, signingOpen } from './config'
 import { useSignatures } from './hooks/useSignatures'
 import { MAX_COMMENT_BYTES, buildSignature, topicMemo } from './lib/hcs'
-import { isDraft, letterBytes, letterHash, letterSlug, letterText } from 'virtual:letter'
+import { isDraft, letterBytes, letterHash, letterText, subject } from 'virtual:letter'
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -20,10 +20,10 @@ function Row({ label, value }: { label: string; value: string }) {
  * Content, layout and visual design are not defined yet.
  */
 export function App() {
-  const signatures = useSignatures({ letter: letterSlug, letterHash })
+  const signatures = useSignatures({ subject, letterHash })
 
   // what a signer would submit right now — no wallet involved, just the bytes
-  const draft = buildSignature({ accountId: '0.0.1234', letter: letterSlug, letterHash })
+  const draft = buildSignature({ accountId: '0.0.1234', subject, letterHash })
 
   const signatureValue =
     signatures.status === 'closed'
@@ -56,11 +56,11 @@ export function App() {
       <section className="mt-8">
         <h2 className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-500">Letter</h2>
         <dl>
-          <Row label="letter" value={letterSlug} />
+          <Row label="subject" value={subject} />
           <Row label="text" value={letterText.length > 0 ? `${letterBytes} bytes` : 'not written yet'} />
           <Row label="draft" value={isDraft ? 'yes' : 'no'} />
           <Row label="sha-256 (build time)" value={letterHash} />
-          <Row label="topic memo" value={topicMemo(letterSlug, letterHash)} />
+          <Row label="topic memo" value={topicMemo(subject, letterHash)} />
         </dl>
       </section>
 

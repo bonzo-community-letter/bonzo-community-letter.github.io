@@ -3,8 +3,8 @@
  * The hash is computed from src/content/letter.ts at build time.
  */
 declare module 'virtual:letter' {
-  /** campaign slug, e.g. "bonzo-exploit-open-letter" */
-  export const letterSlug: string
+  /** campaign subject, e.g. "bonzo-exploit-open-letter" */
+  export const subject: string
   export const letterText: string
   /** SHA-256 of letterText, lowercase hex — the value a signature commits to */
   export const letterHash: string

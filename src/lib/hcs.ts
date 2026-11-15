@@ -20,16 +20,16 @@ export const MAX_COMMENT_BYTES = 512
 export interface SignaturePayload {
   /** signer's Hedera account id, e.g. 0.0.1234 */
   accountId: string
-  /** campaign slug, e.g. "bonzo-exploit-open-letter" */
-  letter: string
+  /** campaign subject, e.g. "bonzo-exploit-open-letter" */
+  subject: string
   /** SHA-256 of the letter text, lowercase hex — computed at build time */
   letterHash: string
   /** ISO-8601 UTC timestamp, set by the client */
   signedAt: string
   /** payload schema version */
   version: number
-  /** optional, signer-authored, permanent and public */
-  comment?: string
+  /** signer-authored, permanent and public; empty string when the signer wrote none */
+  comment: string
 }
 
 export interface Signature extends SignaturePayload {
@@ -47,7 +47,7 @@ export interface MirrorMessage {
 
 export interface SignatureInput {
   accountId: string
-  letter: string
+  subject: string
   letterHash: string
   comment?: string
   /** injectable for tests; defaults to now */
@@ -91,9 +91,9 @@ export function commentByteLength(comment: string): number {
   return byteLength(comment)
 }
 
-/** Topic memo convention: `<letter>:v<version>:<hash>`. */
-export function topicMemo(letter: string, letterHash: string): string {
-  return `${letter}:v${PAYLOAD_VERSION}:${letterHash}`
+/** Topic memo convention: `<subject>:v<version>:<hash>`. */
+export function topicMemo(subject: string, letterHash: string): string {
+  return `${subject}:v${PAYLOAD_VERSION}:${letterHash}`
 }
 
 /**
@@ -105,7 +105,7 @@ export function buildSignature(input: SignatureInput): BuildResult {
   const errors: string[] = []
 
   if (!ACCOUNT_ID.test(input.accountId)) errors.push('accountId must look like 0.0.1234')
-  if (!SLUG.test(input.letter)) errors.push('letter must be a lowercase slug')
+  if (!SLUG.test(input.subject)) errors.push('subject must be a lowercase slug')
   if (!SHA256_HEX.test(input.letterHash)) errors.push('letterHash must be 64 lowercase hex characters')
 
   let comment: string | undefined
@@ -126,11 +126,11 @@ export function buildSignature(input: SignatureInput): BuildResult {
 
   const payload: SignaturePayload = {
     accountId: input.accountId,
-    letter: input.letter,
+    subject: input.subject,
     letterHash: input.letterHash,
     signedAt: input.signedAt ?? new Date().toISOString(),
     version: PAYLOAD_VERSION,
-    ...(comment ? { comment } : {}),
+    comment: comment ?? '',
   }
 
   const encoded = encodePayload(payload)
@@ -151,7 +151,7 @@ function isSignaturePayload(value: unknown): value is SignaturePayload {
   return (
     p.version === PAYLOAD_VERSION &&
     typeof p.accountId === 'string' &&
-    typeof p.letter === 'string' &&
+    typeof p.subject === 'string' &&
     typeof p.letterHash === 'string' &&
     typeof p.signedAt === 'string' &&
     (p.comment === undefined || typeof p.comment === 'string')
@@ -177,16 +177,17 @@ export function decodeMessage(base64: string): SignaturePayload | null {
  */
 export function parseMessages(
   messages: readonly MirrorMessage[],
-  opts: { letter: string; letterHash: string },
+  opts: { subject: string; letterHash: string },
 ): Signature[] {
   const out: Signature[] = []
   for (const m of messages) {
     const payload = decodeMessage(m.message)
     if (!payload) continue
-    if (payload.letter !== opts.letter) continue
+    if (payload.subject !== opts.subject) continue
     if (payload.letterHash !== opts.letterHash) continue
     out.push({
       ...payload,
+      comment: payload.comment ?? '',
       sequence: m.sequence_number,
       consensusTimestamp: m.consensus_timestamp,
       payerAccountId: m.payer_account_id ?? payload.accountId,
@@ -211,7 +212,7 @@ export function hashscanTopicUrl(network: HederaNetwork, topicId: string): strin
 export interface FetchOptions {
   network: HederaNetwork
   topicId: string
-  letter: string
+  subject: string
   letterHash: string
   /** safety cap on pages of 100 messages */
   maxPages?: number
@@ -224,7 +225,7 @@ export interface FetchOptions {
  * Newest first, bounded number of pages.
  */
 export async function fetchSignatures(opts: FetchOptions): Promise<Signature[]> {
-  const { network, topicId, letter, letterHash, maxPages = 5, signal } = opts
+  const { network, topicId, subject, letterHash, maxPages = 5, signal } = opts
   const doFetch = opts.fetchImpl ?? fetch
   if (!topicId) return []
 
@@ -240,7 +241,7 @@ export async function fetchSignatures(opts: FetchOptions): Promise<Signature[]> 
       messages?: MirrorMessage[]
       links?: { next?: string | null }
     }
-    collected.push(...parseMessages(body.messages ?? [], { letter, letterHash }))
+    collected.push(...parseMessages(body.messages ?? [], { subject, letterHash }))
     const next = body.links?.next
     url = next ? (next.startsWith('http') ? next : `${MIRROR_BASE[network]}${next.replace(/^\/api\/v1/, '')}`) : null
     pages += 1

@@ -9,7 +9,7 @@
  */
 
 /** Identifies this letter on the topic. Stable for the life of the campaign. */
-export const LETTER_SLUG = 'bonzo-exploit-open-letter'
+export const SUBJECT = 'bonzo-exploit-open-letter'
 
 /** Not written yet — keep empty until the text is signed off. */
 export const letterText = ''
