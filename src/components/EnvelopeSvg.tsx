@@ -1,16 +1,16 @@
 /**
- * The envelope, drawn once and animated by a single parameter.
+ * The envelope, drawn once and opened by a single value.
  *
- * progress 0 — sealed: a paper flap lying over the outside surface.
- * progress 1 — open:   the same flap standing behind the body, the inside dark,
- *                      the glued margin showing along its edges.
+ * The inside is always there, opaque. The flap is the lid over it: a triangle
+ * whose tip sits 223 units below the fold when shut and 223 above it when open,
+ * so mirroring it about the fold is the whole motion. As it swings up, the area
+ * it covered shrinks from the tip upwards and the dark inside is *revealed*
+ * underneath — nothing fades, nothing dissolves.
  *
- * Both states are one geometry. The flap is a triangle whose tip sits 223 units
- * below the hinge when closed (y = 479) and 223 above it when open (y = 33), so
- * mirroring about y = 256 is exactly the difference between them — no second
- * shape, no cross-fade of two drawings. What does cross-fade is only what the
- * flap hides: the outside surface gives way to the dark inside, and the paper
- * face of the flap gives way to its shadowed back.
+ * The flap's two faces are the only thing that swaps, and it swaps exactly when
+ * the flap is edge-on (scaleY = 0), so the swap cannot be seen: paper face and
+ * its cut edge while it is still lying down, shadowed back and the glued margin
+ * once it has passed vertical.
  */
 
 interface EnvelopeSvgProps {
@@ -22,27 +22,32 @@ interface EnvelopeSvgProps {
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
 /* ── geometry, measured off the approved drawings ─────────────────────────── */
-const BODY = { x: 26, y: 256, w: 588, h: 363, r: 7 }
+const BODY = { x: 26, y: 256, w: 588, h: 363 }
 const HINGE = 256
-const FLAP_TIP = 479 // closed; 223 below the hinge
+const FLAP_TIP = 479 // 223 below the hinge; mirrored, it is 223 above
 const FLAP = `M33 ${HINGE} L607 ${HINGE} L320 ${FLAP_TIP} Z`
 const FLAP_EDGE = `M33 ${HINGE} L320 ${FLAP_TIP} L607 ${HINGE}`
 const FLAP_SHADOW = `M33 ${HINGE + 3} L320 ${FLAP_TIP + 3} L607 ${HINGE + 3}`
-const INTERIOR = 'M26 256 L614 256 L320 485 Z'
+/** The inside is exactly the area the flap covers, so nothing of it shows while sealed. */
+const INTERIOR = FLAP
 const POCKET =
   'M26 619 L290.2 452.75 C290.2 452.75 308.26 443 320 443 C331.78 443 349.91 452.82 349.91 452.82 L614 619 Z'
 const SIDE_LEFT = 'M26 619 L290 453 C290 453 138 321 57 261 C50 256 26 256 26 256 Z'
 const SIDE_RIGHT = 'M614 619 L350 453 C350 453 502 321 583 261 C590 256 614 256 614 256 Z'
 const SIDE_EDGE_LEFT = 'M26 256 C26 256 50 256 57 261 C138 321 290 453 290 453'
 const SIDE_EDGE_RIGHT = 'M614 256 C614 256 590 256 583 261 C502 321 350 453 350 453'
-const STRIP = 'M31.81 263.49 L320.5 33 L608 263'
+/** The glued margin, in the flap's own (closed) coordinate space: the group's mirror
+ *  about y = 256 turns it into the approved open-state path. */
+const STRIP_LOCAL = 'M31.81 248.51 L320.5 479 L608 249'
 const OUTLINE =
   'M26 257 L26 612 C26 615.87 29.13 619 33 619 L607 619 C610.13 619 614 615.87 614 612 L614 257'
 /** The body's silhouette: square at the fold, rounded at the bottom. */
-const CLIP = 'M26 256 L614 256 L614 612 C614 615.87 610.87 619 607 619 L33 619 C29.13 619 26 615.87 26 612 Z'
+const CLIP =
+  'M26 256 L614 256 L614 612 C614 615.87 610.87 619 607 619 L33 619 C29.13 619 26 615.87 26 612 Z'
 
 export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
   const p = clamp01(progress)
+  const lifted = p >= 0.5 // past vertical: the flap's back is what we see
 
   return (
     <svg
@@ -53,13 +58,11 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
       style={{ overflow: 'visible' }}
     >
       <defs>
-        {/* the shadowed side: the flap's back and the inside, one plane */}
         <linearGradient id="env-shadow" x1="0" y1="33" x2="0" y2="485" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#5f5647" />
           <stop offset="0.42" stopColor="#6f6553" />
           <stop offset="1" stopColor="#8b7d65" />
         </linearGradient>
-        {/* the outside surface, seen while the envelope is still sealed */}
         <linearGradient id="env-face" x1="0" y1="256" x2="0" y2="619" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#fdf8ee" />
           <stop offset="1" stopColor="#e6dac2" />
@@ -89,19 +92,15 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
 
       <g filter="url(#env-drop)">
         <g clipPath="url(#env-bodyClip)">
-          {/* 1 · the outside surface — what a sealed envelope shows */}
+          {/* 1 · paper behind everything, so no gap can show the page */}
           <rect x={BODY.x} y={BODY.y} width={BODY.w} height={BODY.h} fill="url(#env-face)" />
 
-          {/* 2 · the inside, coming up as the flap lifts */}
-          {p > 0.001 ? <path d={INTERIOR} fill="url(#env-shadow)" opacity={p.toFixed(3)} /> : null}
+          {/* 2 · the inside — always there, revealed as the flap lifts off it */}
+          <path d={INTERIOR} fill="url(#env-shadow)" />
 
           {/* 3 · the side flaps' edges casting onto the inside */}
-          {p > 0.001 ? (
-            <g opacity={p.toFixed(3)}>
-              <path d={SIDE_EDGE_LEFT} fill="none" stroke="#2b2417" strokeWidth="12" opacity="0.22" filter="url(#env-soft)" />
-              <path d={SIDE_EDGE_RIGHT} fill="none" stroke="#2b2417" strokeWidth="12" opacity="0.22" filter="url(#env-soft)" />
-            </g>
-          ) : null}
+          <path d={SIDE_EDGE_LEFT} fill="none" stroke="#2b2417" strokeWidth="12" opacity="0.22" filter="url(#env-soft)" />
+          <path d={SIDE_EDGE_RIGHT} fill="none" stroke="#2b2417" strokeWidth="12" opacity="0.22" filter="url(#env-soft)" />
 
           {/* 4 · the bottom flap */}
           <path d={POCKET} fill="url(#env-pocket)" />
@@ -112,39 +111,33 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
           <path d="M614 619 L350 453" fill="none" stroke="#b9a98d" opacity="0.45" />
         </g>
 
-        {/* 6 · the shadow the flap casts while it still lies on the paper */}
-        {p < 0.999 ? (
+        {/* 6 · the shadow the flap throws while it still lies on the paper */}
+        {p < 0.5 ? (
           <path
             d={FLAP_SHADOW}
             fill="none"
             stroke="#5a4d3a"
             strokeWidth="7"
-            opacity={(0.1 * (1 - p)).toFixed(3)}
+            opacity={(0.1 * (1 - 2 * p)).toFixed(3)}
             filter="url(#env-soft)"
           />
         ) : null}
 
-        {/* 7 · the flap itself, hinged on the fold: mirroring it about y = 256 turns
-             the sealed triangle into the standing one */}
+        {/* 7 · the flap, hinged on the fold. Mirroring it about the fold swings it
+             up; the inside below it is uncovered as its projection shrinks. */}
         <g transform={`translate(0 ${(2 * HINGE * p).toFixed(2)}) scale(1 ${(1 - 2 * p).toFixed(3)})`}>
-          {p < 0.999 ? <path d={FLAP} fill="url(#env-flapShut)" opacity={(1 - p).toFixed(3)} /> : null}
-          {p > 0.001 ? <path d={FLAP} fill="url(#env-shadow)" opacity={p.toFixed(3)} /> : null}
-          {p < 0.999 ? (
-            <path d={FLAP_EDGE} fill="none" stroke="#d3c6ae" strokeWidth="1" opacity={(1 - p).toFixed(3)} />
-          ) : null}
+          <path d={FLAP} fill={lifted ? 'url(#env-shadow)' : 'url(#env-flapShut)'} />
+          {!lifted ? <path d={FLAP_EDGE} fill="none" stroke="#d3c6ae" strokeWidth="1" /> : null}
+          {/* the glued margin travels with the flap, so it unfolds instead of appearing */}
+          {lifted ? <path d={STRIP_LOCAL} fill="none" stroke="#f2e9d8" strokeWidth="18" /> : null}
         </g>
 
-        {/* 8 · the glued margin, which only exists on the flap's inner side */}
-        {p > 0.001 ? (
-          <path d={STRIP} fill="none" stroke="#f2e9d8" strokeWidth="18" opacity={p.toFixed(3)} />
-        ) : null}
-
         <g clipPath="url(#env-bodyClip)">
-          {/* 9 · the side flaps folded in, over the strip's ends */}
+          {/* 8 · the side flaps folded in, over the strip's ends */}
           <path d={SIDE_LEFT} fill="url(#env-side)" />
           <path d={SIDE_RIGHT} fill="url(#env-side)" />
 
-          {/* 10 · the contour: left, bottom, right — the top edge stays open */}
+          {/* 9 · the contour: left, bottom, right — the top edge stays open */}
           <path d={OUTLINE} fill="none" stroke="#c9bba3" />
         </g>
       </g>
