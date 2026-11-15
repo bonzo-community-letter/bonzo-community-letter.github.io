@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { EnvelopeSvg } from './EnvelopeSvg'
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
@@ -22,12 +23,11 @@ const REVEAL_DISTANCE = 420
 const TRAVEL_DISTANCE = 340
 
 /**
- * A sealed envelope covering the letterhead. As the page scrolls it unseals and
- * travels down out of the way, so the letter appears to slide out of it.
+ * The envelope, sitting over the letterhead and driven by scroll.
  *
- * Scroll-driven rather than timeline-driven: nothing moves on its own, the
- * envelope follows the reader's scroll, and with `prefers-reduced-motion` it is
- * not rendered at all — the letterhead is simply visible.
+ * Step 1 of the reveal: it is one drawn object (EnvelopeSvg) rather than a stack
+ * of divs, so the fold seams, the pocket and the flap read as an envelope at any
+ * size. The scroll behaviour is unchanged for now.
  */
 export function EnvelopeOverlay() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -67,49 +67,23 @@ export function EnvelopeOverlay() {
 
   if (reduced) return null
 
-  const flap = clamp01(progress / 0.32) * -172
+  const flapOpen = clamp01(progress / 0.32)
   const travel = progress * TRAVEL_DISTANCE
   const opacity = progress < 0.78 ? 1 : clamp01(1 - (progress - 0.78) / 0.22)
-  const tilt = progress * -1.4
 
   return (
     <div
       ref={ref}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 z-20 -mx-1.5 h-[220px] [perspective:1200px] sm:h-[264px]"
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 aspect-[3/2] w-full"
       style={{
-        transform: `translate3d(0, ${travel.toFixed(1)}px, 0) rotate(${tilt.toFixed(2)}deg)`,
+        transform: `translate3d(0, ${travel.toFixed(1)}px, 0)`,
         opacity,
         willChange: 'transform, opacity',
+        filter: 'drop-shadow(0 28px 38px rgba(0, 0, 0, 0.55))',
       }}
     >
-      {/* envelope body */}
-      <div className="absolute inset-0 rounded-[3px] border border-[#d5cab7] bg-[#efe7d9] shadow-[0_18px_40px_-26px_rgba(0,0,0,0.9)]" />
-
-      {/* pocket front: a V-shaped top edge, so the paper reads as an envelope */}
-      <div
-        className="absolute inset-x-0 bottom-0 h-[64%] rounded-b-[3px] border-b border-x border-[#d5cab7] bg-[#e8dfce]"
-        style={{ clipPath: 'polygon(0 0, 50% 44%, 100% 0, 100% 100%, 0 100%)' }}
-      />
-
-      {/* the flap, hinged at the top edge; once it has swung past vertical it
-          sits behind the body, the way an opened flap does */}
-      <div
-        className="absolute inset-x-0 top-0 h-[56%] origin-top transition-none"
-        style={{
-          transform: `rotateX(${flap.toFixed(2)}deg)`,
-          transformStyle: 'preserve-3d',
-          zIndex: flap < -90 ? -1 : 3,
-        }}
-      >
-        <div
-          className="h-full w-full bg-[#f7f1e4]"
-          style={{ clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }}
-        />
-      </div>
-
-      {/* a hairline where the flap meets the pocket */}
-      <div className="absolute inset-x-0 top-[56%] h-px bg-[#d5cab7]/70" />
+      <EnvelopeSvg flapOpen={flapOpen} className="h-full w-full" />
     </div>
   )
 }
