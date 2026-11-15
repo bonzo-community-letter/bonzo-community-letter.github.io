@@ -12,7 +12,7 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
     .filter((paragraph) => paragraph.length > 0)
 
   return (
-    <div className="mx-auto -mt-28 w-full max-w-2xl px-4 sm:-mt-36 sm:px-6">
+    <div className="mx-auto -mt-28 w-full max-w-5xl px-4 sm:-mt-36 sm:px-6">
       <div className="relative">
         {/* the sheet underneath, so it reads as paper rather than a card */}
         <div
@@ -20,7 +20,7 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
           className="absolute inset-0 translate-x-1.5 translate-y-2 rounded-[3px] border border-rule bg-sheet-back"
         />
 
-        <article className="relative rounded-[3px] border border-rule bg-sheet px-7 py-9 shadow-[0_1px_1px_rgba(23,19,15,0.03),0_28px_56px_-36px_rgba(23,19,15,0.4)] sm:px-12 sm:py-12">
+        <article className="relative rounded-[3px] border border-rule bg-sheet px-7 py-10 shadow-[0_1px_1px_rgba(23,19,15,0.03),0_28px_56px_-36px_rgba(23,19,15,0.4)] sm:min-h-[900px] sm:px-20 sm:py-16 lg:px-24">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-rule pb-4">
             <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint">
               {page.letterhead.from}

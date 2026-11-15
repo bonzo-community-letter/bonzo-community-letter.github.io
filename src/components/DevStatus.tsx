@@ -29,7 +29,7 @@ export function DevStatus({ state }: { state: SignatureState }) {
           : `${state.signatures.length}`
 
   return (
-    <section className="mx-auto w-full max-w-2xl px-4 pb-20 pt-10 sm:px-6">
+    <section className="mx-auto w-full max-w-5xl px-4 pb-20 pt-10 sm:px-6">
       <details className="rounded border border-rule bg-white/40 px-4 py-3 text-xs text-ink-soft">
         <summary className="cursor-pointer select-none text-ink-faint">Developer status</summary>
 

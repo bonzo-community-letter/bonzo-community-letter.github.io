@@ -47,7 +47,7 @@ body {
 /* The letter itself: a real page, not a card */
 @utility letter-body {
   font-family: var(--font-serif);
-  font-size: 1.0625rem;
+  font-size: clamp(1.0625rem, 0.45vw + 0.95rem, 1.25rem);
   line-height: 1.75;
   color: var(--color-ink);
 }
