@@ -14,7 +14,7 @@ export const page = {
    * `from.note` replaces the old standfirst — same words, better placed.
    */
   from: {
-    name: 'Affected users of Bonzo Lend',
+    name: 'Affected users of the Bonzo Lend and Supra Labs exploit',
     note: 'What happened, what was promised, what was delivered, and what questions remain unanswered.',
   },
 
