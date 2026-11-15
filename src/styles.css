@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+/*
+ * Deliberately minimal. Design tokens, type scale and layout belong to the
+ * visual pass, which has not happened yet — see README.md.
+ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}

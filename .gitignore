@@ -1,3 +1,18 @@
 .DS_Store
 ._*
 *.swp
+
+# node
+node_modules/
+dist/
+coverage/
+*.log
+
+# local env (never committed — see .env.example)
+.env
+.env.local
+.env.*.local
+
+# editors
+.vscode/
+.idea/
