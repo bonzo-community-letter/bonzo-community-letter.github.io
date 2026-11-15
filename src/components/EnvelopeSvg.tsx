@@ -25,8 +25,10 @@ export function EnvelopeSvg({ flapOpen = 0, className }: EnvelopeSvgProps) {
 
   const flap = (
     <g transform={`translate(0 ${(16 * open).toFixed(2)}) scale(1 ${flip.toFixed(3)})`}>
-      <path d="M8 8 L592 8 L300 208 Z" fill="url(#env-flap)" />
-      <path d="M8 8 L592 8 L300 208 Z" fill="none" stroke="#cdbfa7" strokeWidth="1.1" />
+      <path d="M8 8 L592 8 L300 246 Z" fill="url(#env-flap)" />
+      <path d="M8 8 L592 8 L300 246 Z" fill="none" stroke="#cdbfa7" strokeWidth="1.1" />
+      {/* the flap's lower edges in shadow, where it lies over the pocket */}
+      <path d="M10 13 L300 244 L590 13" fill="none" stroke="#a9967a" strokeWidth="2.2" opacity="0.4" />
       {/* the fold the flap creases along */}
       <path d="M8 8 L592 8" stroke="#c7b9a1" strokeWidth="1.4" opacity="0.9" />
       {/* light catching the flap's upper surface */}
@@ -86,22 +88,23 @@ export function EnvelopeSvg({ flapOpen = 0, className }: EnvelopeSvgProps) {
         {/* past halfway the flap has swung behind the pocket */}
         {open > 0.5 ? flap : null}
 
-        {/* pocket: the bottom flap folded up, its top edge a V */}
-        <path d="M6 394 L300 208 L594 394 Z" fill="url(#env-pocket)" />
-        <path d="M6 394 L300 208 L594 394" fill="none" stroke="#c8b9a0" strokeWidth="1.2" />
+        {/* pocket: the bottom flap folded up, its top edge a V — the vertex sits
+            above the top flap's tip, so the flap overlaps it */}
+        <path d="M6 394 L300 186 L594 394 Z" fill="url(#env-pocket)" />
+        <path d="M6 394 L300 186 L594 394" fill="none" stroke="#c8b9a0" strokeWidth="1.2" />
 
         {/* the two side folds of the pocket, catching a little light */}
-        <path d="M6 394 L300 208" stroke="#fbf6ea" strokeWidth="1" opacity="0.7" />
-        <path d="M594 394 L300 208" stroke="#fbf6ea" strokeWidth="1" opacity="0.7" />
+        <path d="M6 394 L300 186" stroke="#fbf6ea" strokeWidth="1" opacity="0.7" />
+        <path d="M594 394 L300 186" stroke="#fbf6ea" strokeWidth="1" opacity="0.7" />
 
         {/* shade under the flap, cast onto the pocket */}
         {open <= 0.5 ? (
           <path
-            d="M8 10 L300 210 L592 10"
+            d="M8 26 L300 264 L592 26"
             fill="none"
             stroke="url(#env-shadow)"
-            strokeWidth="14"
-            opacity="0.9"
+            strokeWidth="16"
+            opacity="0.85"
             filter="url(#env-blur)"
           />
         ) : null}
