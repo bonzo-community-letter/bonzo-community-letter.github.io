@@ -10,17 +10,15 @@
  * unmodified and non-implying. See README → "Logos and trademarks".
  */
 export interface Addressee {
-  /** full name as it appears in the letter */
+  /** full name as it appears in the letter and in the hero's To block */
   name: string
-  /** short form for the wordmark row in the hero */
-  wordmark: string
   /** optional path under /logos/, e.g. '/logos/hedera.svg' — leave unset until cleared */
   logoSrc?: string
 }
 
 export const addressees: Addressee[] = [
-  { name: 'Hedera', wordmark: 'Hedera' },
-  { name: 'the HBAR Foundation', wordmark: 'HBAR Foundation' },
-  { name: 'Supra Labs', wordmark: 'Supra' },
-  { name: 'the Bonzo Finance Foundation', wordmark: 'Bonzo' },
+  { name: 'Hedera' },
+  { name: 'the HBAR Foundation' },
+  { name: 'Supra Labs' },
+  { name: 'the Bonzo Finance Foundation' },
 ]

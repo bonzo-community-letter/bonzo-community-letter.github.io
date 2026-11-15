@@ -9,10 +9,13 @@ export const page = {
   /** Working title — still to be decided. */
   title: 'Open community letter',
 
-  subtitle: {
-    /** rendered as the emphasised lead-in of the standfirst */
-    lead: 'From',
-    rest: 'the users who lost funds when the oracle failed: what was promised, what was delivered, and the questions that still have no answer.',
+  /**
+   * The hero is a letter's address block: who writes, and to whom.
+   * `from.note` replaces the old standfirst — same words, better placed.
+   */
+  from: {
+    name: 'Affected users of Bonzo Lend',
+    note: 'the users who lost funds when the oracle failed — asking what was promised, what was delivered, and what remains unanswered.',
   },
 
   status: 'Draft — not yet published',

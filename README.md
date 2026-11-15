@@ -45,9 +45,9 @@ colours; changing the page theme cannot wash out the letter. Contrast measured o
 
 **No third-party logo file is committed.** Using another company's mark is not automatically unlawful —
 nominative use to name who a letter is addressed to is ordinary — but it sits under each brand's
-guidelines and can read as endorsement, which an open letter must avoid. Until permission exists (or
-each brand's asset rules are checked), the addressee row renders **typographic wordmarks** instead:
-the names set in the page's own type, not in anyone's corporate font.
+guidelines and can read as endorsement, which an open letter must avoid. Until permission exists (or each
+brand's asset rules are checked), the hero's **To** block simply names the addressees in the letter's own
+serif. No mark, no corporate typeface.
 
 To switch to real marks, set `logoSrc` per entry in `src/content/addressees.ts` to a file under
 `public/logos/` **after**:
