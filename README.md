@@ -20,6 +20,44 @@ from that:
   letter text, so anyone can re-read the topic and check it independently.
 - **No secrets in the build.** Everything configured ends up in the client bundle, by design.
 
+## The page
+
+First layout, in `src/components/`:
+
+- `Hero.tsx` — title, standfirst, and the four addressees. The hero carries the height that the letter
+  sheet overlaps into.
+- `LetterSheet.tsx` — the letter as a page of paper (second sheet behind it for depth), with a real
+  letterhead: from / date, to, subject, salutation, then the body. The body renders whatever is in
+  `src/content/letter.ts`, split on blank lines; while that is empty it shows a placeholder.
+- `DevStatus.tsx` — build facts and the payload a signer would submit, collapsed at the bottom. Not for
+  readers.
+- `src/content/page.ts` — all page copy except the letter itself (title, subtitle, letterhead labels).
+  Changing it cannot invalidate signatures; changing `letter.ts` does.
+
+Colour is deliberately restrained: warm paper, ink, one accent (`--color-accent`) reserved for links and
+emphasis. Text colours were checked against WCAG AA on both the hero and the sheet — `--color-ink-faint`
+is `#6f6258` because anything lighter failed AA at 11 px.
+
+### Logos and trademarks
+
+**No third-party logo file is committed.** Using another company's mark is not automatically unlawful —
+nominative use to name who a letter is addressed to is ordinary — but it sits under each brand's
+guidelines and can read as endorsement, which an open letter must avoid. Until permission exists (or
+each brand's asset rules are checked), the addressee row renders **typographic wordmarks** instead:
+the names set in the page's own type, not in anyone's corporate font.
+
+To switch to real marks, set `logoSrc` per entry in `src/content/addressees.ts` to a file under
+`public/logos/` **after**:
+
+1. checking that brand's guidelines for third-party use, or getting written permission;
+2. confirming monochrome / single-colour use is allowed, and that the mark is unmodified with clear
+   space respected;
+3. making sure nothing on the page implies endorsement, partnership or approval;
+4. keeping a note in the commit message of which guideline or permission covers each mark.
+
+`Hero.tsx` already renders `logoSrc` when present (`grayscale`, 70 % opacity, fixed height), so switching
+is a content change, not a code change.
+
 ## Layout
 
 ```
