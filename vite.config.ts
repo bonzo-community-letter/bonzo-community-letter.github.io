@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { letterHashPlugin } from './build/letter-hash.ts'
 
 // Optional network exposure for the dev server. All unset by default, so the
 // repo stays portable and nothing about one machine's network lives in the code.
@@ -25,7 +26,7 @@ const hmr =
 // For a custom domain (letter.example.org), set base to '/' — see README.
 export default defineConfig({
   base: '/open-letter/',
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), letterHashPlugin()],
   build: {
     target: 'es2022',
     sourcemap: true,

@@ -8,11 +8,19 @@ export interface SignatureState {
   error?: string
 }
 
+export interface SignatureQuery {
+  letterId: string
+  letterHash: string
+}
+
 /**
  * Reads the topic from the public mirror node. No backend, no key, no tracking:
  * one GET to a public API, repeated every minute while the tab is open.
+ *
+ * Both the letter id and the hash come from the build (virtual:letter), so the
+ * page can never read a different version of the letter than the one it shows.
  */
-export function useSignatures(letterHash: string | null, letterId: string): SignatureState {
+export function useSignatures({ letterId, letterHash }: SignatureQuery): SignatureState {
   const [state, setState] = useState<SignatureState>({ status: 'closed', signatures: [] })
 
   useEffect(() => {
@@ -29,8 +37,8 @@ export function useSignatures(letterHash: string | null, letterId: string): Sign
         const signatures = await fetchSignatures({
           network: config.network,
           topicId: config.topicId,
-          letter: letterId,
-          hash: letterHash,
+          letterId,
+          letterHash,
           signal: controller.signal,
         })
         if (!cancelled) setState({ status: 'ready', signatures })
@@ -53,7 +61,7 @@ export function useSignatures(letterHash: string | null, letterId: string): Sign
       controller.abort()
       window.clearInterval(timer)
     }
-  }, [letterHash, letterId])
+  }, [letterId, letterHash])
 
   return state
 }

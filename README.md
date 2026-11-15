@@ -27,6 +27,8 @@ from that:
 ├── .github/workflows/
 │   ├── ci.yml                 PR + branch pushes: typecheck, test, build, upload dist
 │   └── deploy.yml             merge to main: same checks, then deploy-pages
+├── build/
+│   └── letter-hash.ts         Vite plugin: hashes src/content/letter.ts at build time
 ├── src/
 │   ├── main.tsx               React entry
 │   ├── App.tsx                scaffold shell — renders runtime/config state only
@@ -35,7 +37,7 @@ from that:
 │   │   └── letter.ts          ← the letter text goes here (currently empty)
 │   ├── lib/
 │   │   ├── hcs.ts             payload contract, mirror-node reader, parsers
-│   │   └── hcs.test.ts        unit tests for the contract (8 tests)
+│   │   └── hcs.test.ts        unit tests for the contract (17 tests)
 │   ├── hooks/
 │   │   └── useSignatures.ts   reads the topic, refreshes every 60 s
 │   └── styles.css             Tailwind import only — no design tokens yet
@@ -116,25 +118,54 @@ job fails with "Pages is not enabled". A deploy key cannot do this.
 
 ## The signature contract (implemented)
 
-`src/lib/hcs.ts` defines it; `hcs.test.ts` pins it down. A message is canonical JSON — sorted keys, no
-whitespace, under HCS's 1 KB cap:
+Modelled on what Bonzo actually submitted for the recovery portal's terms — verified by reading
+[their topic](https://hashscan.io/mainnet/topic/0.0.10955904/messages) through the mirror node:
 
-```json
-{
-  "v": 1,
-  "kind": "open-letter-signature",
-  "letter": "bonzo-recovery-2026-11",
-  "hash": "<sha-256 of the letter text>",
-  "account": "0.0.1234",
-  "ts": "2026-11-15T18:00:00.000Z"
-}
+```
+{"app":"Bonzo Finance","accountId":"0.0.6754749","agreement":"redemption-waiver",
+ "version":1,"termsHash":"4ad02fc0…ab85","signedAt":"2026-11-12T15:29:24.484Z"}     210 bytes
 ```
 
-The reader keeps only messages whose `kind`, `letter` and `hash` match the current text — anything else
-on the topic (older drafts, junk) is ignored. Changing one word of the letter invalidates every
-signature, which is the point of the hash.
+That topic has `admin_key: null` and `submit_key: null`: anyone can submit, nobody can censor or delete.
+Ours mirrors that shape, with a comment field added:
+
+```json
+{"accountId":"0.0.1234","agreement":"bonzo-recovery-letter","app":"open-letter",
+ "comment":"optional","letterHash":"<sha-256 of the letter>","letterId":"bonzo-recovery-2026-11",
+ "signedAt":"2026-11-15T18:00:00.000Z","version":1}
+```
+
+- **The message carries the hash, never the letter.** Same primitive as the portal's `termsHash`, and
+  small enough that one message always fits.
+- **Canonical JSON** — keys sorted, no whitespace — so the bytes are reproducible.
+- **Optional comment**, trimmed, max `MAX_COMMENT_BYTES` (512) UTF-8 bytes, no control characters other
+  than newlines. `buildSignature()` returns the byte count and refuses anything that would exceed HCS's
+  1 KB cap, so a wallet is never asked to sign a message that cannot be submitted.
+- **Reader filters** on `app`, `agreement`, `version`, `letterId` and `letterHash`, so older drafts and
+  foreign messages on the same topic are ignored.
+
+Topic memo convention, mirroring `bonzo:redemption-waiver:v1:<hash>`:
+
+```
+open-letter:bonzo-recovery-letter:v1:<letterHash>
+```
+
+### The hash is computed at build time
+
+`build/letter-hash.ts` is a Vite plugin: it bundles `src/content/letter.ts` with esbuild, imports it,
+and exposes a virtual module (`virtual:letter`) with the text, its id, its byte length and its SHA-256.
+There is **no runtime hashing path**, so the hash the page displays and the hash a wallet signs cannot
+diverge. Editing the text and rebuilding changes the hash, which invalidates every existing signature by
+design — the check is `git diff` on one file.
+
+The plugin warns at build time when the text is empty, because the hash of an empty string would make
+every signature meaningless. Signing must stay closed until the text exists.
 
 ## Still open
 
 Content, layout, visual design, the wallet handshake, topic creation, and the awareness campaign. None
 of them are started here.
+
+One decision belongs to the visual/content phase but has a technical edge: **comments are permanent and
+public**. HCS messages cannot be edited or deleted, so the page needs a policy for displaying them
+(unmoderated, filtered, or shown only to the signer) before the signing UI goes live.
