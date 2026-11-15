@@ -9,7 +9,7 @@ export function App() {
   const signatureCount = signatures.status === 'ready' ? signatures.signatures.length : null
 
   return (
-    <div className="min-h-dvh bg-paper">
+    <div className="min-h-dvh bg-page">
       <Hero signatureCount={signatureCount} />
       <main>
         <LetterSheet letterHash={letterHash} />

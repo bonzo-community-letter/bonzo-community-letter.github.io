@@ -30,7 +30,7 @@ export function DevStatus({ state }: { state: SignatureState }) {
 
   return (
     <section className="mx-auto w-full max-w-5xl px-4 pb-20 pt-10 sm:px-6">
-      <details className="rounded border border-rule bg-white/40 px-4 py-3 text-xs text-ink-soft">
+      <details className="rounded border border-rule bg-white/[0.04] px-4 py-3 text-xs text-ink-soft">
         <summary className="cursor-pointer select-none text-ink-faint">Developer status</summary>
 
         <dl className="mt-3">
@@ -51,7 +51,7 @@ export function DevStatus({ state }: { state: SignatureState }) {
         <p className="mt-4 text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint">
           Message a signer would submit
         </p>
-        <pre className="mt-2 overflow-x-auto rounded border border-rule bg-paper p-3 font-mono text-[0.6875rem] leading-relaxed text-ink-soft">
+        <pre className="mt-2 overflow-x-auto rounded border border-rule bg-black/30 p-3 font-mono text-[0.6875rem] leading-relaxed text-ink-soft">
           <code>{draft.ok ? prettyPayload(draft.payload) : `invalid: ${draft.errors.join('; ')}`}</code>
         </pre>
         <p className="mt-1 text-ink-faint">

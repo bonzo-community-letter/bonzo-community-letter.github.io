@@ -34,9 +34,12 @@ First layout, in `src/components/`:
 - `src/content/page.ts` — all page copy except the letter itself (title, subtitle, letterhead labels).
   Changing it cannot invalidate signatures; changing `letter.ts` does.
 
-Colour is deliberately restrained: warm paper, ink, one accent (`--color-accent`) reserved for links and
-emphasis. Text colours were checked against WCAG AA on both the hero and the sheet — `--color-ink-faint`
-is `#6f6258` because anything lighter failed AA at 11 px.
+**Colour: dark page, light letter.** The page background is `#14110e` on purpose — the letter is the only
+bright surface, so it reads as the content rather than as a card on a website. The sheet therefore has its
+own ink tokens (`--color-sheet-ink`, `-soft`, `-faint`, `--color-sheet-rule`) and never inherits page
+colours; changing the page theme cannot wash out the letter. Contrast measured on both surfaces: page ink
+16.4:1, soft 9.0:1, faint 5.5:1; sheet ink 18.2:1, sheet faint 5.8:1 — all AA, most AAA. One accent
+(`#d97a5a`, warm terracotta) is reserved for links and selection.
 
 ### Logos and trademarks
 
