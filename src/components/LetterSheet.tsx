@@ -1,5 +1,6 @@
 import { page } from '../content/page'
 import { letterText } from 'virtual:letter'
+import { EnvelopeOverlay } from './EnvelopeOverlay'
 
 /**
  * The letter as a page of paper, pulled up so it overlaps the hero — the first
@@ -60,6 +61,8 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
             </div>
           </div>
         </article>
+
+        <EnvelopeOverlay />
       </div>
     </div>
   )

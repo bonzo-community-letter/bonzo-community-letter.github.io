@@ -29,6 +29,11 @@ First layout, in `src/components/`:
 - `LetterSheet.tsx` — the letter as a page of paper (second sheet behind it for depth), with a real
   letterhead: from / date, to, subject, salutation, then the body. The body renders whatever is in
   `src/content/letter.ts`, split on blank lines; while that is empty it shows a placeholder.
+- `EnvelopeOverlay.tsx` — a sealed envelope over the letterhead. It is scroll-driven, not time-driven:
+  the flap unseals over the first ~130 px of scrolling and the envelope then travels 340 px down and
+  fades, so the letter appears to slide out of it. The reveal takes a fixed 420 px of scroll, so it
+  completes on any page length. With `prefers-reduced-motion: reduce` it is not rendered at all and the
+  letterhead is simply visible.
 - `DevStatus.tsx` — build facts and the payload a signer would submit, collapsed at the bottom. Not for
   readers.
 - `src/content/page.ts` — all page copy except the letter itself (title, subtitle, letterhead labels).
