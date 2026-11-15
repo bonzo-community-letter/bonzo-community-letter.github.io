@@ -68,6 +68,29 @@ npm run dev                    # http://localhost:5173/open-letter/
 `base` in `vite.config.ts` is `/open-letter/` because this is a GitHub Pages *project* page. A custom
 domain means changing it to `/`.
 
+### Seeing it from another device (tailnet)
+
+`npm run dev` listens on loopback only. To open it from a phone or another machine on the same tailnet:
+
+```bash
+npm run dev:tailnet
+```
+
+That binds Vite to this machine's Tailscale address (not `0.0.0.0`, so the LAN cannot reach it) and
+allows the MagicDNS hostname as a `Host` header. It prints the URL, typically
+`http://<host>.<tailnet>.ts.net:5173/open-letter/`.
+
+The underlying knobs, if you need them by hand:
+
+| variable | purpose |
+|---|---|
+| `DEV_BIND_HOST` | interface to listen on (default `127.0.0.1`) |
+| `PUBLIC_DEV_HOST` | hostname clients use — Vite blocks unknown `Host` headers without it |
+| `PUBLIC_DEV_PROXY` | `1` when TLS terminates in front of Vite (e.g. `tailscale serve`) → HMR switches to `wss:443` |
+
+For HTTPS on port 443 instead of `http://host:5173`, `tailscale serve` is the better tool, but it needs
+operator rights once (`sudo tailscale set --operator=$USER`); then run with `PUBLIC_DEV_PROXY=1`.
+
 ## Configuration
 
 All public. Never a Hedera private key or account secret — the page has no way to use one.
