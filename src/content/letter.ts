@@ -1,16 +1,18 @@
 /**
- * Content entry point. Intentionally empty.
+ * Content entry point.
  *
- * The letter text, its sections and any supporting copy are not written yet.
- * When they are, they go here: `letterText` must be the exact text that is
- * signed, because every HCS signature commits to its SHA-256.
+ * `LETTER_SLUG` names the campaign: it goes into every signature and into the
+ * HCS topic memo. `letterText` is what gets hashed at build time — its SHA-256
+ * is what a signature commits to, so it must be the exact text that is signed.
  *
- * Editing this text after signatures exist invalidates them by design.
+ * Editing `letterText` after signatures exist invalidates them by design.
  */
-export const LETTER_ID = 'bonzo-recovery-2026-11'
+
+/** Identifies this letter on the topic. Stable for the life of the campaign. */
+export const LETTER_SLUG = 'bonzo-exploit-open-letter'
 
 /** Not written yet — keep empty until the text is signed off. */
 export const letterText = ''
 
-/** True while the text is a draft. Should block signing once the UI exists. */
+/** True while the text is a draft. Must block signing once the UI exists. */
 export const letterIsDraft = true

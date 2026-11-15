@@ -34,10 +34,10 @@ from that:
 │   ├── App.tsx                scaffold shell — renders runtime/config state only
 │   ├── config.ts              env parsing; `signingOpen` gate
 │   ├── content/
-│   │   └── letter.ts          ← the letter text goes here (currently empty)
+│   │   └── letter.ts          ← LETTER_SLUG + the letter text (text currently empty)
 │   ├── lib/
 │   │   ├── hcs.ts             payload contract, mirror-node reader, parsers
-│   │   └── hcs.test.ts        unit tests for the contract (17 tests)
+│   │   └── hcs.test.ts        unit tests for the contract (18 tests)
 │   ├── hooks/
 │   │   └── useSignatures.ts   reads the topic, refreshes every 60 s
 │   └── styles.css             Tailwind import only — no design tokens yet
@@ -127,27 +127,29 @@ Modelled on what Bonzo actually submitted for the recovery portal's terms — ve
 ```
 
 That topic has `admin_key: null` and `submit_key: null`: anyone can submit, nobody can censor or delete.
-Ours mirrors that shape, with a comment field added:
+Ours keeps the parts that carry meaning for an open letter — the account, the hash, the timestamp — and
+drops the parts that do not (`app`, `agreement`, a date-versioned letter id):
 
 ```json
-{"accountId":"0.0.1234","agreement":"bonzo-recovery-letter","app":"open-letter",
- "comment":"optional","letterHash":"<sha-256 of the letter>","letterId":"bonzo-recovery-2026-11",
- "signedAt":"2026-11-15T18:00:00.000Z","version":1}
+{"accountId":"0.0.1234","comment":"optional","letter":"bonzo-exploit-open-letter",
+ "letterHash":"<sha-256 of the letter>","signedAt":"2026-11-15T18:00:00.000Z","version":1}
 ```
 
 - **The message carries the hash, never the letter.** Same primitive as the portal's `termsHash`, and
   small enough that one message always fits.
+- **`letter`** is the campaign slug, constant for the whole campaign; **`letterHash`** pins the exact
+  version of the text. Both come from the build.
 - **Canonical JSON** — keys sorted, no whitespace — so the bytes are reproducible.
 - **Optional comment**, trimmed, max `MAX_COMMENT_BYTES` (512) UTF-8 bytes, no control characters other
   than newlines. `buildSignature()` returns the byte count and refuses anything that would exceed HCS's
   1 KB cap, so a wallet is never asked to sign a message that cannot be submitted.
-- **Reader filters** on `app`, `agreement`, `version`, `letterId` and `letterHash`, so older drafts and
-  foreign messages on the same topic are ignored.
+- **Reader filters** on `version`, `letter` and `letterHash`, so older drafts and foreign messages on the
+  same topic are ignored.
 
-Topic memo convention, mirroring `bonzo:redemption-waiver:v1:<hash>`:
+Topic memo convention: `<letter>:v<version>:<letterHash>`, e.g.
 
 ```
-open-letter:bonzo-recovery-letter:v1:<letterHash>
+bonzo-exploit-open-letter:v1:<letterHash>
 ```
 
 ### The hash is computed at build time
@@ -166,6 +168,9 @@ every signature meaningless. Signing must stay closed until the text exists.
 Content, layout, visual design, the wallet handshake, topic creation, and the awareness campaign. None
 of them are started here.
 
-One decision belongs to the visual/content phase but has a technical edge: **comments are permanent and
-public**. HCS messages cannot be edited or deleted, so the page needs a policy for displaying them
-(unmoderated, filtered, or shown only to the signer) before the signing UI goes live.
+**Decided:** comments are shown in full, from everyone, uncensored. Two consequences to build for:
+
+- Comments are permanent and public — HCS has no edit or delete — so the signing UI must say so plainly
+  before a wallet is asked to sign.
+- Render comments as **text, never HTML**: they are arbitrary strings from strangers on a page we
+  control. Length is already capped at 512 bytes by the payload rules.

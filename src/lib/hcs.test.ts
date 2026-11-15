@@ -1,6 +1,4 @@
 import {
-  AGREEMENT,
-  APP,
   HCS_MAX_MESSAGE_BYTES,
   MAX_COMMENT_BYTES,
   buildSignature,
@@ -16,7 +14,8 @@ import {
 import { describe, expect, it } from 'vitest'
 
 const HASH = 'a'.repeat(64)
-const input = { accountId: '0.0.1234', letterId: 'bonzo-recovery-2026-11', letterHash: HASH }
+const LETTER = 'bonzo-exploit-open-letter'
+const input = { accountId: '0.0.1234', letter: LETTER, letterHash: HASH }
 
 const toB64 = (s: string): string => {
   const bytes = new TextEncoder().encode(s)
@@ -49,27 +48,27 @@ describe('canonicalJson', () => {
 })
 
 describe('topicMemo', () => {
-  it('follows the convention Bonzo used for the recovery portal', () => {
-    expect(topicMemo(HASH)).toBe(`open-letter:${AGREEMENT}:v1:${HASH}`)
+  it('is the letter slug, the schema version and the hash', () => {
+    expect(topicMemo(LETTER, HASH)).toBe(`${LETTER}:v1:${HASH}`)
   })
 })
 
 describe('buildSignature', () => {
-  it('builds a minimal message with the agreed field names', () => {
+  it('builds exactly the fields we need and nothing else', () => {
     const result = buildSignature({ ...input, signedAt: '2026-11-15T18:00:00.000Z' })
     expect(result.ok).toBe(true)
     if (!result.ok) return
 
     expect(result.payload).toEqual({
-      app: APP,
       accountId: '0.0.1234',
-      agreement: AGREEMENT,
-      version: 1,
-      letterId: input.letterId,
+      letter: LETTER,
       letterHash: HASH,
       signedAt: '2026-11-15T18:00:00.000Z',
+      version: 1,
     })
-    expect(result.bytes).toBeLessThan(400)
+    expect(Object.keys(result.payload).sort()).toEqual(
+      ['accountId', 'letter', 'letterHash', 'signedAt', 'version'].sort(),
+    )
   })
 
   it('carries the hash of the letter, never the letter itself', () => {
@@ -106,6 +105,12 @@ describe('buildSignature', () => {
     }
   })
 
+  it('rejects a letter slug that is empty or malformed', () => {
+    for (const letter of ['', 'Bonzo Letter', 'BONZO', 'bonzo_letter', '-leading']) {
+      expect(buildSignature({ ...input, letter }).ok).toBe(false)
+    }
+  })
+
   it('enforces the comment budget in bytes, not characters', () => {
     expect(buildSignature({ ...input, comment: 'a'.repeat(MAX_COMMENT_BYTES + 1) }).ok).toBe(false)
 
@@ -135,25 +140,24 @@ describe('decoding', () => {
     expect(decodeMessage(toB64(canonicalJson(payload)))).toEqual(payload)
   })
 
-  it('rejects other agreements, versions and foreign payloads', () => {
+  it('rejects other versions and foreign payloads', () => {
     const payload = payloadOf()
-    expect(decodeMessage(toB64(JSON.stringify({ ...payload, agreement: 'other' })))).toBeNull()
     expect(decodeMessage(toB64(JSON.stringify({ ...payload, version: 2 })))).toBeNull()
-    expect(decodeMessage(toB64(JSON.stringify({ ...payload, app: 'Bonzo Finance' })))).toBeNull()
+    expect(decodeMessage(toB64(JSON.stringify({ hello: 'world' })))).toBeNull()
     expect(decodeMessage(toB64('not json'))).toBeNull()
     expect(decodeMessage('!!!!')).toBeNull()
   })
 })
 
 describe('parseMessages', () => {
-  const opts = { letterId: input.letterId, letterHash: HASH }
+  const opts = { letter: LETTER, letterHash: HASH }
 
   it('keeps only signatures of this exact letter version, in consensus order', () => {
     const rows = [
       mirror(canonicalJson(payloadOf({ accountId: '0.0.2' })), 2),
       mirror(canonicalJson(payloadOf({ accountId: '0.0.1' })), 1),
       mirror(canonicalJson(payloadOf({ letterHash: 'b'.repeat(64) })), 3), // other draft
-      mirror(canonicalJson(payloadOf({ letterId: 'other-letter' })), 4),
+      mirror(canonicalJson(payloadOf({ letter: 'other-letter' })), 4),
       mirror('{"hello":"world"}', 5),
       mirror('garbage', 6),
     ]
