@@ -29,11 +29,16 @@ First layout, in `src/components/`:
 - `LetterSheet.tsx` — the letter as a page of paper (second sheet behind it for depth), with a real
   letterhead: from / date, to, subject, salutation, then the body. The body renders whatever is in
   `src/content/letter.ts`, split on blank lines; while that is empty it shows a placeholder.
-- `EnvelopeOverlay.tsx` — a sealed envelope over the letterhead. It is scroll-driven, not time-driven:
-  the flap unseals over the first ~130 px of scrolling and the envelope then travels 340 px down and
-  fades, so the letter appears to slide out of it. The reveal takes a fixed 420 px of scroll, so it
-  completes on any page length. With `prefers-reduced-motion: reduce` it is not rendered at all and the
-  letterhead is simply visible.
+- `EnvelopeSvg.tsx` — the envelope as one drawing, animated by a single value. Sealed and open are
+  the same geometry: the flap's tip sits 223 units below the fold when shut and 223 above it when
+  open, so mirroring the flap about the fold is the whole difference. What cross-fades is only what
+  the flap hides — the outside surface gives way to the dark inside, and the paper face of the flap
+  gives way to its shadowed back.
+- `EnvelopeOverlay.tsx` — places that drawing on the letter sheet: lifted by 40% of its height so the
+  body's top edge sits on the sheet's top edge, with the standing flap reaching up over the hero. It
+  is scroll-driven, not time-driven; the reveal takes a fixed 150 px, short on purpose, because the
+  envelope is anchored to the sheet and leaves the viewport as you scroll. With
+  `prefers-reduced-motion: reduce` it is drawn in its open state, without scroll coupling.
 - `DevStatus.tsx` — build facts and the payload a signer would submit, collapsed at the bottom. Not for
   readers.
 - `src/content/page.ts` — all page copy except the letter itself (title, subtitle, letterhead labels).

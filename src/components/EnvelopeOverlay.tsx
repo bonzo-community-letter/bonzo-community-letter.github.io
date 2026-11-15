@@ -17,17 +17,18 @@ function usePrefersReducedMotion(): boolean {
   return reduced
 }
 
-/** How much scrolling the whole unsealing takes, in pixels. */
-const REVEAL_DISTANCE = 420
-/** How far the envelope travels down while it unseals. */
-const TRAVEL_DISTANCE = 340
+/** How much scrolling opens the envelope, in pixels. Short on purpose: the
+ *  envelope is anchored to the sheet, so it leaves the viewport as you scroll —
+ *  the reveal has to finish while the standing flap is still on screen. */
+const REVEAL_DISTANCE = 150
 
 /**
- * The envelope, sitting over the letterhead and driven by scroll.
+ * The envelope on the letter sheet. It is placed so the body's top edge sits on
+ * the sheet's top edge and the standing flap reaches up over the hero — the
+ * drawing's fold is at y = 256 of 640, hence the -40% lift.
  *
- * Step 1 of the reveal: it is one drawn object (EnvelopeSvg) rather than a stack
- * of divs, so the fold seams, the pocket and the flap read as an envelope at any
- * size. The scroll behaviour is unchanged for now.
+ * The only animated value is progress: the flap mirrors about the fold as the
+ * reader scrolls, and everything the flap hides changes with it.
  */
 export function EnvelopeOverlay() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -42,10 +43,12 @@ export function EnvelopeOverlay() {
     const update = (): void => {
       const element = ref.current
       if (!element) return
-      const top = element.getBoundingClientRect().top + window.scrollY
-      // begin as the envelope comes up the viewport, finish a fixed 420px later
-      // so the reveal completes on any page length, however short
-      const start = top - window.innerHeight * 0.45
+      // the element is lifted by 40% of its height so the body sits on the sheet;
+      // add that back to get the position the scroll is measured against
+      const untransformedTop =
+        element.getBoundingClientRect().top + window.scrollY + 0.4 * element.offsetHeight
+      // open over a fixed distance, starting once the sheet is comfortably in view
+      const start = Math.max(0, untransformedTop - window.innerHeight * 0.55)
       setProgress(clamp01((window.scrollY - start) / REVEAL_DISTANCE))
     }
 
@@ -65,22 +68,14 @@ export function EnvelopeOverlay() {
     }
   }, [reduced])
 
-  if (reduced) return null
-
-  const flapOpen = clamp01(progress / 0.32)
-  const travel = progress * TRAVEL_DISTANCE
-
   return (
     <div
       ref={ref}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 z-20 aspect-[3/2] w-full"
-      style={{
-        transform: `translate3d(0, ${travel.toFixed(1)}px, 0)`,
-        willChange: 'transform',
-      }}
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 aspect-square"
+      style={{ transform: 'translateY(-40%)' }}
     >
-      <EnvelopeSvg flapOpen={flapOpen} className="h-full w-full" />
+      <EnvelopeSvg progress={reduced ? 1 : progress} className="h-full w-full" />
     </div>
   )
 }
