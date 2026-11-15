@@ -1,18 +1,19 @@
 /**
  * An envelope drawn as SVG, in two states that share one geometry.
  *
- * Sealed (`flapOpen` 0): the outer back, the pocket folded up from the bottom,
- * and the top flap lying over it.
+ * Sealed (`flapOpen` 0): the outer surface, the pocket folded up from the
+ * bottom, and the top flap lying over it.
  *
- * Opened (`flapOpen` 1): the outer back has faded away, so the envelope is a
- * *hole* with a shadowed rim — whatever sits behind it shows through as the
- * letter inside. The flap has swung up past the top edge on its hinge and stays
- * there, visible, drawn behind the body the way a real opened flap stands.
+ * Opened (`flapOpen` 1): the outer surface has given way to the inside of the
+ * envelope — a darker paper — with a sheet standing in it and a shadowed rim
+ * under the opening. Everything stays opaque: what is behind the envelope is
+ * the page, not the letter, so nothing may show through.
  *
- * Geometry: 600×400, 3:2. Fold vertex at (300, 186); the flap's tip at
- * (300, 246), i.e. 60px past it, so the flap visibly overlaps the pocket. The
- * hinge is y=8, so a fully opened flap reaches y=-230 — outside the viewBox,
- * which is why the SVG must not clip (`overflow: visible`).
+ * The flap is hinged at y=8 and mirrors about it, so a fully opened flap
+ * reaches y=-230 — outside the viewBox, which is why the SVG must not clip.
+ *
+ * Geometry: 600×400, 3:2. Pocket vertex at (300, 186); the flap's tip at
+ * (300, 246), i.e. 60px past it, so the flap visibly overlaps the pocket.
  */
 
 interface EnvelopeSvgProps {
@@ -28,15 +29,14 @@ const FLAP = 'M8 8 L592 8 L300 246 Z'
 const POCKET = 'M6 394 L300 186 L594 394 Z'
 /** The hinge sits at y=8; mirroring about it means translating by twice that. */
 const HINGE = 8
+/** The sheet inside sits here when sealed and rises as the flap comes up. */
+const SHEET_SEATED = 56
+const SHEET_RISE = 20
 
 export function EnvelopeSvg({ flapOpen = 0, className }: EnvelopeSvgProps) {
   const open = clamp01(flapOpen)
   const flip = 1 - 2 * open
-
-  // the outer back fades once the flap is clearly up, so the letter behind
-  // shows through as the envelope's interior
-  const backOpacity = clamp01(1 - (open - 0.35) / 0.4)
-  const interiorOpacity = clamp01((open - 0.3) / 0.4)
+  const sheetTop = SHEET_SEATED - SHEET_RISE * open
 
   const flap = (
     <g transform={`translate(0 ${(2 * HINGE * open).toFixed(2)}) scale(1 ${flip.toFixed(3)})`}>
@@ -66,6 +66,13 @@ export function EnvelopeSvg({ flapOpen = 0, className }: EnvelopeSvgProps) {
           <stop offset="1" stopColor="#e6dbc6" />
         </linearGradient>
 
+        {/* the inside of the envelope: same paper, in its own shadow */}
+        <linearGradient id="env-inside" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#cdbda0" />
+          <stop offset="0.5" stopColor="#d9cbb0" />
+          <stop offset="1" stopColor="#e2d6bd" />
+        </linearGradient>
+
         <linearGradient id="env-flap" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#fdf8ee" />
           <stop offset="1" stopColor="#f2e9d7" />
@@ -83,15 +90,19 @@ export function EnvelopeSvg({ flapOpen = 0, className }: EnvelopeSvgProps) {
         </linearGradient>
 
         {/* the rim of the opening: dark at the lip, clear towards the middle */}
-        <linearGradient id="env-interior" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#2b2216" stopOpacity="0.55" />
-          <stop offset="0.16" stopColor="#2b2216" stopOpacity="0.22" />
-          <stop offset="0.42" stopColor="#2b2216" stopOpacity="0.05" />
+        <linearGradient id="env-rim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#2b2216" stopOpacity="0.5" />
+          <stop offset="0.14" stopColor="#2b2216" stopOpacity="0.2" />
+          <stop offset="0.4" stopColor="#2b2216" stopOpacity="0.04" />
           <stop offset="1" stopColor="#2b2216" stopOpacity="0" />
         </linearGradient>
 
         <filter id="env-blur" x="-15%" y="-15%" width="130%" height="130%">
           <feGaussianBlur stdDeviation="7" />
+        </filter>
+
+        <filter id="env-soft" x="-15%" y="-30%" width="130%" height="160%">
+          <feGaussianBlur stdDeviation="4" />
         </filter>
 
         <filter id="env-drop" x="-40%" y="-70%" width="180%" height="240%">
@@ -113,28 +124,48 @@ export function EnvelopeSvg({ flapOpen = 0, className }: EnvelopeSvgProps) {
         {open > 0.5 ? flap : null}
 
         <g clipPath="url(#env-clip)">
-          {/* the outer back, present only while the envelope is still sealed */}
-          {backOpacity > 0.01 ? (
+          {/* the inside, always painted so nothing behind the envelope leaks in */}
+          <rect x={BODY.x} y={BODY.y} width={BODY.w} height={BODY.h} fill="url(#env-inside)" />
+
+          {/* the outside surface, which gives way to the inside as it opens */}
+          {open < 1 ? (
             <rect
               x={BODY.x}
               y={BODY.y}
               width={BODY.w}
               height={BODY.h}
               fill="url(#env-body)"
-              opacity={backOpacity.toFixed(3)}
+              opacity={(1 - open).toFixed(3)}
             />
           ) : null}
 
-          {/* the interior: a shadowed rim around a hole the letter shows through */}
-          {interiorOpacity > 0.01 ? (
+          {/* the opening's rim */}
+          {open > 0.01 ? (
             <rect
               x={BODY.x}
               y={BODY.y}
               width={BODY.w}
               height={BODY.h}
-              fill="url(#env-interior)"
-              opacity={interiorOpacity.toFixed(3)}
+              fill="url(#env-rim)"
+              opacity={open.toFixed(3)}
             />
+          ) : null}
+
+          {/* the letter, standing in the envelope */}
+          {open > 0.05 ? (
+            <g opacity={clamp01((open - 0.05) / 0.35).toFixed(3)}>
+              <rect x="30" y={sheetTop} width="540" height={394 - sheetTop} fill="#fffdfa" />
+              <rect x="30" y={sheetTop} width="540" height="2" fill="#e4dac6" />
+              <rect
+                x="30"
+                y={sheetTop - 10}
+                width="540"
+                height="10"
+                fill="#3a2f21"
+                opacity="0.18"
+                filter="url(#env-soft)"
+              />
+            </g>
           ) : null}
 
           {/* pocket: the bottom flap folded up, its top edge a V — the vertex sits
@@ -183,7 +214,7 @@ export function EnvelopeSvg({ flapOpen = 0, className }: EnvelopeSvgProps) {
             d={`M${BODY.x} ${HINGE} L${BODY.x + BODY.w} ${HINGE}`}
             stroke="#3a2f21"
             strokeWidth="2.5"
-            opacity={(0.5 * interiorOpacity).toFixed(3)}
+            opacity={(0.45 * open).toFixed(3)}
           />
         </g>
       </g>

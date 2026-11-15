@@ -69,7 +69,6 @@ export function EnvelopeOverlay() {
 
   const flapOpen = clamp01(progress / 0.32)
   const travel = progress * TRAVEL_DISTANCE
-  const opacity = progress < 0.78 ? 1 : clamp01(1 - (progress - 0.78) / 0.22)
 
   return (
     <div
@@ -78,8 +77,7 @@ export function EnvelopeOverlay() {
       className="pointer-events-none absolute inset-x-0 top-0 z-20 aspect-[3/2] w-full"
       style={{
         transform: `translate3d(0, ${travel.toFixed(1)}px, 0)`,
-        opacity,
-        willChange: 'transform, opacity',
+        willChange: 'transform',
       }}
     >
       <EnvelopeSvg flapOpen={flapOpen} className="h-full w-full" />
