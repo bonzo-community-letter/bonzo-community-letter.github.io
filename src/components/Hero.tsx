@@ -15,11 +15,13 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
           {page.title}
         </h1>
 
-        <div className="mx-auto mt-12 grid max-w-3xl grid-cols-1 gap-y-8 text-left sm:grid-cols-[1fr_1px_1fr] sm:gap-x-12">
+        <div className="mx-auto mt-12 grid max-w-3xl grid-cols-1 gap-y-8 text-center sm:grid-cols-[1fr_1px_1fr] sm:gap-x-12 sm:text-left">
           <div>
             <p className="eyebrow">From</p>
             <p className="mt-2 font-serif text-xl leading-snug text-ink">{page.from.name}</p>
-            <p className="mt-2 max-w-[36ch] text-sm leading-relaxed text-ink-soft">{page.from.note}</p>
+            <p className="mx-auto mt-2 max-w-[36ch] text-sm leading-relaxed text-ink-soft sm:mx-0">
+              {page.from.note}
+            </p>
           </div>
 
           <div aria-hidden="true" className="hidden bg-rule sm:block" />
@@ -28,7 +30,7 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
             <p className="eyebrow">To</p>
             <ul className="mt-2 space-y-1.5">
               {addressees.map((addressee) => (
-                <li key={addressee.name} className="flex items-center gap-2.5">
+                <li key={addressee.name} className="flex items-center justify-center gap-2.5 sm:justify-start">
                   {addressee.logoSrc ? (
                     <img
                       src={addressee.logoSrc}

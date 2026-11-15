@@ -18,7 +18,7 @@ export interface Addressee {
 
 export const addressees: Addressee[] = [
   { name: 'Hedera' },
-  { name: 'the HBAR Foundation' },
+  { name: 'HBAR Foundation' },
   { name: 'Supra Labs' },
-  { name: 'the Bonzo Finance Foundation' },
+  { name: 'Bonzo Finance Foundation' },
 ]

@@ -15,7 +15,7 @@ export const page = {
    */
   from: {
     name: 'Affected users of Bonzo Lend',
-    note: 'the users who lost funds when the oracle failed — asking what was promised, what was delivered, and what remains unanswered.',
+    note: 'What happened, what was promised, what was delivered, and what questions remain unanswered.',
   },
 
   status: 'Draft — not yet published',
