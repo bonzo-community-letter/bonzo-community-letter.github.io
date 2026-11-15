@@ -111,14 +111,16 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
           <path d="M614 619 L350 453" fill="none" stroke="#b9a98d" opacity="0.45" />
         </g>
 
-        {/* 6 · the shadow the flap throws while it still lies on the paper */}
-        {p < 0.5 ? (
+        {/* 6 · the shadow the flap throws while it still lies on the paper. It has to
+             go at once: the flap is off the paper after the first few pixels of
+             scroll, and a shadow left behind floats on its own. */}
+        {p < 0.12 ? (
           <path
             d={FLAP_SHADOW}
             fill="none"
             stroke="#5a4d3a"
             strokeWidth="7"
-            opacity={(0.1 * (1 - 2 * p)).toFixed(3)}
+            opacity={(0.1 * (1 - p / 0.12)).toFixed(3)}
             filter="url(#env-soft)"
           />
         ) : null}
