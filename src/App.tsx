@@ -1,6 +1,7 @@
 import { DevStatus } from './components/DevStatus'
 import { Hero } from './components/Hero'
 import { LetterSheet } from './components/LetterSheet'
+import { SiteFooter } from './components/SiteFooter'
 import { useSignatures } from './hooks/useSignatures'
 import { letterHash, subject } from 'virtual:letter'
 
@@ -15,6 +16,7 @@ export function App() {
         <LetterSheet letterHash={letterHash} />
         <DevStatus state={signatures} />
       </main>
+      <SiteFooter />
     </div>
   )
 }

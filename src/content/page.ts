@@ -9,8 +9,11 @@ export const page = {
   /** Working title — still to be decided. */
   title: 'Open community letter',
 
-  subtitle:
-    'From the users who lost funds when the oracle failed: what was promised, what was delivered, and the questions that still have no answer.',
+  subtitle: {
+    /** rendered as the emphasised lead-in of the standfirst */
+    lead: 'From',
+    rest: 'the users who lost funds when the oracle failed: what was promised, what was delivered, and the questions that still have no answer.',
+  },
 
   status: 'Draft — not yet published',
 
