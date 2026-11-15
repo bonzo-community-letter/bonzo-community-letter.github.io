@@ -80,7 +80,6 @@ export function EnvelopeOverlay() {
         transform: `translate3d(0, ${travel.toFixed(1)}px, 0)`,
         opacity,
         willChange: 'transform, opacity',
-        filter: 'drop-shadow(0 28px 38px rgba(0, 0, 0, 0.55))',
       }}
     >
       <EnvelopeSvg flapOpen={flapOpen} className="h-full w-full" />
