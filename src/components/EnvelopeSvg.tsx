@@ -123,22 +123,22 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
           />
         ) : null}
 
-        {/* 7 · the flap, hinged on the fold. Mirroring it about the fold swings it
-             up; the inside below it is uncovered as its projection shrinks. */}
+        <g clipPath="url(#env-bodyClip)">
+          {/* 7 · the side flaps folded in */}
+          <path d={SIDE_LEFT} fill="url(#env-side)" />
+          <path d={SIDE_RIGHT} fill="url(#env-side)" />
+
+          {/* 8 · the contour: left, bottom, right — the top edge stays open */}
+          <path d={OUTLINE} fill="none" stroke="#c9bba3" />
+        </g>
+
+        {/* 9 · the flap last, so it is always above the side flaps: on its way up it
+             must never slide under them, whatever the fold does */}
         <g transform={`translate(0 ${(2 * HINGE * p).toFixed(2)}) scale(1 ${(1 - 2 * p).toFixed(3)})`}>
           <path d={FLAP} fill={lifted ? 'url(#env-shadow)' : 'url(#env-flapShut)'} />
           {!lifted ? <path d={FLAP_EDGE} fill="none" stroke="#d3c6ae" strokeWidth="1" /> : null}
           {/* the glued margin travels with the flap, so it unfolds instead of appearing */}
           {lifted ? <path d={STRIP_LOCAL} fill="none" stroke="#f2e9d8" strokeWidth="18" /> : null}
-        </g>
-
-        <g clipPath="url(#env-bodyClip)">
-          {/* 8 · the side flaps folded in, over the strip's ends */}
-          <path d={SIDE_LEFT} fill="url(#env-side)" />
-          <path d={SIDE_RIGHT} fill="url(#env-side)" />
-
-          {/* 9 · the contour: left, bottom, right — the top edge stays open */}
-          <path d={OUTLINE} fill="none" stroke="#c9bba3" />
         </g>
       </g>
     </svg>
