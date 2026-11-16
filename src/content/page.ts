@@ -21,7 +21,6 @@ export const page = {
   status: 'Draft — not yet published',
 
   letterhead: {
-    from: 'Affected users of Bonzo Lend',
     date: '15 November 2026',
     to: 'Hedera, the HBAR Foundation, Supra Labs and the Bonzo Finance Foundation',
     subject: 'On the Bonzo Lend recovery — the commitment, the distribution, and what remains unanswered',

@@ -1,10 +1,14 @@
 import { useLayoutEffect, useRef } from 'react'
 import { page } from '../content/page'
-import { ENVELOPE, envelopeGutter, envelopeHidden, envelopeTravel } from './EnvelopeOverlay'
+import { ENVELOPE, envelopeGutter, envelopeHidden, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
 import { letterText } from 'virtual:letter'
 
 /** How far through the flap's travel the paper should reach the fold. */
 const CROSSING = 0.62
+/** On a phone the envelope is already open, so there is no crossing to aim for: the
+ *  paper stands out of the opening, its letterhead — the From line — clear of the fold.
+ *  Negative: it starts above the fold, not inside it. */
+const OPEN_DEPTH = -0.5
 
 /**
  * The sheet starts inside the envelope, not at its opening: the gap above it is the
@@ -13,25 +17,31 @@ const CROSSING = 0.62
  * That distance cannot be a fixed number of pixels — the envelope's height follows the
  * viewport (588:363), and the fold sits a fixed fraction of it above the bottom edge.
  * So the gap is measured: place the paper where it is `CROSSING` of the reveal away
- * from meeting the fold.
+ * from meeting the fold — or, where the envelope starts open, a little inside it.
  */
-function useStartDepth(ref: React.RefObject<HTMLDivElement | null>): void {
+function useStartDepth(
+  wrapper: React.RefObject<HTMLDivElement | null>,
+  sheet: React.RefObject<HTMLDivElement | null>,
+): void {
   useLayoutEffect(() => {
     const place = (): void => {
-      const el = ref.current
-      if (!el) return
+      const box = wrapper.current
+      const paper = sheet.current
+      if (!box || !paper) return
 
       const bodyWidth = Math.min(window.innerWidth, ENVELOPE.maxWidth) - 2 * envelopeGutter()
       const bodyHeight = bodyWidth / ENVELOPE.aspect
-      const fold = window.innerHeight - (1 - envelopeHidden(window.innerWidth)) * bodyHeight
+      const fold = window.innerHeight - (1 - envelopeHidden()) * bodyHeight
       // how far the fold itself descends per pixel of scroll
-      const foldPerScroll = (envelopeTravel(window.innerWidth) / ENVELOPE.exit) * bodyHeight
-      const crossing = CROSSING * ENVELOPE.reveal
-      const target = fold + crossing * (1 + foldPerScroll)
+      const foldPerScroll = (envelopeTravel() / ENVELOPE.exit) * bodyHeight
+      const depth = envelopeOpensOnScroll(window.innerWidth)
+        ? CROSSING * ENVELOPE.reveal * (1 + foldPerScroll)
+        : OPEN_DEPTH * bodyHeight
+      const target = fold + depth
 
-      const top = el.getBoundingClientRect().top + window.scrollY
-      const height = Math.max(0, Math.round(target - top))
-      if (Math.abs(height - el.offsetHeight) > 1) el.style.height = `${height}px`
+      // a margin, not a spacer: on a phone the paper starts above the wrapper's top edge
+      const top = box.getBoundingClientRect().top + window.scrollY
+      paper.style.marginTop = `${Math.round(target - top)}px`
     }
 
     place()
@@ -52,7 +62,7 @@ function useStartDepth(ref: React.RefObject<HTMLDivElement | null>): void {
       observer.disconnect()
       window.removeEventListener('resize', place)
     }
-  }, [ref])
+  }, [wrapper, sheet])
 }
 
 /**
@@ -63,8 +73,9 @@ function useStartDepth(ref: React.RefObject<HTMLDivElement | null>): void {
  * emerge from the envelope as the page scrolls.
  */
 export function LetterSheet({ letterHash }: { letterHash: string }) {
-  const spacer = useRef<HTMLDivElement | null>(null)
-  useStartDepth(spacer)
+  const wrapper = useRef<HTMLDivElement | null>(null)
+  const sheet = useRef<HTMLDivElement | null>(null)
+  useStartDepth(wrapper, sheet)
 
   const paragraphs = letterText
     .split('\n\n')
@@ -72,9 +83,8 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
     .filter((paragraph) => paragraph.length > 0)
 
   return (
-    <div className="relative z-20 mx-auto -mt-28 w-full max-w-5xl px-7 sm:-mt-36 sm:px-6">
-      <div ref={spacer} aria-hidden="true" className="h-[420px]" />
-      <div className="relative">
+    <div ref={wrapper} className="relative z-20 mx-auto -mt-28 flow-root w-full max-w-5xl px-7 sm:-mt-36 sm:px-6">
+      <div ref={sheet} className="relative">
         {/* the sheet underneath, so it reads as paper rather than a card */}
         <div
           aria-hidden="true"
@@ -84,7 +94,8 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
         <article className="relative rounded-[3px] border border-sheet-rule bg-sheet px-7 py-10 shadow-[0_2px_4px_rgba(0,0,0,0.5),0_60px_100px_-60px_rgba(0,0,0,0.95)] sm:min-h-[900px] sm:px-20 sm:py-16 lg:px-24">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-sheet-rule pb-4">
             <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-sheet-ink-faint">
-              {page.letterhead.from}
+              {/* the same words as on the envelope's flap */}
+              {page.from.name}
             </span>
             <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-sheet-ink-faint">
               {page.letterhead.date}

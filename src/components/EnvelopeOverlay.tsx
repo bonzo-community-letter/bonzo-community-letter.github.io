@@ -32,14 +32,12 @@ const BODY_ASPECT = 588 / 363
  *  is still closed. It hangs out of the frame from the start, as it always did. */
 const BODY_HIDDEN = 0.32
 
-/** On a phone the body is only ~240px tall: hanging a third of it out leaves the
- *  envelope squeezed against the bottom with the hero filling everything above it.
- *  There it sits entirely in view, its bottom edge on the viewport's, so its opening
- *  has room above the fold. */
-const BODY_HIDDEN_SMALL = 0
+export const envelopeHidden = (): number => BODY_HIDDEN
 
-export const envelopeHidden = (viewportWidth: number): number =>
-  viewportWidth < 640 ? BODY_HIDDEN_SMALL : BODY_HIDDEN
+/** On a phone there is no room to watch an envelope open: the hero fills the screen
+ *  and the body is only ~230px tall. There it starts open — the flap stands up into
+ *  the hero — and scrolling only carries it away. */
+export const envelopeOpensOnScroll = (viewportWidth: number): boolean => viewportWidth >= 640
 
 /** Side breathing room for the envelope, so it never sits flush against the screen
  *  edge. Matches the overlay's `px-3`. */
@@ -53,8 +51,7 @@ const FLAP_UP = 223 / 363
 
 /** The whole way out, in body heights: the part still in view, then the flap above it.
  *  It depends on how much of the body hangs below the edge to begin with. */
-export const envelopeTravel = (viewportWidth: number): number =>
-  1 - envelopeHidden(viewportWidth) + FLAP_UP + 0.04
+export const envelopeTravel = (): number => 1 - BODY_HIDDEN + FLAP_UP + 0.04
 
 /** The envelope's choreography in one place. The letter needs the same numbers to
  *  know where it should start: the envelope's size follows the viewport, so the
@@ -92,7 +89,8 @@ export function EnvelopeOverlay() {
   const latest = useRef<EnvelopeState>({ progress: 0, exit: 0 })
   const [state, setState] = useState<EnvelopeState>({ progress: 0, exit: 0 })
   const reduced = usePrefersReducedMotion()
-  const [hidden, setHidden] = useState(() => envelopeHidden(window.innerWidth))
+  // on a phone the envelope is open before the page moves at all
+  const [opensOnScroll, setOpensOnScroll] = useState(() => envelopeOpensOnScroll(window.innerWidth))
 
   useEffect(() => {
     if (reduced) return
@@ -104,9 +102,9 @@ export function EnvelopeOverlay() {
       // are simply how far the page has been scrolled. They start together.
       const progress = clamp01(window.scrollY / REVEAL_DISTANCE)
       const exit = clamp01(window.scrollY / EXIT_DISTANCE)
-      // how much of it hangs below the bottom edge depends on the viewport's width,
-      // and this is the only place a resize is noticed
-      setHidden(envelopeHidden(window.innerWidth))
+      // whether there is an opening to watch depends on the viewport's width, and this
+      // is the only place a resize is noticed
+      setOpensOnScroll(envelopeOpensOnScroll(window.innerWidth))
       const previous = latest.current
       // only re-render when a value actually moves: every render repaints the whole
       // drawing, and scroll fires far more often than a frame
@@ -133,10 +131,10 @@ export function EnvelopeOverlay() {
     }
   }, [reduced])
 
-  const progress = reduced ? 1 : state.progress
+  const progress = reduced || !opensOnScroll ? 1 : state.progress
   const exit = reduced ? 0 : state.exit
   // from hanging below the edge to sitting entirely below it — body and flap
-  const shift = (hidden + exit * (1 - hidden + FLAP_UP + 0.04)) * 100
+  const shift = (BODY_HIDDEN + exit * envelopeTravel()) * 100
 
   const layer = (part: 'back' | 'front', z: string) => (
     <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 bottom-0 ${z}`}>

@@ -70,7 +70,7 @@ body {
 .hero-height {
   --envelope-width: calc(100vw - 24px);
   --envelope-body: calc(var(--envelope-width) * 0.61735);
-  --envelope-hidden: 0;
+  --envelope-hidden: 0.32;
   min-height: calc(100lvh - (1 - var(--envelope-hidden)) * var(--envelope-body) + 4rem);
 }
 
