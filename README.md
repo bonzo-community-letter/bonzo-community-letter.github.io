@@ -181,7 +181,9 @@ All public. Never a Hedera private key or account secret — the page has no way
 | `VITE_CONTACT_URL` | optional footer link |
 
 Deployed builds read these from **repository variables** (Settings → Secrets and variables → Actions →
-Variables), wired in `deploy.yml`.
+Variables), wired in `deploy.yml`. GitHub's UI refuses an empty value, so a variable that means "nothing"
+(`VITE_HCS_TOPIC_ID_TESTNET` before the topic exists) gets a single space — `read()` in `config.ts`
+trims, so it arrives as empty.
 
 ### Switching between testnet and mainnet
 
