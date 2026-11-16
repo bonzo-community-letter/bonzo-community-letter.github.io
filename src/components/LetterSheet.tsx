@@ -42,13 +42,15 @@ function useStartDepth(
       if (!envelope.style.marginTop) return
 
       const rect = envelope.getBoundingClientRect()
-      // the box includes the skirt below the body, so the body's height comes from the width
+      // the box carries the space the open flap stands in above the body, so the body's
+      // top edge is a share of the box's height below its top
+      const bodyTop = rect.top + ENVELOPE_VIEW.bodyTopShare * rect.height
       const bodyHeight = ENVELOPE_VIEW.bodyHeightFor(rect.width)
       const width = window.innerWidth
       if (!anchor.current || anchor.current.width !== width) {
         // the fold has already descended by however far the page is scrolled
         const exit = Math.min(1, Math.max(0, window.scrollY / ENVELOPE.exit))
-        const fold = rect.top + window.scrollY - exit * envelopeTravel() * bodyHeight
+        const fold = bodyTop + window.scrollY - exit * envelopeTravel() * bodyHeight
         anchor.current = { width, fold }
       }
 

@@ -81,6 +81,7 @@ export const ENVELOPE = {
 export function EnvelopeOverlay() {
   const front = useRef<HTMLDivElement | null>(null)
   const back = useRef<HTMLDivElement | null>(null)
+  const shadow = useRef<HTMLDivElement | null>(null)
   const placed = useRef({ width: 0, top: 0 })
   const opensOnScrollAtMount = useRef(envelopeOpensOnScroll(window.innerWidth))
   const latest = useRef({ progress: opensOnScrollAtMount.current ? 0 : 1, exit: 0, lifted: !opensOnScrollAtMount.current })
@@ -103,20 +104,24 @@ export function EnvelopeOverlay() {
       // re-deriving it whenever the address bar moves is what made the drift stutter
       const width = window.innerWidth
       if (placed.current.width !== width && front.current) {
-        const bodyHeight = front.current.offsetWidth / ENVELOPE.aspect
+        // the box's top before the drift transform, which then carries it down; the box
+        // reaches from the open flap's tip to the body's bottom, so placing its bottom on
+        // the viewport's edge leaves the body hanging out by the same amount as before
         placed.current = {
           width,
-          // the box's top before the drift transform, which then carries it down
-          top: Math.round(window.innerHeight - bodyHeight),
+          top: Math.round(window.innerHeight - front.current.offsetHeight),
         }
         if (front.current) front.current.style.marginTop = `${placed.current.top}px`
         if (back.current) back.current.style.marginTop = `${placed.current.top}px`
         // the body's shadow on the page: a box shadow, not an SVG filter, which iOS
-        // re-rasterises while the layer moves. It goes on the *back* layer, behind the
-        // letter — on the front one it would also fall across the fold onto the paper.
+        // re-rasterises while the layer moves. It sits on the body's own rectangle behind
+        // the letter — on the box it would outline the empty space the flap opens into,
+        // and on the front layer it would fall across the fold onto the paper.
         const scale = front.current.offsetWidth / ENVELOPE_VIEW.width
-        const shadow = `0 ${Math.round(14 * scale)}px ${Math.round(32 * scale)}px rgba(0, 0, 0, 0.55)`
-        if (back.current) back.current.style.boxShadow = shadow
+        if (shadow.current) {
+          shadow.current.style.boxShadow =
+            `0 ${Math.round(14 * scale)}px ${Math.round(32 * scale)}px rgba(0, 0, 0, 0.55)`
+        }
       }
 
       if (front.current) front.current.style.transform = transform
@@ -218,12 +223,22 @@ export function EnvelopeOverlay() {
           className="relative"
           style={{
             aspectRatio: `${ENVELOPE_VIEW.width} / ${ENVELOPE_VIEW.height}`,
-            marginBottom: `-${(ENVELOPE_VIEW.skirtOfWidth * 100).toFixed(3)}%`,
+            marginBottom: '0',
             transform: `translateY(${(BODY_HIDDEN * ENVELOPE_VIEW.bodyShare * 100).toFixed(2)}%)`,
             willChange: 'transform',
           }}
         >
           <EnvelopeSvg part={part} progress={latest.current.progress} lifted={lifted} className="h-full w-full" />
+          {/* the body's shadow, on the body's own rectangle: the box is taller than the
+              body now, so a shadow on it would outline the space the flap opens into */}
+          {part === 'back' ? (
+            <div
+              ref={shadow}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 bottom-0"
+              style={{ top: `${(ENVELOPE_VIEW.bodyTopShare * 100).toFixed(3)}%` }}
+            />
+          ) : null}
         </div>
       </div>
     </div>

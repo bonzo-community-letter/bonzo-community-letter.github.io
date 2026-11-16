@@ -1,0 +1,86 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  connect as openSession,
+  describeWalletError,
+  disconnect as closeSessions,
+  hasStoredSession,
+  restore,
+  type WalletKind,
+} from '../lib/wallet'
+
+export type WalletStatus = 'idle' | 'restoring' | 'connecting' | 'connected' | 'error'
+
+export interface WalletState {
+  status: WalletStatus
+  accountId: string | null
+  /** The wallet the reader picked; null once a session was restored. */
+  kind: WalletKind | null
+  error: string | null
+}
+
+const IDLE: WalletState = { status: 'idle', accountId: null, kind: null, error: null }
+
+export interface WalletApi extends WalletState {
+  connect: (kind: WalletKind) => Promise<void>
+  /** Abandon a connection attempt that is waiting on a wallet. */
+  cancel: () => void
+  disconnect: () => Promise<void>
+}
+
+/**
+ * The wallet session as React state. A session this browser already holds is
+ * picked up on mount without prompting — but only if one is in storage, so a
+ * first-time reader never loads the wallet libraries at all.
+ */
+export function useWallet(): WalletApi {
+  const [state, setState] = useState<WalletState>(IDLE)
+  /** Bumped on cancel/disconnect, so a late wallet answer cannot revive a dead attempt. */
+  const attempt = useRef(0)
+
+  useEffect(() => {
+    if (!hasStoredSession()) return
+    let cancelled = false
+
+    setState({ ...IDLE, status: 'restoring' })
+    void restore().then((session) => {
+      if (cancelled || attempt.current !== 0) return
+      setState(
+        session
+          ? { status: 'connected', accountId: session.accountId, kind: null, error: null }
+          : IDLE,
+      )
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const connect = useCallback(async (kind: WalletKind) => {
+    const current = ++attempt.current
+    setState({ status: 'connecting', accountId: null, kind, error: null })
+    try {
+      const session = await openSession(kind)
+      if (attempt.current !== current) return
+      setState({ status: 'connected', accountId: session.accountId, kind, error: null })
+    } catch (error) {
+      if (attempt.current !== current) return
+      setState({ status: 'error', accountId: null, kind, error: describeWalletError(error) })
+    }
+  }, [])
+
+  const cancel = useCallback(() => {
+    attempt.current += 1
+    setState(IDLE)
+  }, [])
+
+  const disconnect = useCallback(async () => {
+    attempt.current += 1
+    setState(IDLE)
+    await closeSessions().catch(() => {
+      // A session that cannot be closed is already gone as far as this page is concerned.
+    })
+  }, [])
+
+  return { ...state, connect, cancel, disconnect }
+}

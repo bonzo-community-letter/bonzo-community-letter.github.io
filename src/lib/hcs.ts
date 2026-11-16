@@ -63,6 +63,12 @@ export const MIRROR_BASE: Record<HederaNetwork, string> = {
   testnet: 'https://testnet.mirrornode.hedera.com/api/v1',
 }
 
+/** Block explorer, per network — the same switch as the mirror node. */
+export const HASHSCAN_BASE: Record<HederaNetwork, string> = {
+  mainnet: 'https://hashscan.io/mainnet',
+  testnet: 'https://hashscan.io/testnet',
+}
+
 const ACCOUNT_ID = /^\d+\.\d+\.\d+$/
 const SHA256_HEX = /^[a-f0-9]{64}$/
 const SLUG = /^[a-z0-9][a-z0-9-]*$/

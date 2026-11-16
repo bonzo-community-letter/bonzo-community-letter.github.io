@@ -1,0 +1,168 @@
+import { describe, expect, it } from 'vitest'
+import {
+  WalletError,
+  deepLinkFor,
+  describeWalletError,
+  isMobileWalletTarget,
+  normalizeAccountId,
+  walletLink,
+} from './wallet'
+
+const jsonResponse = (body: unknown, status = 200): Response =>
+  ({
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
+  }) as Response
+
+describe('deepLinkFor', () => {
+  it('appends the pairing to a universal link', () => {
+    expect(deepLinkFor('https://wallet.example', 'wc:abc@2?relay=x')).toBe(
+      'https://wallet.example/wc?uri=wc%3Aabc%402%3Frelay%3Dx',
+    )
+  })
+
+  it('does not double the slash of a universal link', () => {
+    expect(deepLinkFor('https://wallet.example/', 'wc:abc')).toBe(
+      'https://wallet.example/wc?uri=wc%3Aabc',
+    )
+  })
+
+  it('builds a native scheme link with a doubled slash', () => {
+    expect(deepLinkFor('hashpack:', 'wc:abc')).toBe('hashpack://wc?uri=wc%3Aabc')
+  })
+
+  it('keeps a native scheme that has no colon', () => {
+    expect(deepLinkFor('kabila', 'wc:abc')).toBe('kabila/wc?uri=wc%3Aabc')
+  })
+
+  it('encodes characters that would break the link', () => {
+    expect(deepLinkFor('https://wallet.example', 'wc:a b&c')).toBe(
+      'https://wallet.example/wc?uri=wc%3Aa%20b%26c',
+    )
+  })
+})
+
+describe('isMobileWalletTarget', () => {
+  it('recognises phone and tablet browsers', () => {
+    expect(isMobileWalletTarget('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)')).toBe(true)
+    expect(isMobileWalletTarget('Mozilla/5.0 (Linux; Android 14; Pixel 8)')).toBe(true)
+    expect(isMobileWalletTarget('Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)')).toBe(true)
+  })
+
+  it('treats a desktop browser as desktop', () => {
+    expect(isMobileWalletTarget('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)')).toBe(false)
+    expect(isMobileWalletTarget('Mozilla/5.0 (X11; Linux x86_64)')).toBe(false)
+  })
+
+  it('is safe without a navigator', () => {
+    expect(isMobileWalletTarget('')).toBe(false)
+  })
+})
+
+describe('normalizeAccountId', () => {
+  it('accepts a shard.realm.num account id', () => {
+    expect(normalizeAccountId(' 0.0.1234 ')).toBe('0.0.1234')
+    expect(normalizeAccountId('0.0.0')).toBe('0.0.0')
+  })
+
+  it('rejects anything else', () => {
+    expect(normalizeAccountId('0.0')).toBeNull()
+    expect(normalizeAccountId('hedera:testnet:0.0.1234')).toBeNull()
+    expect(normalizeAccountId('0.0.-1')).toBeNull()
+    expect(normalizeAccountId('')).toBeNull()
+  })
+})
+
+describe('walletLink', () => {
+  const projectId = 'pid'
+
+  it('prefers the universal link', async () => {
+    const link = await walletLink('hashpack', projectId, (async () =>
+      jsonResponse({
+        listings: { hashpack: { mobile: { universal: 'https://hp.example', native: 'hashpack:' } } },
+      })) as unknown as typeof fetch)
+    expect(link).toBe('https://hp.example')
+  })
+
+  it('falls back to the native scheme', async () => {
+    const link = await walletLink('kabila', projectId, (async () =>
+      jsonResponse({ listings: { kabila: { mobile: { native: 'kabila:' } } } })) as unknown as typeof fetch)
+    expect(link).toBe('kabila:')
+  })
+
+  it('asks the registry for the wallet by id and project', async () => {
+    let called = ''
+    await walletLink('hashpack', projectId, (async (url: string) => {
+      called = url
+      return jsonResponse({ listings: {} })
+    }) as unknown as typeof fetch)
+    expect(called).toContain('projectId=pid')
+    expect(called).toContain('ids=hashpack')
+  })
+
+  it('returns null when the registry says no', async () => {
+    expect(
+      await walletLink('hashpack', projectId, (async () => jsonResponse({}, 500)) as unknown as typeof fetch),
+    ).toBeNull()
+  })
+
+  it('returns null when the wallet is not in the listing', async () => {
+    expect(
+      await walletLink('hashpack', projectId, (async () =>
+        jsonResponse({ listings: { other: {} } })) as unknown as typeof fetch),
+    ).toBeNull()
+  })
+
+  it('returns null when the request throws', async () => {
+    expect(
+      await walletLink('hashpack', projectId, (async () => {
+        throw new Error('offline')
+      }) as unknown as typeof fetch),
+    ).toBeNull()
+  })
+
+  it('does not call out without a project id', async () => {
+    let called = false
+    const link = await walletLink('hashpack', '', (async () => {
+      called = true
+      return jsonResponse({})
+    }) as unknown as typeof fetch)
+    expect(link).toBeNull()
+    expect(called).toBe(false)
+  })
+
+  it('has no link for the generic WalletConnect option', async () => {
+    expect(await walletLink('walletconnect', projectId)).toBeNull()
+  })
+})
+
+describe('describeWalletError', () => {
+  it('keeps a WalletError message', () => {
+    expect(describeWalletError(new WalletError('not_configured', 'Not configured here.'))).toBe(
+      'Not configured here.',
+    )
+  })
+
+  it('turns a wallet rejection into a sentence', () => {
+    expect(describeWalletError(new Error('User rejected.'))).toBe(
+      'The request was rejected in your wallet.',
+    )
+    expect(describeWalletError(new Error('User cancelled'))).toBe(
+      'The request was rejected in your wallet.',
+    )
+  })
+
+  it('recognises an expired session', () => {
+    expect(describeWalletError(new Error('Session not found'))).toBe(
+      'The wallet session expired. Please connect again.',
+    )
+  })
+
+  it('never leaks a raw message for an unknown failure', () => {
+    expect(describeWalletError(new Error('kaboom at line 42'))).toBe(
+      'The wallet connection failed. Please try again.',
+    )
+    expect(describeWalletError(undefined)).toBe('The wallet connection failed. Please try again.')
+  })
+})

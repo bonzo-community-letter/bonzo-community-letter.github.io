@@ -1,4 +1,4 @@
-import { config, signingOpen } from '../config'
+import { NETWORKS, config, signingOpen } from '../config'
 import type { SignatureState } from '../hooks/useSignatures'
 import { MAX_COMMENT_BYTES, buildSignature, prettyPayload, topicMemo } from '../lib/hcs'
 import { isDraft, letterBytes, letterHash, letterText, subject } from 'virtual:letter'
@@ -36,7 +36,8 @@ export function DevStatus({ state }: { state: SignatureState }) {
         <dl className="mt-3">
           <Row label="mode" value={import.meta.env.PROD ? 'production build' : 'dev server'} />
           <Row label="base path" value={import.meta.env.BASE_URL} />
-          <Row label="network" value={config.network} />
+          <Row label="network" value={`${config.network} · ${config.profile.chainId}`} />
+          <Row label="mirror node" value={config.profile.mirrorBase} />
           <Row label="signing" value={signingOpen ? 'open' : 'closed'} />
           <Row label="subject" value={subject} />
           <Row label="text" value={letterText.length > 0 ? `${letterBytes} bytes` : 'not written yet'} />
@@ -44,6 +45,8 @@ export function DevStatus({ state }: { state: SignatureState }) {
           <Row label="sha-256" value={letterHash} />
           <Row label="topic memo" value={topicMemo(subject, letterHash)} />
           <Row label="HCS topic" value={config.topicId || 'not set'} />
+          <Row label="topic · testnet" value={NETWORKS.testnet.topicId || 'not set'} />
+          <Row label="topic · mainnet" value={NETWORKS.mainnet.topicId || 'not set'} />
           <Row label="WalletConnect id" value={config.walletConnectProjectId ? 'set' : 'not set'} />
           <Row label="signatures read" value={signatureValue} />
         </dl>

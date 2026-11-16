@@ -33,19 +33,21 @@ const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
 /* ── geometry, measured off the approved drawings ─────────────────────────── */
 const BODY = { x: 26, y: 256, w: 588, h: 363 }
-/** The body's paper is carried on below it by this much, inside the viewBox: a browser
- *  that ends a fixed layer above the screen's bottom would otherwise show the letter
- *  through the address bar instead of the envelope. */
-const SKIRT = 0
-const VIEW_H = BODY.h + SKIRT
+/** How far the flap stands above the hinge when it is open. The drawing has to include
+ *  that space: an SVG's overflow is not honoured everywhere, and a browser that clips it
+ *  cuts the flap off at the hinge the moment it lifts. */
+const FLAP_RISE = 256 - 33
+/** The drawing starts where the open flap's tip ends and runs to the body's bottom. */
+const VIEW_Y = BODY.y - FLAP_RISE
+const VIEW_H = BODY.h + FLAP_RISE
 
 /** The drawing's box, for the layer that places it: it is taller than the body by the
- *  skirt, which hangs below the viewport's bottom edge. */
+ *  space the open flap takes above the hinge. */
 export const ENVELOPE_VIEW = {
   width: BODY.w,
   height: VIEW_H,
-  /** how much of the box hangs below the body, as a fraction of its width */
-  skirtOfWidth: SKIRT / BODY.w,
+  /** where the body's top edge sits in the box, as a fraction of its height */
+  bodyTopShare: FLAP_RISE / VIEW_H,
   /** the body's height as a fraction of the box's, for distances given in body heights */
   bodyShare: BODY.h / VIEW_H,
   /** the body's own height for a given width */
@@ -135,7 +137,7 @@ export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', 
 
   return (
     <svg
-      viewBox={`26 256 588 ${VIEW_H}`}
+      viewBox={`${BODY.x} ${VIEW_Y} ${BODY.w} ${VIEW_H}`}
       className={className}
       role="presentation"
       aria-hidden="true"

@@ -1,0 +1,160 @@
+import { useEffect, useRef } from 'react'
+import type { WalletApi } from '../hooks/useWallet'
+import { WALLET_OPTIONS, type WalletKind } from '../lib/wallet'
+import { config } from '../config'
+
+interface Props {
+  open: boolean
+  onClose: () => void
+  wallet: WalletApi
+}
+
+/**
+ * The wallet menu. Three ways in, all of them the same protocol: a Hedera
+ * WalletConnect pairing the wallet approves. No key, no seed phrase, no
+ * signature is ever asked for here — only a session.
+ */
+export function ConnectDialog({ open, onClose, wallet }: Props) {
+  const panel = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+      }
+    }
+    const overflow = document.body.style.overflow
+
+    document.addEventListener('keydown', onKeyDown)
+    document.body.style.overflow = 'hidden'
+    panel.current?.querySelector<HTMLElement>('button, a[href]')?.focus()
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = overflow
+      previous?.focus()
+    }
+  }, [open, onClose])
+
+  if (!open) return null
+
+  const busy = wallet.status === 'connecting' || wallet.status === 'restoring'
+  const connected = wallet.status === 'connected' && wallet.accountId !== null
+  const current = wallet.kind ? WALLET_OPTIONS.find((option) => option.kind === wallet.kind) : null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 cursor-default bg-page/80 backdrop-blur-sm"
+        tabIndex={-1}
+      />
+
+      <div
+        ref={panel}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="connect-title"
+        className="relative m-3 w-full max-w-sm border border-rule bg-hero p-6 shadow-2xl shadow-black/60 sm:m-0"
+      >
+        <p className="eyebrow">{config.network} network</p>
+        <h2 id="connect-title" className="mt-2 font-serif text-2xl leading-tight text-ink">
+          {connected ? 'Wallet connected' : 'Connect a wallet'}
+        </h2>
+
+        {connected ? (
+          <>
+            <p className="mt-4 break-all font-mono text-sm text-ink-soft">{wallet.accountId}</p>
+            <p className="mt-2 text-xs leading-relaxed text-ink-faint">
+              Signatures you submit are paid for by this account and recorded on the Hedera Consensus
+              Service.
+            </p>
+            <div className="mt-6 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => void wallet.disconnect()}
+                className="rounded-sm border border-rule px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-accent hover:text-ink"
+              >
+                Disconnect
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint hover:text-ink-soft"
+              >
+                Close
+              </button>
+            </div>
+          </>
+        ) : busy ? (
+          <div className="mt-5">
+            <p className="text-sm leading-relaxed text-ink-soft">
+              {wallet.status === 'restoring'
+                ? 'Restoring your previous session…'
+                : current
+                  ? `Approve the connection in ${current.label}.`
+                  : 'Approve the connection in your wallet.'}
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-ink-faint">
+              Nothing is signed yet. This only opens a session.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                wallet.cancel()
+                onClose()
+              }}
+              className="mt-6 rounded-sm border border-rule px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-accent hover:text-ink"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <>
+            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+              Your wallet submits and pays for your signature (~0.0001 HBAR). This page never sees a
+              private key.
+            </p>
+
+            <ul className="mt-5 space-y-2">
+              {WALLET_OPTIONS.map((option) => (
+                <li key={option.kind}>
+                  <button
+                    type="button"
+                    onClick={() => void wallet.connect(option.kind as WalletKind)}
+                    className="group flex w-full items-baseline justify-between gap-4 border border-rule px-4 py-3 text-left transition-colors hover:border-accent/70 hover:bg-white/[0.03]"
+                  >
+                    <span className="font-serif text-base text-ink">{option.label}</span>
+                    <span className="text-right text-[0.6875rem] uppercase tracking-[0.12em] text-ink-faint group-hover:text-ink-soft">
+                      {option.note}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            {wallet.error ? (
+              <p role="alert" className="mt-4 border-l-2 border-accent pl-3 text-xs leading-relaxed text-ink-soft">
+                {wallet.error}
+              </p>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-6 text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint hover:text-ink-soft"
+            >
+              Cancel
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
