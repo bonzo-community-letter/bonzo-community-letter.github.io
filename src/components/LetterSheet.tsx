@@ -37,6 +37,9 @@ function useStartDepth(
       // `innerHeight` reports, and the paper has to sit where the envelope actually is
       const envelope = document.querySelector<HTMLElement>('[data-envelope="front"]')
       if (!box || !paper || !envelope) return
+      // the overlay positions the envelope in its own effect; measuring before that reads
+      // a fold at the top of the page
+      if (!envelope.style.marginTop) return
 
       const rect = envelope.getBoundingClientRect()
       // the box includes the skirt below the body, so the body's height comes from the width

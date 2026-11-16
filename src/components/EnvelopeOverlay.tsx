@@ -82,6 +82,7 @@ export function EnvelopeOverlay() {
   const front = useRef<HTMLDivElement | null>(null)
   const back = useRef<HTMLDivElement | null>(null)
   const tint = useRef<HTMLDivElement | null>(null)
+  const placed = useRef({ width: 0, top: 0 })
   const latest = useRef({ progress: 0, exit: 0, lifted: false })
   const [lifted, setLifted] = useState(false)
   const reduced = usePrefersReducedMotion()
@@ -96,11 +97,26 @@ export function EnvelopeOverlay() {
       // in body heights, then as a share of the taller box
       const shift = (BODY_HIDDEN + exit * envelopeTravel()) * ENVELOPE_VIEW.bodyShare * 100
       const transform = `translateY(${shift.toFixed(2)}%)`
+
+      // the fold's height above the bottom edge, measured once per width and then kept:
+      // re-deriving it whenever the address bar moves is what made the drift stutter
+      const width = window.innerWidth
+      if (placed.current.width !== width && front.current) {
+        const bodyHeight = front.current.offsetWidth / ENVELOPE.aspect
+        placed.current = {
+          width,
+          // the box's top before the drift transform, which then carries it down
+          top: Math.round(window.innerHeight - bodyHeight),
+        }
+        if (front.current) front.current.style.marginTop = `${placed.current.top}px`
+        if (back.current) back.current.style.marginTop = `${placed.current.top}px`
+      }
+
       if (front.current) front.current.style.transform = transform
       if (back.current) back.current.style.transform = transform
-      // the tint strip belongs to the envelope: once it starts to leave, the bottom of
-      // the screen is the letter again and the bar should show that
-      if (tint.current) tint.current.style.opacity = exit > 0.02 ? '0' : '1'
+      // the tint strip belongs to the envelope: while it still covers the bottom of the
+      // screen the bar takes its colour, and gives it up as the envelope leaves
+      if (tint.current) tint.current.style.opacity = exit > 0.3 ? '0' : '1'
 
       const flap = document.querySelector<SVGGElement>('[data-flap]')
       if (flap) {
@@ -155,11 +171,10 @@ export function EnvelopeOverlay() {
   }, [reduced, opensOnScroll])
 
   const layer = (part: 'back' | 'front', z: string) => (
-    /* `top-0` plus a viewport height, rather than `bottom-0`: iOS Safari puts a fixed
-       element's bottom on the *visual* viewport, so it ends at the address bar and the
-       letter shows through the translucent bar below it. Anchored this way the envelope
-       reaches the layout viewport's bottom and runs on behind the bar. */
-    <div aria-hidden="true" className={`envelope-layer pointer-events-none fixed inset-x-0 top-0 flex items-end ${z}`}>
+    /* Anchored from the top with a measured offset, not to the bottom edge: iOS keeps a
+       fixed element inside the *visible* area, so a bottom-anchored envelope moved with
+       the address bar every time it collapsed — that is what made the drift stutter. */
+    <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 ${z}`}>
       {/* a little air at the sides, at every width: the envelope reaches past the
           letter's edges, but never touches the screen's */}
       <div className="relative mx-auto w-full max-w-5xl px-3">
@@ -168,8 +183,6 @@ export function EnvelopeOverlay() {
           data-envelope={part}
           className="relative"
           style={{
-            // the box includes the skirt; the negative margin makes its body sit on the
-            // layer's bottom edge, with the skirt hanging below
             aspectRatio: `${ENVELOPE_VIEW.width} / ${ENVELOPE_VIEW.height}`,
             marginBottom: `-${(ENVELOPE_VIEW.skirtOfWidth * 100).toFixed(3)}%`,
             transform: `translateY(${(BODY_HIDDEN * ENVELOPE_VIEW.bodyShare * 100).toFixed(2)}%)`,
@@ -178,17 +191,6 @@ export function EnvelopeOverlay() {
         >
           <EnvelopeSvg part={part} lifted={lifted} className="h-full w-full" />
         </div>
-
-        {/* iOS Safari stops a fixed element at the bottom bar, so the envelope cannot
-            reach behind it — but an element that touches the bar tints it with its own
-            background colour. This strip is that colour, and is what the bar picks up. */}
-        {part === 'front' ? (
-          <div
-            ref={tint}
-            aria-hidden="true"
-            className="absolute inset-x-0 bottom-0 h-2 bg-[#dccfb4] transition-opacity duration-150"
-          />
-        ) : null}
       </div>
     </div>
   )
@@ -197,6 +199,14 @@ export function EnvelopeOverlay() {
     <>
       {layer('back', 'z-10')}
       {layer('front', 'z-30')}
+      {/* iOS Safari stops a fixed element at the bottom bar, so the envelope cannot reach
+          behind it — but an element that touches the bar tints it with its own background
+          colour. This strip is that colour, and is what the bar picks up. */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-30">
+        <div className="mx-auto w-full max-w-5xl px-3">
+          <div ref={tint} className="h-2 bg-[#dccfb4] transition-opacity duration-200" />
+        </div>
+      </div>
     </>
   )
 }
