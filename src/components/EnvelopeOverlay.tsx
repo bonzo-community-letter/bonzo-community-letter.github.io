@@ -19,14 +19,23 @@ function usePrefersReducedMotion(): boolean {
 
 /** How much scrolling opens the envelope, in pixels. */
 const REVEAL_DISTANCE = 420
+/** How much scrolling then carries the opened envelope out of the viewport.
+ *  Short enough that the drift completes on a short page too. */
+const EXIT_DISTANCE = 260
 
 /** The body's proportions: 588 × 363 of the drawing's units. */
 const BODY_ASPECT = 588 / 363
 
-/** How much of the body stays below the viewport's bottom edge. The envelope
- *  hangs out of the frame as it did when it was anchored to the sheet; pinning it
- *  must not lift it into full view. */
+/** How much of the body stays below the viewport's bottom edge while the envelope
+ *  is still closed. It hangs out of the frame from the start, as it always did. */
 const BODY_HIDDEN = 0.32
+
+interface EnvelopeState {
+  /** 0 = sealed, 1 = open */
+  progress: number
+  /** 0 = still in place, 1 = carried fully out of the viewport */
+  exit: number
+}
 
 /**
  * The envelope, pinned to the bottom edge of the viewport.
@@ -36,13 +45,16 @@ const BODY_HIDDEN = 0.32
  * scrolls behind it. Only the flap moves — a single progress value, driven by the
  * scroll position.
  *
+ * Once it is fully open, further scrolling carries it out of the viewport and fades
+ * it away, so it stops covering the letter.
+ *
  * The drawing's viewBox is the body alone; the standing flap and the drop shadow
  * reach above it through `overflow: visible`.
  */
 export function EnvelopeOverlay() {
   const ref = useRef<HTMLDivElement | null>(null)
-  const latest = useRef(0)
-  const [progress, setProgress] = useState(0)
+  const latest = useRef<EnvelopeState>({ progress: 0, exit: 0 })
+  const [state, setState] = useState<EnvelopeState>({ progress: 0, exit: 0 })
   const reduced = usePrefersReducedMotion()
 
   useEffect(() => {
@@ -51,14 +63,18 @@ export function EnvelopeOverlay() {
     let frame = 0
 
     const update = (): void => {
-      // the envelope is fixed, so its viewport position never changes — the reveal
-      // is simply how far the page has been scrolled
-      const next = clamp01(window.scrollY / REVEAL_DISTANCE)
-      // only re-render when the value actually moves: every render repaints the
-      // whole drawing, and scroll fires far more often than a frame
-      if (Math.abs(next - latest.current) < 0.004) return
-      latest.current = next
-      setProgress(next)
+      // the envelope is fixed, so its viewport position never changes — both values
+      // are simply how far the page has been scrolled
+      const progress = clamp01(window.scrollY / REVEAL_DISTANCE)
+      const exit = clamp01((window.scrollY - REVEAL_DISTANCE) / EXIT_DISTANCE)
+      const previous = latest.current
+      // only re-render when a value actually moves: every render repaints the whole
+      // drawing, and scroll fires far more often than a frame
+      if (Math.abs(progress - previous.progress) < 0.004 && Math.abs(exit - previous.exit) < 0.004) {
+        return
+      }
+      latest.current = { progress, exit }
+      setState({ progress, exit })
     }
 
     const onScroll = (): void => {
@@ -77,6 +93,10 @@ export function EnvelopeOverlay() {
     }
   }, [reduced])
 
+  const exit = reduced ? 0 : state.exit
+  // from hanging 32% below the edge to sitting entirely below it: one body height
+  const shift = (BODY_HIDDEN + exit * (1 - BODY_HIDDEN)) * 100
+
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-20">
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
@@ -84,10 +104,11 @@ export function EnvelopeOverlay() {
           ref={ref}
           style={{
             aspectRatio: `${BODY_ASPECT}`,
-            transform: `translateY(${(BODY_HIDDEN * 100).toFixed(1)}%)`,
+            transform: `translateY(${shift.toFixed(2)}%)`,
+            opacity: (1 - exit).toFixed(3),
           }}
         >
-          <EnvelopeSvg progress={reduced ? 1 : progress} className="h-full w-full" />
+          <EnvelopeSvg progress={reduced ? 1 : state.progress} className="h-full w-full" />
         </div>
       </div>
     </div>
