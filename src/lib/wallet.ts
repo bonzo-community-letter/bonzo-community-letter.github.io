@@ -246,14 +246,36 @@ export function sessionOf(instance: DAppConnector): WalletSession | null {
   return accountId ? { accountId, network: config.network } : null
 }
 
-/** Whether a stored session exists, without starting the connector. */
+/**
+ * Whether a stored session exists, without starting the connector.
+ *
+ * The WalletConnect client keeps its state in localStorage under
+ * `wc@2:client:` (sessions, pairings, history) — nothing else on this page uses
+ * that prefix, so its presence means this browser has connected before.
+ */
 export function hasStoredSession(): boolean {
   if (typeof localStorage === 'undefined') return false
   try {
-    return Object.keys(localStorage).some((key) => key.startsWith('wc@2:client:0.0'))
+    return Object.keys(localStorage).some((key) => key.startsWith('wc@2:client:'))
   } catch {
     return false
   }
+}
+
+/**
+ * How long a pairing may stay unanswered. A wallet that never answers leaves the
+ * promise pending forever — the UI must not sit on "Connecting…" without a way out.
+ */
+export const CONNECT_TIMEOUT_MS = 120_000
+
+export function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new WalletError('unknown', message)), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer)
+  }) as Promise<T>
 }
 
 export interface ConnectOptions {
@@ -276,22 +298,40 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
 
   try {
     if (kind === 'walletconnect') {
-      await instance.openModal()
+      await withTimeout(
+        // `true` = reject when the pairing dialog is closed, so closing it is an
+        // answer ("rejected") instead of a wait that only the timeout ends.
+        instance.openModal(undefined, true),
+        CONNECT_TIMEOUT_MS,
+        'The wallet did not answer in time. Please try again.',
+      )
     } else {
       const link = await walletLink(kind, config.walletConnectProjectId, options.fetchImpl ?? fetch)
       const target = isMobileWalletTarget(options.userAgent)
       if (link && target) {
-        await instance.connect((uri) => {
-          options.onPairing?.(uri)
-          window.location.href = deepLinkFor(link, uri)
-        })
+        await withTimeout(
+          instance.connect((uri) => {
+            options.onPairing?.(uri)
+            window.location.href = deepLinkFor(link, uri)
+          }),
+          CONNECT_TIMEOUT_MS,
+          'The wallet did not answer in time. Please try again.',
+        )
       } else {
         // Desktop, or no deep link known: the pairing dialog shows the code the
         // wallet's extension pastes, which is the documented flow for both.
-        await instance.openModal()
+        await withTimeout(
+          instance.openModal(undefined, true),
+          CONNECT_TIMEOUT_MS,
+          'The wallet did not answer in time. Please try again.',
+        )
       }
     }
   } catch (error) {
+    // A pairing that timed out leaves the WalletConnect dialog open; close it so
+    // the reader is not left with two overlapping panels.
+    instance.walletConnectModal.closeModal()
+    if (error instanceof WalletError) throw error
     throw new WalletError('rejected', describeWalletError(error))
   }
 

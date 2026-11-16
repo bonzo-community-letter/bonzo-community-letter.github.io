@@ -36,7 +36,7 @@ export function NavBar() {
               onPointerEnter={prefetchWallet}
               onFocus={prefetchWallet}
               aria-haspopup="dialog"
-              className="flex items-center gap-2 rounded-full border border-rule px-4 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-accent hover:text-ink"
+              className="flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-accent hover:text-ink sm:py-1.5"
             >
               {connected ? (
                 <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />

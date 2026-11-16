@@ -1,11 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   WalletError,
   deepLinkFor,
   describeWalletError,
+  hasStoredSession,
   isMobileWalletTarget,
   normalizeAccountId,
   walletLink,
+  withTimeout,
 } from './wallet'
 
 const jsonResponse = (body: unknown, status = 200): Response =>
@@ -134,6 +136,58 @@ describe('walletLink', () => {
 
   it('has no link for the generic WalletConnect option', async () => {
     expect(await walletLink('walletconnect', projectId)).toBeNull()
+  })
+})
+
+describe('hasStoredSession', () => {
+  const setStorage = (value: unknown): void => {
+    Object.defineProperty(globalThis, 'localStorage', { value, configurable: true, writable: true })
+  }
+  const original = (globalThis as { localStorage?: unknown }).localStorage
+
+  afterEach(() => setStorage(original))
+
+  it('is false without storage', () => {
+    setStorage(undefined)
+    expect(hasStoredSession()).toBe(false)
+  })
+
+  it('recognises a walletconnect session in storage', () => {
+    setStorage({ 'wc@2:client:0.3//session': '[]' })
+    expect(hasStoredSession()).toBe(true)
+  })
+
+  it('ignores keys this page did not write', () => {
+    setStorage({ 'open-letter:theme': 'dark' })
+    expect(hasStoredSession()).toBe(false)
+  })
+
+  it('survives a storage that throws', () => {
+    setStorage({
+      get length(): number {
+        throw new Error('blocked')
+      },
+    })
+    expect(hasStoredSession()).toBe(false)
+  })
+})
+
+describe('withTimeout', () => {
+  it('passes a fast answer through', async () => {
+    await expect(withTimeout(Promise.resolve('ok'), 1000, 'late')).resolves.toBe('ok')
+  })
+
+  it('rejects with a readable message when the wallet never answers', async () => {
+    const pending = new Promise<string>(() => {})
+    await expect(withTimeout(pending, 5, 'The wallet did not answer in time.')).rejects.toThrow(
+      'The wallet did not answer in time.',
+    )
+  })
+
+  it('keeps the rejection of the original promise', async () => {
+    await expect(withTimeout(Promise.reject(new Error('rejected')), 1000, 'late')).rejects.toThrow(
+      'rejected',
+    )
   })
 })
 

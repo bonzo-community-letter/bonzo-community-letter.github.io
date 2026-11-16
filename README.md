@@ -48,6 +48,8 @@ First layout, in `src/components/`:
   `visualViewport` resizes, because the bar moves the fold without firing a window resize.
 - `DevStatus.tsx` — build facts and the payload a signer would submit, collapsed at the bottom. Not for
   readers.
+- `NavBar.tsx` / `ConnectDialog.tsx` — the thin top bar and the wallet menu: HashPack, Kabila and
+  WalletConnect. See *The wallet connection* below.
 - `src/content/page.ts` — all page copy except the letter itself (title, subtitle, letterhead labels).
   Changing it cannot invalidate signatures; changing `letter.ts` does.
 
@@ -90,15 +92,17 @@ is a content change, not a code change.
 ├── src/
 │   ├── main.tsx               React entry
 │   ├── App.tsx                scaffold shell — renders runtime/config state only
-│   ├── config.ts              env parsing; `signingOpen` gate
+│   ├── config.ts              the network switch: NETWORKS table, topic per network
 │   ├── content/
 │   │   └── letter.ts          ← SUBJECT + the letter text (text currently empty)
 │   ├── lib/
 │   │   ├── hcs.ts             payload contract, mirror-node reader, parsers
-│   │   └── hcs.test.ts        unit tests for the contract (18 tests)
+│   │   ├── hcs.test.ts        unit tests for the contract (18 tests)
+│   │   └── wallet.ts          HashPack / Kabila / WalletConnect, lazily loaded
 │   ├── hooks/
-│   │   └── useSignatures.ts   reads the topic, refreshes every 60 s
-│   └── styles.css             Tailwind import only — no design tokens yet
+│   │   ├── useSignatures.ts   reads the topic, refreshes every 60 s
+│   │   └── useWallet.ts       session state for the Connect button
+│   └── styles.css             design tokens (@theme) + envelope geometry
 ├── index.html
 ├── vite.config.ts             base: '/open-letter/' (Pages project page)
 ├── vitest.config.ts
@@ -106,8 +110,8 @@ is a content change, not a code change.
 └── .env.example               public config, copy to .env.local
 ```
 
-Not created yet, on purpose: `src/sections/` (page sections), a design system / tokens file, the
-wallet-connection module, a topic-creation script. Add them when the content and design exist.
+Not created yet, on purpose: `src/sections/` (page sections), the signing UI, a topic-creation script.
+Add them when the content and design exist.
 
 ## Local development
 
@@ -157,13 +161,85 @@ All public. Never a Hedera private key or account secret — the page has no way
 
 | variable | meaning |
 |---|---|
-| `VITE_HEDERA_NETWORK` | `mainnet` or `testnet` (default `testnet`) |
-| `VITE_HCS_TOPIC_ID` | signature topic. Empty ⇒ signing closed, no messages read |
+| `VITE_HEDERA_NETWORK` | **the switch**: `mainnet` or `testnet` (default `testnet`) |
+| `VITE_HCS_TOPIC_ID_TESTNET` | signature topic on testnet. Empty ⇒ signing closed, no messages read |
+| `VITE_HCS_TOPIC_ID_MAINNET` | signature topic on mainnet. Empty ⇒ signing closed, no messages read |
 | `VITE_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project id for the wallet handshake |
 | `VITE_CONTACT_URL` | optional footer link |
 
 Deployed builds read these from **repository variables** (Settings → Secrets and variables → Actions →
 Variables), wired in `deploy.yml`.
+
+### Switching between testnet and mainnet
+
+`VITE_HEDERA_NETWORK` is the whole switch. `src/config.ts` resolves it once into `NETWORKS`, and
+everything downstream reads from that table:
+
+| what | follows the switch |
+|---|---|
+| wallet session chain | `hedera:testnet` / `hedera:mainnet` — a wallet is asked for one chain, not both |
+| mirror node | `testnet.mirrornode.hedera.com` / `mainnet-public.mirrornode.hedera.com` |
+| HCS topic | `VITE_HCS_TOPIC_ID_TESTNET` / `VITE_HCS_TOPIC_ID_MAINNET` |
+| explorer links | `hashscan.io/testnet` / `hashscan.io/mainnet` |
+| ledger id handed to the SDK | `LedgerId.TESTNET` / `LedgerId.MAINNET` |
+
+There is **no runtime toggle on purpose**. A reader must not be able to sign on a network the letter was
+not published on, and a signature that lands on testnet is silently worthless. Flipping the network is a
+deploy, not a click.
+
+A misspelled value (`VITE_HEDERA_NETWORK=main`) does not fall back to the default — `config.ts` throws at
+load, in dev and in the build, because a silent fallback is exactly how a mainnet signature ends up on
+testnet.
+
+## The wallet connection
+
+`Connect` in the top bar offers **HashPack**, **Kabila** and **WalletConnect**. All three are the same
+protocol underneath.
+
+- **Hedera Wallet Connect** (`@hashgraph/hedera-wallet-connect`, Apache-2.0) — the HIP-820
+  implementation of WalletConnect v2. Not HashConnect: HashPack shut legacy HashConnect down and moved
+  to WalletConnect, and the library's `HashConnect`-era API is gone.
+- The page never holds a key, never sees a seed phrase and never asks for one. The wallet signs and
+  pays the network fee (~0.0001 HBAR per message).
+- **Least privilege**: the session requests exactly one method, `hedera_signAndExecuteTransaction`, on
+  exactly one chain. Nothing about the letter needs anything else, and a session that can do more is a
+  session that can be abused if the page is ever compromised.
+- **HashPack / Kabila**: the wallet's own deep link is read from the WalletConnect explorer registry and
+  the pairing is appended to it — `<link>/wc?uri=wc%3A…`. No scheme is hardcoded: a wallet moves its own
+  link, and a guessed `hashpack://` is how a Connect button quietly stops working. On a desktop browser
+  (or when the registry cannot be read) the pairing dialog opens instead, which shows the code the
+  HashPack and Kabila extensions paste.
+- **WalletConnect**: the pairing dialog, for every other wallet, by QR code.
+- **Nothing loads until it is needed.** The connector, the WalletConnect client and the Hedera SDK are
+  one lazy chunk (~600 kB gzipped) fetched on hover/click of the button; a reader who only reads the
+  letter downloads none of it. The main bundle stays at ~80 kB gzipped.
+- A pairing that is never answered times out after 120 s instead of leaving the button on "Connecting…".
+
+### What the wallet libraries cost, and why the deep imports
+
+`src/lib/wallet.ts` imports `@hashgraph/hedera-wallet-connect/dist/lib/dapp` rather than the package
+root. The root entry also exports the *wallet*-side code, which pulls `@reown/walletkit`,
+`@reown/appkit` and `ethers` into a dApp that uses none of them. The package publishes no `exports` map,
+so those deep paths work — and the version is pinned exactly in `package.json` for that reason. Revisit
+on a major bump.
+
+`@hashgraph/hedera-wallet-connect` declares its peers (including `ethers`, `@reown/appkit`,
+`@reown/walletkit`) as required, so the install uses `--legacy-peer-deps` (`.npmrc`) to avoid pulling in
+code this page never imports.
+
+One library-internal deprecation is visible in the console: the connector still builds its session with
+WalletConnect's `requiredNamespaces`, which the current `@walletconnect/sign-client` maps onto
+`optionalNamespaces`. Sessions therefore still ask for the `hedera` chain and
+`hedera_signAndExecuteTransaction`, but a wallet is no longer *forced* to grant them — so the code
+treats "approved without a signer on our chain" as a failed connection (`WalletError: no_account`)
+rather than assuming the grant.
+
+### Content Security Policy
+
+None is set today: GitHub Pages cannot send response headers, so a CSP would have to be a `<meta>` tag.
+The wallet flow needs at least `connect-src wss://relay.walletconnect.com
+https://explorer-api.walletconnect.com` plus the mirror node, and `img-src` for the registry's logo host.
+Worth doing before launch; not done here.
 
 ## Deployment
 
@@ -226,8 +302,9 @@ every signature meaningless. Signing must stay closed until the text exists.
 
 ## Still open
 
-Content, layout, visual design, the wallet handshake, topic creation, and the awareness campaign. None
-of them are started here.
+Content, layout, the signing UI (the wallet *session* exists; `submitTopicMessage()` in
+`src/lib/wallet.ts` is the submit path, not yet wired to a button), topic creation, and the awareness
+campaign.
 
 **Decided:** comments are shown in full, from everyone, uncensored. Two consequences to build for:
 
