@@ -195,15 +195,29 @@ export function normalizeAccountId(value: string): string | null {
  * to "the HashPack API" that still exists (HashConnect, the old injected one, was
  * removed in HashPack 14.3.0).
  */
+/**
+ * The id HashPack's extension announces itself with (read from its own
+ * `content_script.js`, v15.1.1). The display name also matches, but a name is
+ * text the wallet can change; the id is what the handshake actually keys on.
+ */
+export const HASHPACK_EXTENSION_ID = 'gjagmgiddbbciopjhllkdnddhcglnemk'
+
 export function findExtension(
   instance: Pick<DAppConnector, 'extensions'>,
   kind: WalletKind,
 ): { id: string } | null {
-  const pattern = kind === 'hashpack' ? /hashpack/i : kind === 'kabila' ? /kabila/i : null
-  if (!pattern) return null
-  const match = instance.extensions.find(
-    (extension) => pattern.test(extension.id) || pattern.test(extension.name ?? ''),
-  )
+  if (kind === 'walletconnect') return null
+  const match = instance.extensions.find((extension) => {
+    const name = extension.name ?? ''
+    if (kind === 'hashpack') {
+      return (
+        extension.id === HASHPACK_EXTENSION_ID ||
+        /hashpack/i.test(extension.id) ||
+        /hashpack/i.test(name)
+      )
+    }
+    return /kabila/i.test(extension.id) || /kabila/i.test(name)
+  })
   return match ? { id: match.id } : null
 }
 

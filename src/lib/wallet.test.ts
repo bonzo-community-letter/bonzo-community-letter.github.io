@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  HASHPACK_EXTENSION_ID,
   WalletError,
   connect,
   deepLinkFor,
@@ -231,6 +232,12 @@ describe('findExtension', () => {
     expect(
       findExtension(withExtensions([{ id: 'ext-42', name: 'Kabila Wallet' }]), 'kabila'),
     ).toEqual({ id: 'ext-42' })
+  })
+
+  it('finds HashPack by the id its content script announces', () => {
+    expect(
+      findExtension(withExtensions([{ id: HASHPACK_EXTENSION_ID, name: 'Some Renamed Wallet' }]), 'hashpack'),
+    ).toEqual({ id: HASHPACK_EXTENSION_ID })
   })
 
   it('ignores extensions that are not the wallet asked for', () => {
