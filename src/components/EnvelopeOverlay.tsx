@@ -17,8 +17,10 @@ function usePrefersReducedMotion(): boolean {
   return reduced
 }
 
-/** How much scrolling opens the envelope, in pixels. */
-const REVEAL_DISTANCE = 420
+/** How much scrolling opens the envelope, in pixels. Short, so the flap is well up
+ *  by the time the paper reaches the fold: the two cross at about two thirds of the
+ *  flap's travel. */
+const REVEAL_DISTANCE = 240
 /** How much scrolling carries the envelope out of the viewport. It starts together
  *  with the reveal — the envelope sinks while its flap is still coming up. */
 const EXIT_DISTANCE = 700

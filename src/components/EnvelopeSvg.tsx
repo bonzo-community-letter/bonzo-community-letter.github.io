@@ -16,6 +16,8 @@
  * fold is the whole motion, and the inside is uncovered underneath it.
  */
 
+import { page } from '../content/page'
+
 interface EnvelopeSvgProps {
   /** 0 = sealed, 1 = open */
   progress?: number
@@ -69,6 +71,18 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
       <path d={FLAP} fill={`url(#${id('shadow')})`} opacity={lifted ? 1 : 0} />
       {!lifted ? <path d={FLAP} fill={`url(#${id('flapShut')})`} /> : null}
       {!lifted ? <path d={FLAP_EDGE} fill="none" stroke="#d3c6ae" strokeWidth="1" /> : null}
+      {/* the sender is written on the flap, as on a real envelope. It travels with the
+          flap and is gone once the flap turns over, where its back would face us. */}
+      {!lifted ? (
+        <g textAnchor="middle" fontFamily="ui-serif, Georgia, Cambria, serif">
+          <text x="320" y="300" fontSize="6.4" letterSpacing="2.2" fill="#9a8b78">
+            FROM
+          </text>
+          <text x="320" y="322" fontSize="10.4" fill="#5b5044">
+            {page.from.name}
+          </text>
+        </g>
+      ) : null}
       {/* the glued margin travels with the flap, so it unfolds instead of appearing */}
       {lifted ? <path d={STRIP_LOCAL} fill="none" stroke="#f2e9d8" strokeWidth="18" /> : null}
     </g>
