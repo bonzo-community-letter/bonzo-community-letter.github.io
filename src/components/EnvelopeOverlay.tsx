@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ENVELOPE_VIEW, EnvelopeSvg } from './EnvelopeSvg'
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
@@ -82,13 +82,14 @@ export function EnvelopeOverlay() {
   const front = useRef<HTMLDivElement | null>(null)
   const back = useRef<HTMLDivElement | null>(null)
   const placed = useRef({ width: 0, top: 0 })
-  const latest = useRef({ progress: 0, exit: 0, lifted: false })
-  const [lifted, setLifted] = useState(false)
+  const opensOnScrollAtMount = useRef(envelopeOpensOnScroll(window.innerWidth))
+  const latest = useRef({ progress: opensOnScrollAtMount.current ? 0 : 1, exit: 0, lifted: !opensOnScrollAtMount.current })
+  // on a phone the envelope is open from the first paint, so the flap is already up
+  const [lifted, setLifted] = useState(() => !opensOnScrollAtMount.current)
   const reduced = usePrefersReducedMotion()
-  // on a phone the envelope is open before the page moves at all
-  const [opensOnScroll, setOpensOnScroll] = useState(() => envelopeOpensOnScroll(window.innerWidth))
+  const [opensOnScroll, setOpensOnScroll] = useState(opensOnScrollAtMount.current)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // written straight onto the elements: a React render per frame repaints both
     // drawings and their filters, which an iPhone cannot keep up with
     const apply = (): void => {
@@ -109,6 +110,11 @@ export function EnvelopeOverlay() {
         }
         if (front.current) front.current.style.marginTop = `${placed.current.top}px`
         if (back.current) back.current.style.marginTop = `${placed.current.top}px`
+        // the body's shadow on the page: a box shadow, not an SVG filter, which iOS
+        // re-rasterises while the layer moves
+        const scale = front.current.offsetWidth / ENVELOPE_VIEW.width
+        const shadow = `0 ${Math.round(14 * scale)}px ${Math.round(32 * scale)}px rgba(0, 0, 0, 0.55)`
+        if (front.current) front.current.style.boxShadow = shadow
       }
 
       if (front.current) front.current.style.transform = transform
@@ -185,7 +191,7 @@ export function EnvelopeOverlay() {
             willChange: 'transform',
           }}
         >
-          <EnvelopeSvg part={part} lifted={lifted} className="h-full w-full" />
+          <EnvelopeSvg part={part} progress={latest.current.progress} lifted={lifted} className="h-full w-full" />
         </div>
       </div>
     </div>

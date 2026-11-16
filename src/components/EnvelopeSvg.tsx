@@ -163,9 +163,6 @@ export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', 
           <stop offset="0" stopColor="#f1e8d7" />
           <stop offset="1" stopColor="#dfd2b8" />
         </linearGradient>
-        <filter id={id('drop')} x="-40%" y="-60%" width="180%" height="220%">
-          <feDropShadow dx="0" dy="14" stdDeviation="16" floodColor="#000000" floodOpacity="0.55" />
-        </filter>
         <clipPath id={id('bodyClip')}>
           <path d={CLIP} />
         </clipPath>
@@ -176,14 +173,6 @@ export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', 
            of its back panel, and the dark inside it. The letter lies on top of all of
            it, so you look past the letter into the envelope. */
         <>
-          {/* The drop shadow sits on a static silhouette, not on the animated content:
-              Safari re-rasterises an SVG filter on every frame in which anything inside
-              it moves. This element never changes, so its filter is computed once; the
-              paper below covers the black shape. */}
-          <g filter={`url(#${id('drop')})`}>
-            <path d={CLIP} fill="#14110e" />
-          </g>
-
           <g clipPath={`url(#${id('bodyClip')})`}>
             <rect x={BODY.x} y={BODY.y} width={BODY.w} height={BODY.h} fill={`url(#${id('face')})`} />
 
@@ -212,7 +201,7 @@ export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', 
                 <path d={FLAP_SHADOW} strokeWidth="5" opacity="0.06" />
               </g>
             ) : null}
-          </g>
+        </g>
 
           {/* once the flap stands it is behind the letter too */}
           {lifted ? flap : null}
