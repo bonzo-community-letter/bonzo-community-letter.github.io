@@ -92,6 +92,7 @@ export function EnvelopeOverlay() {
   useLayoutEffect(() => {
     // written straight onto the elements: a React render per frame repaints both
     // drawings and their filters, which an iPhone cannot keep up with
+    let flapEl: SVGGElement | null = null
     const apply = (): void => {
       const { progress, exit } = latest.current
       // in body heights, then as a share of the taller box
@@ -121,9 +122,10 @@ export function EnvelopeOverlay() {
       if (front.current) front.current.style.transform = transform
       if (back.current) back.current.style.transform = transform
 
-      const flap = document.querySelector<SVGGElement>('[data-flap]')
-      if (flap) {
-        flap.setAttribute(
+      // the flap element is replaced when it changes layers, so the cache is checked
+      if (!flapEl || !flapEl.isConnected) flapEl = document.querySelector<SVGGElement>('[data-flap]')
+      if (flapEl) {
+        flapEl.setAttribute(
           'transform',
           `translate(0 ${(2 * 256 * progress).toFixed(2)}) scale(1 ${(1 - 2 * progress).toFixed(4)})`,
         )
@@ -144,31 +146,60 @@ export function EnvelopeOverlay() {
       return
     }
 
-    let frame = 0
-
     const update = (): void => {
       // the envelope is fixed, so its viewport position never changes — both values
       // are simply how far the page has been scrolled. They start together.
       const scroll = window.scrollY
-      const onScroll = envelopeOpensOnScroll(window.innerWidth)
-      latest.current.progress = onScroll ? clamp01(scroll / REVEAL_DISTANCE) : 1
+      const opens = envelopeOpensOnScroll(window.innerWidth)
+      latest.current.progress = opens ? clamp01(scroll / REVEAL_DISTANCE) : 1
       latest.current.exit = clamp01(scroll / EXIT_DISTANCE)
-      if (onScroll !== opensOnScroll) setOpensOnScroll(onScroll)
+      if (opens !== opensOnScroll) setOpensOnScroll(opens)
       apply()
     }
 
-    const onScroll = (): void => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(update)
+    // A frame loop, not a scroll listener: iOS delivers scroll events late and coalesced
+    // while the page is coasting, so the page moved smoothly and the envelope trailed it.
+    // Reading scrollY once per frame keeps the two in step.
+    let frame = 0
+    let idle = 0
+    let running = false
+
+    const tick = (): void => {
+      const before = window.scrollY
+      update()
+      if (window.scrollY === before) {
+        idle += 1
+        if (idle > 12) {
+          // a fifth of a second without movement: stop until the next scroll
+          running = false
+          return
+        }
+      } else {
+        idle = 0
+      }
+      frame = requestAnimationFrame(tick)
+    }
+
+    const start = (): void => {
+      if (running) return
+      running = true
+      idle = 0
+      frame = requestAnimationFrame(tick)
+    }
+
+    const onScroll = (): void => start()
+    const onResize = (): void => {
+      update()
+      start()
     }
 
     update()
     window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
+    window.addEventListener('resize', onResize)
 
     return () => {
       window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
+      window.removeEventListener('resize', onResize)
       cancelAnimationFrame(frame)
     }
   }, [reduced, opensOnScroll])
