@@ -30,6 +30,12 @@ const BODY_ASPECT = 588 / 363
  *  is still closed. It hangs out of the frame from the start, as it always did. */
 const BODY_HIDDEN = 0.32
 
+/** The standing flap reaches 223 of the body's 363 units above the fold, so the
+ *  envelope is not out of the frame until that much more has passed the bottom edge. */
+const FLAP_UP = 223 / 363
+/** The whole way out: past the body's own height, then past the flap's tip. */
+const TRAVEL = 1 - BODY_HIDDEN + FLAP_UP + 0.04
+
 interface EnvelopeState {
   /** 0 = sealed, 1 = open */
   progress: number
@@ -92,8 +98,8 @@ export function EnvelopeOverlay() {
 
   const progress = reduced ? 1 : state.progress
   const exit = reduced ? 0 : state.exit
-  // from hanging 32% below the edge to sitting entirely below it: one body height
-  const shift = (BODY_HIDDEN + exit * (1 - BODY_HIDDEN)) * 100
+  // from hanging 32% below the edge to sitting entirely below it — body and flap
+  const shift = (BODY_HIDDEN + exit * TRAVEL) * 100
 
   const layer = (part: 'back' | 'front', z: string) => (
     <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 bottom-0 ${z}`}>
