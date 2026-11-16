@@ -1,4 +1,5 @@
 import { DevStatus } from './components/DevStatus'
+import { EnvelopeOverlay } from './components/EnvelopeOverlay'
 import { Hero } from './components/Hero'
 import { LetterSheet } from './components/LetterSheet'
 import { SiteFooter } from './components/SiteFooter'
@@ -17,6 +18,8 @@ export function App() {
         <DevStatus state={signatures} />
       </main>
       <SiteFooter />
+      {/* fixed, in two layers around the letter: flap behind it, body in front */}
+      <EnvelopeOverlay />
     </div>
   )
 }

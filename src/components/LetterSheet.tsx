@@ -1,10 +1,12 @@
 import { page } from '../content/page'
 import { letterText } from 'virtual:letter'
-import { EnvelopeOverlay } from './EnvelopeOverlay'
 
 /**
  * The letter as a page of paper, pulled up so it overlaps the hero — the first
  * thing you read is a letterhead, not a landing page.
+ *
+ * It sits at z-20: above the envelope's standing flap and below its body, so it can
+ * emerge from the envelope as the page scrolls.
  */
 export function LetterSheet({ letterHash }: { letterHash: string }) {
   const paragraphs = letterText
@@ -13,7 +15,11 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
     .filter((paragraph) => paragraph.length > 0)
 
   return (
-    <div className="mx-auto -mt-28 w-full max-w-5xl px-4 sm:-mt-36 sm:px-6">
+    <div className="relative z-20 mx-auto -mt-28 w-full max-w-5xl px-4 sm:-mt-36 sm:px-6">
+      {/* The sheet starts inside the envelope, not at its opening: this gap is the
+          distance it has to travel to come out. It is covered by the envelope until
+          the page starts scrolling. */}
+      <div aria-hidden="true" className="h-[380px]" />
       <div className="relative">
         {/* the sheet underneath, so it reads as paper rather than a card */}
         <div
@@ -61,8 +67,6 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
             </div>
           </div>
         </article>
-
-        <EnvelopeOverlay />
       </div>
     </div>
   )

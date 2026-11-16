@@ -19,9 +19,8 @@ function usePrefersReducedMotion(): boolean {
 
 /** How much scrolling opens the envelope, in pixels. */
 const REVEAL_DISTANCE = 420
-/** How much scrolling carries the opened envelope out of the viewport. It starts
- *  together with the reveal — the envelope sinks and fades while its flap is still
- *  coming up — and is long enough to finish at the end of a short page. */
+/** How much scrolling carries the envelope out of the viewport. It starts together
+ *  with the reveal — the envelope sinks while its flap is still coming up. */
 const EXIT_DISTANCE = 700
 
 /** The body's proportions: 588 × 363 of the drawing's units. */
@@ -39,21 +38,18 @@ interface EnvelopeState {
 }
 
 /**
- * The envelope, pinned to the bottom edge of the viewport.
+ * The envelope, pinned to the bottom edge of the viewport — in two layers, with the
+ * letter between them.
  *
- * It does not travel with the page: its bottom edge sits on the viewport's bottom
- * edge and stays there, so the reveal plays out in a stable frame while the letter
- * scrolls behind it. Only the flap moves — a single progress value, driven by the
- * scroll position.
+ * The letter is real HTML in the document flow. It has to emerge in front of the
+ * standing flap and behind the body, which is only possible if the drawing is split:
+ * `back` holds the standing flap at z-10, `front` holds the body at z-30, and the
+ * sheet sits at z-20. Both layers are fixed to the same box, so they move together.
  *
- * Once it is fully open, further scrolling carries it out of the viewport and fades
- * it away, so it stops covering the letter.
- *
- * The drawing's viewBox is the body alone; the standing flap and the drop shadow
- * reach above it through `overflow: visible`.
+ * Once open, the envelope is carried down and out of the viewport so it stops
+ * covering the letter.
  */
 export function EnvelopeOverlay() {
-  const ref = useRef<HTMLDivElement | null>(null)
   const latest = useRef<EnvelopeState>({ progress: 0, exit: 0 })
   const [state, setState] = useState<EnvelopeState>({ progress: 0, exit: 0 })
   const reduced = usePrefersReducedMotion()
@@ -65,8 +61,7 @@ export function EnvelopeOverlay() {
 
     const update = (): void => {
       // the envelope is fixed, so its viewport position never changes — both values
-      // are simply how far the page has been scrolled. They start together: the
-      // envelope is already sinking while its flap comes up.
+      // are simply how far the page has been scrolled. They start together.
       const progress = clamp01(window.scrollY / REVEAL_DISTANCE)
       const exit = clamp01(window.scrollY / EXIT_DISTANCE)
       const previous = latest.current
@@ -95,23 +90,30 @@ export function EnvelopeOverlay() {
     }
   }, [reduced])
 
+  const progress = reduced ? 1 : state.progress
   const exit = reduced ? 0 : state.exit
   // from hanging 32% below the edge to sitting entirely below it: one body height
   const shift = (BODY_HIDDEN + exit * (1 - BODY_HIDDEN)) * 100
 
-  return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-20">
+  const layer = (part: 'back' | 'front', z: string) => (
+    <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 bottom-0 ${z}`}>
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
         <div
-          ref={ref}
           style={{
             aspectRatio: `${BODY_ASPECT}`,
             transform: `translateY(${shift.toFixed(2)}%)`,
           }}
         >
-          <EnvelopeSvg progress={reduced ? 1 : state.progress} className="h-full w-full" />
+          <EnvelopeSvg part={part} progress={progress} className="h-full w-full" />
         </div>
       </div>
     </div>
+  )
+
+  return (
+    <>
+      {layer('back', 'z-10')}
+      {layer('front', 'z-30')}
+    </>
   )
 }
