@@ -60,6 +60,10 @@ function useStartDepth(
     observer.observe(document.body)
     const timers = [setTimeout(place, 120), setTimeout(place, 600)]
     window.addEventListener('resize', place)
+    window.addEventListener('orientationchange', place)
+    // iOS Safari's address bar changes the visible viewport without a window resize;
+    // the envelope's fold moves with it, so the paper has to be placed again
+    window.visualViewport?.addEventListener('resize', place)
     void document.fonts?.ready.then(place)
 
     return () => {
@@ -67,6 +71,8 @@ function useStartDepth(
       timers.forEach(clearTimeout)
       observer.disconnect()
       window.removeEventListener('resize', place)
+      window.removeEventListener('orientationchange', place)
+      window.visualViewport?.removeEventListener('resize', place)
     }
   }, [wrapper, sheet])
 }
