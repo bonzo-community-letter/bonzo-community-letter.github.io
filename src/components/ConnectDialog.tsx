@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { WalletApi } from '../hooks/useWallet'
-import { WALLET_OPTIONS, type WalletKind } from '../lib/wallet'
+import { INSECURE_CONTEXT_MESSAGE, WALLET_OPTIONS, hasWebCrypto, type WalletKind } from '../lib/wallet'
 import { config } from '../config'
 
 interface Props {
@@ -44,6 +44,7 @@ export function ConnectDialog({ open, onClose, wallet }: Props) {
 
   const busy = wallet.status === 'connecting' || wallet.status === 'restoring'
   const connected = wallet.status === 'connected' && wallet.accountId !== null
+  const secure = hasWebCrypto()
   const current = wallet.kind ? WALLET_OPTIONS.find((option) => option.kind === wallet.kind) : null
 
   return (
@@ -68,7 +69,25 @@ export function ConnectDialog({ open, onClose, wallet }: Props) {
           {connected ? 'Wallet connected' : 'Connect a wallet'}
         </h2>
 
-        {connected ? (
+        {!secure ? (
+          <>
+            <p className="mt-4 border-l-2 border-accent pl-3 text-sm leading-relaxed text-ink-soft">
+              {INSECURE_CONTEXT_MESSAGE}
+            </p>
+            <p className="mt-3 text-xs leading-relaxed text-ink-faint">
+              This page is on <span className="break-all font-mono">{typeof location === 'undefined' ? 'an insecure origin' : location.origin}</span>.
+              A wallet handshake needs <code className="font-mono">crypto.subtle</code>, which browsers only
+              expose over HTTPS or on localhost.
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-6 text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint hover:text-ink-soft"
+            >
+              Cancel
+            </button>
+          </>
+        ) : connected ? (
           <>
             <p className="mt-4 break-all font-mono text-sm text-ink-soft">{wallet.accountId}</p>
             <p className="mt-2 text-xs leading-relaxed text-ink-faint">

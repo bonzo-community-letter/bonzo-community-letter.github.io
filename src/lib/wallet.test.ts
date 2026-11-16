@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   WalletError,
+  connect,
   deepLinkFor,
   describeWalletError,
   hasStoredSession,
+  hasWebCrypto,
   isMobileWalletTarget,
   normalizeAccountId,
   walletLink,
@@ -190,6 +192,27 @@ describe('hasStoredSession', () => {
       },
     })
     expect(hasStoredSession()).toBe(false)
+  })
+})
+
+describe('hasWebCrypto', () => {
+  const original = globalThis.crypto
+  afterEach(() => {
+    Object.defineProperty(globalThis, 'crypto', { value: original, configurable: true, writable: true })
+  })
+
+  it('is true where crypto.subtle exists', () => {
+    expect(hasWebCrypto()).toBe(true)
+  })
+
+  it('is false on an insecure origin, where the browser withholds crypto.subtle', () => {
+    Object.defineProperty(globalThis, 'crypto', { value: {}, configurable: true, writable: true })
+    expect(hasWebCrypto()).toBe(false)
+  })
+
+  it('refuses to start a connection without it, instead of hanging', async () => {
+    Object.defineProperty(globalThis, 'crypto', { value: {}, configurable: true, writable: true })
+    await expect(connect('walletconnect')).rejects.toThrow(/secure connection/)
   })
 })
 

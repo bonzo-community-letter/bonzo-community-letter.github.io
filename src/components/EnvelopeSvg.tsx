@@ -37,9 +37,10 @@ const BODY = { x: 26, y: 256, w: 588, h: 363 }
  *  that space: an SVG's overflow is not honoured everywhere, and a browser that clips it
  *  cuts the flap off at the hinge the moment it lifts. */
 const FLAP_RISE = 256 - 33
-/** Air above the open tip: with the tip exactly on the viewBox's edge a browser that
- *  clips to it takes the last pixel of the point. */
-const VIEW_PAD = 8
+/** Air above the open tip. The flap has to clear the drawing's edge by more than the
+ *  few units a browser clips at it: Safari shaved the point off even with the tip just
+ *  inside the viewBox, so the margin is generous rather than minimal. */
+const VIEW_PAD = 48
 /** The drawing starts just above where the open flap's tip ends and runs to the body's bottom. */
 const VIEW_Y = BODY.y - FLAP_RISE - VIEW_PAD
 const VIEW_H = BODY.h + FLAP_RISE + VIEW_PAD

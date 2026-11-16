@@ -57,11 +57,29 @@ export interface WalletSession {
 
 export type WalletErrorCode =
   | 'not_configured'
+  | 'insecure_context'
   | 'rejected'
   | 'no_account'
   | 'wrong_network'
   | 'load_failed'
   | 'unknown'
+
+/**
+ * The WalletConnect handshake generates an X25519 key pair with WebCrypto. The
+ * browser only exposes `crypto.subtle` in a **secure context** — HTTPS, or
+ * `localhost`/`127.0.0.1`. Served over plain HTTP from a hostname (a tailnet
+ * name, a LAN address), `crypto.subtle` is `undefined` and the SDK's
+ * `connect()` never settles: the button sits on "Connecting…" forever.
+ *
+ * So the page checks first and says why, instead of hanging.
+ */
+export function hasWebCrypto(): boolean {
+  const subtle = (globalThis.crypto as Crypto | undefined)?.subtle
+  return typeof subtle?.generateKey === 'function'
+}
+
+export const INSECURE_CONTEXT_MESSAGE =
+  'Wallets need a secure connection. This page is served over plain HTTP, where the browser disables the cryptography WalletConnect uses — open it over HTTPS, or on localhost.'
 
 export class WalletError extends Error {
   readonly code: WalletErrorCode
@@ -242,7 +260,7 @@ function connector(): Promise<DAppConnector> {
  * sent anywhere — so hovering a button is not a privacy event.
  */
 export function prefetchWallet(): void {
-  if (!config.walletConnectProjectId) return
+  if (!config.walletConnectProjectId || !hasWebCrypto()) return
   void loadModules().catch(() => {
     // A failed prefetch costs nothing; the click will report it.
   })
@@ -304,6 +322,10 @@ export interface ConnectOptions {
  * `WalletError` with a sentence that can be shown to a reader.
  */
 export async function connect(kind: WalletKind, options: ConnectOptions = {}): Promise<WalletSession> {
+  if (!hasWebCrypto()) {
+    throw new WalletError('insecure_context', INSECURE_CONTEXT_MESSAGE)
+  }
+
   const instance = await connector()
 
   const existing = sessionOf(instance)
