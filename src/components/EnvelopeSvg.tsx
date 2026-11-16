@@ -59,7 +59,7 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
 
   return (
     <svg
-      viewBox="0 0 640 640"
+      viewBox="26 256 588 363"
       className={className}
       role="presentation"
       aria-hidden="true"
