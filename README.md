@@ -269,6 +269,21 @@ The wallet flow needs at least `connect-src wss://relay.walletconnect.com
 https://explorer-api.walletconnect.com` plus the mirror node, and `img-src` for the registry's logo host.
 Worth doing before launch; not done here.
 
+### Testing a wallet without a domain
+
+The wallet libraries need a secure context, and the wallet's own scanner needs an origin with a
+reputation — `localhost` is both. If the machine running the dev server is not the one with the browser,
+build a static copy and serve it locally:
+
+```bash
+VITE_BASE=/ npm run build          # assets at /, so a folder root works
+# copy dist/ to the other machine, then:
+cd dist && python3 -m http.server 8080
+# open http://localhost:8080/
+```
+
+No HMR, but it is the real bundle: same network, same topic, same project id.
+
 ## Deployment
 
 - Every PR: `ci.yml` → install, typecheck, test, build, `dist` uploaded as a run artifact (reviewable

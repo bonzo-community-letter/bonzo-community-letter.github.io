@@ -23,9 +23,12 @@ const hmr =
 
 // GitHub Pages project site: https://<owner>.github.io/open-letter/
 // `base` must match the repository name, otherwise every asset 404s in production.
-// For a custom domain (letter.example.org), set base to '/' — see README.
+// For a custom domain (letter.example.org), or for a static copy served from a
+// folder root, set base to '/':  VITE_BASE=/ npm run build
+const base = process.env.VITE_BASE?.trim() || '/open-letter/'
+
 export default defineConfig({
-  base: '/open-letter/',
+  base,
   plugins: [react(), tailwindcss(), letterHashPlugin()],
   build: {
     target: 'es2022',
