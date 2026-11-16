@@ -235,8 +235,9 @@ export function EnvelopeOverlay() {
       {layer('front', 'z-30')}
       {/* iOS Safari stops a fixed element at the bottom bar, so the envelope cannot reach
           behind it — but an element that touches the bar tints it with its own background
-          colour. Dark, the bar reads as part of the page rather than as paper. */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-30">
+          colour. Only a touch device has that bar; on a desktop the strip would just be a
+          dark band across the envelope's foot. */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-30 toolbar-tint">
         <div className="mx-auto w-full max-w-5xl px-3">
           <div className="h-2 bg-page" />
         </div>

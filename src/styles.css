@@ -94,6 +94,18 @@ body {
   height: 100lvh;
 }
 
+/* The strip that tints the iOS toolbar with the page's colour: only a touch device has
+   a bar down there, so elsewhere it is not drawn at all. */
+.toolbar-tint {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .toolbar-tint {
+    display: block;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
