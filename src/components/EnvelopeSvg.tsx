@@ -37,9 +37,12 @@ const BODY = { x: 26, y: 256, w: 588, h: 363 }
  *  that space: an SVG's overflow is not honoured everywhere, and a browser that clips it
  *  cuts the flap off at the hinge the moment it lifts. */
 const FLAP_RISE = 256 - 33
-/** The drawing starts where the open flap's tip ends and runs to the body's bottom. */
-const VIEW_Y = BODY.y - FLAP_RISE
-const VIEW_H = BODY.h + FLAP_RISE
+/** Air above the open tip: with the tip exactly on the viewBox's edge a browser that
+ *  clips to it takes the last pixel of the point. */
+const VIEW_PAD = 8
+/** The drawing starts just above where the open flap's tip ends and runs to the body's bottom. */
+const VIEW_Y = BODY.y - FLAP_RISE - VIEW_PAD
+const VIEW_H = BODY.h + FLAP_RISE + VIEW_PAD
 
 /** The drawing's box, for the layer that places it: it is taller than the body by the
  *  space the open flap takes above the hinge. */
@@ -47,7 +50,7 @@ export const ENVELOPE_VIEW = {
   width: BODY.w,
   height: VIEW_H,
   /** where the body's top edge sits in the box, as a fraction of its height */
-  bodyTopShare: FLAP_RISE / VIEW_H,
+  bodyTopShare: (BODY.y - VIEW_Y) / VIEW_H,
   /** the body's height as a fraction of the box's, for distances given in body heights */
   bodyShare: BODY.h / VIEW_H,
   /** the body's own height for a given width */
