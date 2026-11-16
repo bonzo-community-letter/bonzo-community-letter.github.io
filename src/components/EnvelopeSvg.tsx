@@ -60,6 +60,16 @@ const SOFT_BANDS = [
   { width: 7, opacity: 0.07 },
 ]
 
+/** The sender's name is written on the flap, and a single line of it would be set
+ *  too small to read on a phone. It breaks after "of the". */
+const FLAP_BREAK = ' of the '
+const fromName = page.from.name
+const breakAt = fromName.indexOf(FLAP_BREAK)
+const fromLines =
+  breakAt === -1
+    ? [fromName]
+    : [fromName.slice(0, breakAt + FLAP_BREAK.length).trim(), fromName.slice(breakAt + FLAP_BREAK.length)]
+
 export function EnvelopeSvg({ progress = 0, part = 'front', className }: EnvelopeSvgProps) {
   const p = clamp01(progress)
   const lifted = p >= 0.5 // past vertical: the flap's back is what we see
@@ -75,12 +85,20 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
           flap and is gone once the flap turns over, where its back would face us. */}
       {!lifted ? (
         <g textAnchor="middle" fontFamily="ui-serif, Georgia, Cambria, serif">
-          <text x="320" y="300" fontSize="6.4" letterSpacing="2.2" fill="#9a8b78">
+          <text x="320" y="292" className="text-[12px] sm:text-[6.4px]" letterSpacing="2.2" fill="#9a8b78">
             FROM
           </text>
-          <text x="320" y="322" fontSize="10.4" fill="#5b5044">
-            {page.from.name}
-          </text>
+          {fromLines.map((line, index) => (
+            <text
+              key={line}
+              x="320"
+              y={316 + index * 22}
+              className="text-[18px] sm:text-[10.4px]"
+              fill="#5b5044"
+            >
+              {line}
+            </text>
+          ))}
         </g>
       ) : null}
       {/* the glued margin travels with the flap, so it unfolds instead of appearing */}
