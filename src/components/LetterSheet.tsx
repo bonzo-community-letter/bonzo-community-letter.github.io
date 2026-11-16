@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { page } from '../content/page'
-import { ENVELOPE, envelopeGutter, envelopeHidden } from './EnvelopeOverlay'
+import { ENVELOPE, envelopeGutter, envelopeHidden, envelopeTravel } from './EnvelopeOverlay'
 import { letterText } from 'virtual:letter'
 
 /** How far through the flap's travel the paper should reach the fold. */
@@ -25,7 +25,7 @@ function useStartDepth(ref: React.RefObject<HTMLDivElement | null>): void {
       const bodyHeight = bodyWidth / ENVELOPE.aspect
       const fold = window.innerHeight - (1 - envelopeHidden(window.innerWidth)) * bodyHeight
       // how far the fold itself descends per pixel of scroll
-      const foldPerScroll = (ENVELOPE.travel / ENVELOPE.exit) * bodyHeight
+      const foldPerScroll = (envelopeTravel(window.innerWidth) / ENVELOPE.exit) * bodyHeight
       const crossing = CROSSING * ENVELOPE.reveal
       const target = fold + crossing * (1 + foldPerScroll)
 

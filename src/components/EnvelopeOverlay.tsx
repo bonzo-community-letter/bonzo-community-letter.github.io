@@ -48,8 +48,11 @@ export const envelopeGutter = (viewportWidth: number): number => (viewportWidth 
 /** The standing flap reaches 223 of the body's 363 units above the fold, so the
  *  envelope is not out of the frame until that much more has passed the bottom edge. */
 const FLAP_UP = 223 / 363
-/** The whole way out: past the body's own height, then past the flap's tip. */
-const TRAVEL = 1 - BODY_HIDDEN + FLAP_UP + 0.04
+
+/** The whole way out, in body heights: the part still in view, then the flap above it.
+ *  It depends on how much of the body hangs below the edge to begin with. */
+export const envelopeTravel = (viewportWidth: number): number =>
+  1 - envelopeHidden(viewportWidth) + FLAP_UP + 0.04
 
 /** The envelope's choreography in one place. The letter needs the same numbers to
  *  know where it should start: the envelope's size follows the viewport, so the
@@ -57,8 +60,6 @@ const TRAVEL = 1 - BODY_HIDDEN + FLAP_UP + 0.04
 export const ENVELOPE = {
   /** body width ÷ height */
   aspect: BODY_ASPECT,
-  /** how far the envelope travels, in body heights */
-  travel: TRAVEL,
   /** scroll distances */
   reveal: REVEAL_DISTANCE,
   exit: EXIT_DISTANCE,
@@ -133,7 +134,7 @@ export function EnvelopeOverlay() {
   const progress = reduced ? 1 : state.progress
   const exit = reduced ? 0 : state.exit
   // from hanging below the edge to sitting entirely below it — body and flap
-  const shift = (hidden + exit * TRAVEL) * 100
+  const shift = (hidden + exit * (1 - hidden + FLAP_UP + 0.04)) * 100
 
   const layer = (part: 'back' | 'front', z: string) => (
     <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 bottom-0 ${z}`}>
