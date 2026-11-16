@@ -72,7 +72,7 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
     .filter((paragraph) => paragraph.length > 0)
 
   return (
-    <div className="relative z-20 mx-auto -mt-28 w-full max-w-5xl px-4 sm:-mt-36 sm:px-6">
+    <div className="relative z-20 mx-auto -mt-28 w-full max-w-5xl px-7 sm:-mt-36 sm:px-6">
       <div ref={spacer} aria-hidden="true" className="h-[420px]" />
       <div className="relative">
         {/* the sheet underneath, so it reads as paper rather than a card */}
