@@ -155,6 +155,18 @@ The underlying knobs, if you need them by hand:
 For HTTPS on port 443 instead of `http://host:5173`, `tailscale serve` is the better tool, but it needs
 operator rights once (`sudo tailscale set --operator=$USER`); then run with `PUBLIC_DEV_PROXY=1`.
 
+**Wallets do not work over plain HTTP from a hostname.** `http://<host>.<tailnet>.ts.net:5173` is not a
+secure context, so the browser withholds `crypto.subtle` and the WalletConnect handshake can never
+complete — the dialog says so instead of hanging. `localhost`/`127.0.0.1` are secure contexts and do
+work. To test a wallet from another device, put HTTPS in front:
+
+```bash
+tailscale serve --bg 5173            # https://<host>.<tailnet>.ts.net/
+PUBLIC_DEV_PROXY=1 npm run dev:tailnet
+```
+
+The deployed site is HTTPS on GitHub Pages, so this only bites during local testing.
+
 ## Configuration
 
 All public. Never a Hedera private key or account secret — the page has no way to use one.
