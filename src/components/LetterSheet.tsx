@@ -21,7 +21,7 @@ function useStartDepth(ref: React.RefObject<HTMLDivElement | null>): void {
       const el = ref.current
       if (!el) return
 
-      const bodyWidth = Math.min(window.innerWidth, ENVELOPE.maxWidth) - 2 * envelopeGutter(window.innerWidth)
+      const bodyWidth = Math.min(window.innerWidth, ENVELOPE.maxWidth) - 2 * envelopeGutter()
       const bodyHeight = bodyWidth / ENVELOPE.aspect
       const fold = window.innerHeight - (1 - envelopeHidden(window.innerWidth)) * bodyHeight
       // how far the fold itself descends per pixel of scroll

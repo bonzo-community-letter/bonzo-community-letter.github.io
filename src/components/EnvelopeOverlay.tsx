@@ -41,9 +41,11 @@ const BODY_HIDDEN_SMALL = 0
 export const envelopeHidden = (viewportWidth: number): number =>
   viewportWidth < 640 ? BODY_HIDDEN_SMALL : BODY_HIDDEN
 
-/** Side breathing room on a phone, where the envelope would otherwise be pressed
- *  against both screen edges. Matches the overlay's `px-3`. */
-export const envelopeGutter = (viewportWidth: number): number => (viewportWidth < 640 ? 12 : 0)
+/** Side breathing room for the envelope, so it never sits flush against the screen
+ *  edge. Matches the overlay's `px-3`. */
+const GUTTER = 12
+
+export const envelopeGutter = (): number => GUTTER
 
 /** The standing flap reaches 223 of the body's 363 units above the fold, so the
  *  envelope is not out of the frame until that much more has passed the bottom edge. */
@@ -138,9 +140,9 @@ export function EnvelopeOverlay() {
 
   const layer = (part: 'back' | 'front', z: string) => (
     <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 bottom-0 ${z}`}>
-      {/* a little air at the sides on a phone; from sm the envelope reaches past the
-          letter's edges instead */}
-      <div className="mx-auto w-full max-w-5xl px-3 sm:px-0">
+      {/* a little air at the sides, at every width: the envelope reaches past the
+          letter's edges, but never touches the screen's */}
+      <div className="mx-auto w-full max-w-5xl px-3">
         <div
           style={{
             aspectRatio: `${BODY_ASPECT}`,

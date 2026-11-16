@@ -76,7 +76,7 @@ body {
 
 @media (min-width: 40rem) {
   .hero-height {
-    --envelope-width: min(100vw, 64rem);
+    --envelope-width: calc(min(100vw, 64rem) - 24px);
     --envelope-body: calc(var(--envelope-width) * 0.61735);
     --envelope-hidden: 0.32;
   }
