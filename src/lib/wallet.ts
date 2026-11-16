@@ -97,12 +97,22 @@ export function describeWalletError(error: unknown): string {
  * hardcode `hashpack://…` or a universal link: the registry is where a wallet
  * publishes the one it keeps working, and guessing it is how a "Connect" button
  * silently stops opening the app.
+ *
+ * The registry is keyed by a hex id, and its `ids` filter takes those ids — a
+ * slug returns an empty list. So: search by name, then pick the listing by slug
+ * (Kabila's is `kabila-wallet`, not `kabila`), falling back to the display name.
  */
 const EXPLORER_URL = 'https://explorer-api.walletconnect.com/v3/wallets'
-const EXPLORER_IDS: Partial<Record<WalletKind, string>> = { hashpack: 'hashpack', kabila: 'kabila' }
 
 interface ExplorerListing {
+  name?: string
+  slug?: string
   mobile?: { native?: string; universal?: string }
+}
+
+const REGISTRY: Partial<Record<WalletKind, { search: string; slug: string; name: string }>> = {
+  hashpack: { search: 'hashpack', slug: 'hashpack', name: 'hashpack' },
+  kabila: { search: 'kabila', slug: 'kabila-wallet', name: 'kabila' },
 }
 
 /** The wallet's mobile link, or null when the registry cannot be read. */
@@ -111,15 +121,18 @@ export async function walletLink(
   projectId: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<string | null> {
-  const id = EXPLORER_IDS[kind]
-  if (!id || !projectId) return null
+  const entry = REGISTRY[kind]
+  if (!entry || !projectId) return null
   try {
-    const url = `${EXPLORER_URL}?projectId=${encodeURIComponent(projectId)}&entries=1&ids=${encodeURIComponent(id)}`
+    const url = `${EXPLORER_URL}?projectId=${encodeURIComponent(projectId)}&entries=10&search=${encodeURIComponent(entry.search)}`
     const res = await fetchImpl(url, { headers: { accept: 'application/json' } })
     if (!res.ok) return null
     const body = (await res.json()) as { listings?: Record<string, ExplorerListing> }
-    const listing = body.listings?.[id]
-    const link = listing?.mobile?.universal || listing?.mobile?.native
+    const listings = Object.values(body.listings ?? {})
+    const match =
+      listings.find((listing) => listing.slug === entry.slug) ??
+      listings.find((listing) => listing.name?.toLowerCase() === entry.name)
+    const link = match?.mobile?.universal || match?.mobile?.native
     return typeof link === 'string' && link.length > 0 ? link : null
   } catch {
     return null

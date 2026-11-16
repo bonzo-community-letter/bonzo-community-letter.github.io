@@ -78,29 +78,50 @@ describe('normalizeAccountId', () => {
 
 describe('walletLink', () => {
   const projectId = 'pid'
+  const listing = (over: Record<string, unknown>) => ({
+    listings: {
+      a29498d225fa4b13468ff4d6cf4ae0ea4adcbd95f07ce8a843a1dee10b632f3f: over,
+    },
+  })
 
   it('prefers the universal link', async () => {
     const link = await walletLink('hashpack', projectId, (async () =>
-      jsonResponse({
-        listings: { hashpack: { mobile: { universal: 'https://hp.example', native: 'hashpack:' } } },
-      })) as unknown as typeof fetch)
-    expect(link).toBe('https://hp.example')
+      jsonResponse(
+        listing({ slug: 'hashpack', mobile: { universal: 'https://link.hashpack.app', native: 'hashpack://' } }),
+      )) as unknown as typeof fetch)
+    expect(link).toBe('https://link.hashpack.app')
+  })
+
+  it('finds Kabila by its slug, which is not its name', async () => {
+    const link = await walletLink('kabila', projectId, (async () =>
+      jsonResponse(
+        listing({ slug: 'kabila-wallet', mobile: { universal: 'https://wallet.kabila.app' } }),
+      )) as unknown as typeof fetch)
+    expect(link).toBe('https://wallet.kabila.app')
   })
 
   it('falls back to the native scheme', async () => {
     const link = await walletLink('kabila', projectId, (async () =>
-      jsonResponse({ listings: { kabila: { mobile: { native: 'kabila:' } } } })) as unknown as typeof fetch)
-    expect(link).toBe('kabila:')
+      jsonResponse(listing({ slug: 'kabila-wallet', mobile: { native: 'kabila-wallet://' } }))) as unknown as typeof fetch)
+    expect(link).toBe('kabila-wallet://')
   })
 
-  it('asks the registry for the wallet by id and project', async () => {
+  it('matches by display name when the slug moved', async () => {
+    const link = await walletLink('hashpack', projectId, (async () =>
+      jsonResponse(
+        listing({ slug: 'hashpack-2', name: 'HashPack', mobile: { universal: 'https://link.hashpack.app' } }),
+      )) as unknown as typeof fetch)
+    expect(link).toBe('https://link.hashpack.app')
+  })
+
+  it('asks the registry by search, not by slug', async () => {
     let called = ''
     await walletLink('hashpack', projectId, (async (url: string) => {
       called = url
       return jsonResponse({ listings: {} })
     }) as unknown as typeof fetch)
     expect(called).toContain('projectId=pid')
-    expect(called).toContain('ids=hashpack')
+    expect(called).toContain('search=hashpack')
   })
 
   it('returns null when the registry says no', async () => {
@@ -112,7 +133,7 @@ describe('walletLink', () => {
   it('returns null when the wallet is not in the listing', async () => {
     expect(
       await walletLink('hashpack', projectId, (async () =>
-        jsonResponse({ listings: { other: {} } })) as unknown as typeof fetch),
+        jsonResponse({ listings: { other: { slug: 'some-other-wallet' } } })) as unknown as typeof fetch),
     ).toBeNull()
   })
 
