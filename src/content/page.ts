@@ -7,7 +7,7 @@ export const page = {
   eyebrow: '11 July 2026 · Bonzo Lend oracle exploit',
 
   /** Working title — still to be decided. */
-  title: 'Open community letter',
+  title: 'Open letter on the Bonzo Exploit',
 
   /**
    * The hero is a letter's address block: who writes, and to whom.
