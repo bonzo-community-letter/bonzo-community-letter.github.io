@@ -52,18 +52,16 @@ function useStartDepth(
 
     place()
     // the first run can happen before the stylesheet lands, when the hero is still
-    // unlaid-out; measure again once the layout exists and whenever it changes
+    // unlaid-out; measure again once the layout exists and whenever the hero's height
+    // changes. Not the body: on iOS it resizes as the address bar collapses, and
+    // re-placing there made the letter shift under the reader.
     const frame = requestAnimationFrame(place)
     const observer = new ResizeObserver(place)
     const hero = document.querySelector('header')
     if (hero) observer.observe(hero)
-    observer.observe(document.body)
     const timers = [setTimeout(place, 120), setTimeout(place, 600)]
     window.addEventListener('resize', place)
     window.addEventListener('orientationchange', place)
-    // iOS Safari's address bar changes the visible viewport without a window resize;
-    // the envelope's fold moves with it, so the paper has to be placed again
-    window.visualViewport?.addEventListener('resize', place)
     void document.fonts?.ready.then(place)
 
     return () => {
@@ -72,7 +70,6 @@ function useStartDepth(
       observer.disconnect()
       window.removeEventListener('resize', place)
       window.removeEventListener('orientationchange', place)
-      window.visualViewport?.removeEventListener('resize', place)
     }
   }, [wrapper, sheet])
 }
