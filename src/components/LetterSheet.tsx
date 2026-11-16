@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { page } from '../content/page'
-import { ENVELOPE, envelopeGutter, envelopeHidden, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
+import { ENVELOPE, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
 import { letterText } from 'virtual:letter'
 
 /** How far through the flap's travel the paper should reach the fold. */
@@ -27,11 +27,17 @@ function useStartDepth(
     const place = (): void => {
       const box = wrapper.current
       const paper = sheet.current
-      if (!box || !paper) return
+      // measured, not derived: iOS Safari anchors a fixed element differently from what
+      // `innerHeight` reports, and the paper has to sit where the envelope actually is
+      const envelope = document.querySelector<HTMLElement>('[data-envelope="front"]')
+      if (!box || !paper || !envelope) return
 
-      const bodyWidth = Math.min(window.innerWidth, ENVELOPE.maxWidth) - 2 * envelopeGutter()
-      const bodyHeight = bodyWidth / ENVELOPE.aspect
-      const fold = window.innerHeight - (1 - envelopeHidden()) * bodyHeight
+      const rect = envelope.getBoundingClientRect()
+      const bodyHeight = rect.height
+      // the fold has already descended by however far the page is scrolled; the paper
+      // is placed against where it sits with the page at rest
+      const exit = Math.min(1, Math.max(0, window.scrollY / ENVELOPE.exit))
+      const fold = rect.top + window.scrollY - exit * envelopeTravel() * bodyHeight
       // how far the fold itself descends per pixel of scroll
       const foldPerScroll = (envelopeTravel() / ENVELOPE.exit) * bodyHeight
       const depth = envelopeOpensOnScroll(window.innerWidth)

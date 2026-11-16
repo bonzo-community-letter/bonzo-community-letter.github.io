@@ -137,11 +137,16 @@ export function EnvelopeOverlay() {
   const shift = (BODY_HIDDEN + exit * envelopeTravel()) * 100
 
   const layer = (part: 'back' | 'front', z: string) => (
-    <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 bottom-0 ${z}`}>
+    /* `top-0` plus a viewport height, rather than `bottom-0`: iOS Safari puts a fixed
+       element's bottom on the *visual* viewport, so it ends at the address bar and the
+       letter shows through the translucent bar below it. Anchored this way the envelope
+       reaches the layout viewport's bottom and runs on behind the bar. */
+    <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 flex h-screen items-end ${z}`}>
       {/* a little air at the sides, at every width: the envelope reaches past the
           letter's edges, but never touches the screen's */}
       <div className="mx-auto w-full max-w-5xl px-3">
         <div
+          data-envelope={part}
           style={{
             aspectRatio: `${BODY_ASPECT}`,
             transform: `translateY(${shift.toFixed(2)}%)`,
