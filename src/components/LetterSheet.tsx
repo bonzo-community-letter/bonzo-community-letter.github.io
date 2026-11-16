@@ -23,6 +23,11 @@ function useStartDepth(
   wrapper: React.RefObject<HTMLDivElement | null>,
   sheet: React.RefObject<HTMLDivElement | null>,
 ): void {
+  // The fold is captured once per viewport width and then left alone. iOS moves the
+  // visible viewport as the address bar collapses — firing resize, and resizing the body
+  // — and re-measuring each time made the letter shift under the reader while scrolling.
+  const anchor = useRef<{ width: number; fold: number } | null>(null)
+
   useLayoutEffect(() => {
     const place = (): void => {
       const box = wrapper.current
@@ -34,16 +39,20 @@ function useStartDepth(
 
       const rect = envelope.getBoundingClientRect()
       const bodyHeight = rect.height
-      // the fold has already descended by however far the page is scrolled; the paper
-      // is placed against where it sits with the page at rest
-      const exit = Math.min(1, Math.max(0, window.scrollY / ENVELOPE.exit))
-      const fold = rect.top + window.scrollY - exit * envelopeTravel() * bodyHeight
+      const width = window.innerWidth
+      if (!anchor.current || anchor.current.width !== width) {
+        // the fold has already descended by however far the page is scrolled
+        const exit = Math.min(1, Math.max(0, window.scrollY / ENVELOPE.exit))
+        const fold = rect.top + window.scrollY - exit * envelopeTravel() * bodyHeight
+        anchor.current = { width, fold }
+      }
+
       // how far the fold itself descends per pixel of scroll
       const foldPerScroll = (envelopeTravel() / ENVELOPE.exit) * bodyHeight
-      const depth = envelopeOpensOnScroll(window.innerWidth)
+      const depth = envelopeOpensOnScroll(width)
         ? CROSSING * ENVELOPE.reveal * (1 + foldPerScroll)
         : OPEN_DEPTH * bodyHeight
-      const target = fold + depth
+      const target = anchor.current.fold + depth
 
       // a margin, not a spacer: on a phone the paper starts above the wrapper's top edge
       const top = box.getBoundingClientRect().top + window.scrollY
