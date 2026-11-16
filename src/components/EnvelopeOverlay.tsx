@@ -23,6 +23,11 @@ const REVEAL_DISTANCE = 420
 /** The body's proportions: 588 × 363 of the drawing's units. */
 const BODY_ASPECT = 588 / 363
 
+/** How much of the body stays below the viewport's bottom edge. The envelope
+ *  hangs out of the frame as it did when it was anchored to the sheet; pinning it
+ *  must not lift it into full view. */
+const BODY_HIDDEN = 0.32
+
 /**
  * The envelope, pinned to the bottom edge of the viewport.
  *
@@ -75,7 +80,13 @@ export function EnvelopeOverlay() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-20">
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-        <div ref={ref} style={{ aspectRatio: `${BODY_ASPECT}` }}>
+        <div
+          ref={ref}
+          style={{
+            aspectRatio: `${BODY_ASPECT}`,
+            transform: `translateY(${(BODY_HIDDEN * 100).toFixed(1)}%)`,
+          }}
+        >
           <EnvelopeSvg progress={reduced ? 1 : progress} className="h-full w-full" />
         </div>
       </div>
