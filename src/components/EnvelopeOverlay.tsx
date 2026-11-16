@@ -32,11 +32,39 @@ const BODY_ASPECT = 588 / 363
  *  is still closed. It hangs out of the frame from the start, as it always did. */
 const BODY_HIDDEN = 0.32
 
+/** On a phone the body is only ~240px tall: hanging a third of it out leaves the
+ *  envelope squeezed against the bottom with the hero filling everything above it.
+ *  There it sits entirely in view, its bottom edge on the viewport's, so its opening
+ *  has room above the fold. */
+const BODY_HIDDEN_SMALL = 0
+
+export const envelopeHidden = (viewportWidth: number): number =>
+  viewportWidth < 640 ? BODY_HIDDEN_SMALL : BODY_HIDDEN
+
+/** Side breathing room on a phone, where the envelope would otherwise be pressed
+ *  against both screen edges. Matches the overlay's `px-3`. */
+export const envelopeGutter = (viewportWidth: number): number => (viewportWidth < 640 ? 12 : 0)
+
 /** The standing flap reaches 223 of the body's 363 units above the fold, so the
  *  envelope is not out of the frame until that much more has passed the bottom edge. */
 const FLAP_UP = 223 / 363
 /** The whole way out: past the body's own height, then past the flap's tip. */
 const TRAVEL = 1 - BODY_HIDDEN + FLAP_UP + 0.04
+
+/** The envelope's choreography in one place. The letter needs the same numbers to
+ *  know where it should start: the envelope's size follows the viewport, so the
+ *  distance the paper sits inside it cannot be a fixed number of pixels. */
+export const ENVELOPE = {
+  /** body width ÷ height */
+  aspect: BODY_ASPECT,
+  /** how far the envelope travels, in body heights */
+  travel: TRAVEL,
+  /** scroll distances */
+  reveal: REVEAL_DISTANCE,
+  exit: EXIT_DISTANCE,
+  /** the drawing's widest, matching the overlay's `max-w-5xl` */
+  maxWidth: 1024,
+} as const
 
 interface EnvelopeState {
   /** 0 = sealed, 1 = open */
@@ -61,6 +89,7 @@ export function EnvelopeOverlay() {
   const latest = useRef<EnvelopeState>({ progress: 0, exit: 0 })
   const [state, setState] = useState<EnvelopeState>({ progress: 0, exit: 0 })
   const reduced = usePrefersReducedMotion()
+  const [hidden, setHidden] = useState(() => envelopeHidden(window.innerWidth))
 
   useEffect(() => {
     if (reduced) return
@@ -72,6 +101,9 @@ export function EnvelopeOverlay() {
       // are simply how far the page has been scrolled. They start together.
       const progress = clamp01(window.scrollY / REVEAL_DISTANCE)
       const exit = clamp01(window.scrollY / EXIT_DISTANCE)
+      // how much of it hangs below the bottom edge depends on the viewport's width,
+      // and this is the only place a resize is noticed
+      setHidden(envelopeHidden(window.innerWidth))
       const previous = latest.current
       // only re-render when a value actually moves: every render repaints the whole
       // drawing, and scroll fires far more often than a frame
@@ -100,13 +132,14 @@ export function EnvelopeOverlay() {
 
   const progress = reduced ? 1 : state.progress
   const exit = reduced ? 0 : state.exit
-  // from hanging 32% below the edge to sitting entirely below it — body and flap
-  const shift = (BODY_HIDDEN + exit * TRAVEL) * 100
+  // from hanging below the edge to sitting entirely below it — body and flap
+  const shift = (hidden + exit * TRAVEL) * 100
 
   const layer = (part: 'back' | 'front', z: string) => (
     <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 bottom-0 ${z}`}>
-      {/* no side padding: the envelope reaches past the letter's edges */}
-      <div className="mx-auto w-full max-w-5xl">
+      {/* a little air at the sides on a phone; from sm the envelope reaches past the
+          letter's edges instead */}
+      <div className="mx-auto w-full max-w-5xl px-3 sm:px-0">
         <div
           style={{
             aspectRatio: `${BODY_ASPECT}`,

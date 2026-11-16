@@ -1,5 +1,59 @@
+import { useLayoutEffect, useRef } from 'react'
 import { page } from '../content/page'
+import { ENVELOPE, envelopeGutter, envelopeHidden } from './EnvelopeOverlay'
 import { letterText } from 'virtual:letter'
+
+/** How far through the flap's travel the paper should reach the fold. */
+const CROSSING = 0.62
+
+/**
+ * The sheet starts inside the envelope, not at its opening: the gap above it is the
+ * distance it travels to come out, and the envelope covers it until the page scrolls.
+ *
+ * That distance cannot be a fixed number of pixels — the envelope's height follows the
+ * viewport (588:363), and the fold sits a fixed fraction of it above the bottom edge.
+ * So the gap is measured: place the paper where it is `CROSSING` of the reveal away
+ * from meeting the fold.
+ */
+function useStartDepth(ref: React.RefObject<HTMLDivElement | null>): void {
+  useLayoutEffect(() => {
+    const place = (): void => {
+      const el = ref.current
+      if (!el) return
+
+      const bodyWidth = Math.min(window.innerWidth, ENVELOPE.maxWidth) - 2 * envelopeGutter(window.innerWidth)
+      const bodyHeight = bodyWidth / ENVELOPE.aspect
+      const fold = window.innerHeight - (1 - envelopeHidden(window.innerWidth)) * bodyHeight
+      // how far the fold itself descends per pixel of scroll
+      const foldPerScroll = (ENVELOPE.travel / ENVELOPE.exit) * bodyHeight
+      const crossing = CROSSING * ENVELOPE.reveal
+      const target = fold + crossing * (1 + foldPerScroll)
+
+      const top = el.getBoundingClientRect().top + window.scrollY
+      const height = Math.max(0, Math.round(target - top))
+      if (Math.abs(height - el.offsetHeight) > 1) el.style.height = `${height}px`
+    }
+
+    place()
+    // the first run can happen before the stylesheet lands, when the hero is still
+    // unlaid-out; measure again once the layout exists and whenever it changes
+    const frame = requestAnimationFrame(place)
+    const observer = new ResizeObserver(place)
+    const hero = document.querySelector('header')
+    if (hero) observer.observe(hero)
+    observer.observe(document.body)
+    const timers = [setTimeout(place, 120), setTimeout(place, 600)]
+    window.addEventListener('resize', place)
+    void document.fonts?.ready.then(place)
+
+    return () => {
+      cancelAnimationFrame(frame)
+      timers.forEach(clearTimeout)
+      observer.disconnect()
+      window.removeEventListener('resize', place)
+    }
+  }, [ref])
+}
 
 /**
  * The letter as a page of paper, pulled up so it overlaps the hero — the first
@@ -9,6 +63,9 @@ import { letterText } from 'virtual:letter'
  * emerge from the envelope as the page scrolls.
  */
 export function LetterSheet({ letterHash }: { letterHash: string }) {
+  const spacer = useRef<HTMLDivElement | null>(null)
+  useStartDepth(spacer)
+
   const paragraphs = letterText
     .split('\n\n')
     .map((paragraph) => paragraph.trim())
@@ -16,11 +73,7 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
 
   return (
     <div className="relative z-20 mx-auto -mt-28 w-full max-w-5xl px-4 sm:-mt-36 sm:px-6">
-      {/* The sheet starts inside the envelope, not at its opening: this gap is the
-          distance it has to travel to come out. It is covered by the envelope until
-          the page starts scrolling. 418px ≈ 11cm — a centimetre more than the 10cm it
-          was, so the flap is further up before the paper reaches the fold. */}
-      <div aria-hidden="true" className="h-[418px]" />
+      <div ref={spacer} aria-hidden="true" className="h-[420px]" />
       <div className="relative">
         {/* the sheet underneath, so it reads as paper rather than a card */}
         <div
