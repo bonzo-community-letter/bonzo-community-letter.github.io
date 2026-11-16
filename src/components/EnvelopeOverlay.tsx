@@ -81,7 +81,6 @@ export const ENVELOPE = {
 export function EnvelopeOverlay() {
   const front = useRef<HTMLDivElement | null>(null)
   const back = useRef<HTMLDivElement | null>(null)
-  const tint = useRef<HTMLDivElement | null>(null)
   const placed = useRef({ width: 0, top: 0 })
   const latest = useRef({ progress: 0, exit: 0, lifted: false })
   const [lifted, setLifted] = useState(false)
@@ -114,9 +113,6 @@ export function EnvelopeOverlay() {
 
       if (front.current) front.current.style.transform = transform
       if (back.current) back.current.style.transform = transform
-      // the tint strip belongs to the envelope: while it still covers the bottom of the
-      // screen the bar takes its colour, and gives it up as the envelope leaves
-      if (tint.current) tint.current.style.opacity = exit > 0.3 ? '0' : '1'
 
       const flap = document.querySelector<SVGGElement>('[data-flap]')
       if (flap) {
@@ -201,10 +197,10 @@ export function EnvelopeOverlay() {
       {layer('front', 'z-30')}
       {/* iOS Safari stops a fixed element at the bottom bar, so the envelope cannot reach
           behind it — but an element that touches the bar tints it with its own background
-          colour. This strip is that colour, and is what the bar picks up. */}
+          colour. Dark, the bar reads as part of the page rather than as paper. */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-30">
         <div className="mx-auto w-full max-w-5xl px-3">
-          <div ref={tint} className="h-2 bg-[#dccfb4] transition-opacity duration-200" />
+          <div className="h-2 bg-page" />
         </div>
       </div>
     </>
