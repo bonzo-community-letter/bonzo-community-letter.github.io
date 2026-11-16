@@ -247,6 +247,21 @@ WalletConnect's `requiredNamespaces`, which the current `@walletconnect/sign-cli
 treats "approved without a signer on our chain" as a failed connection (`WalletError: no_account`)
 rather than assuming the grant.
 
+### A wallet may refuse the host, not the page
+
+HashPack and Kabila scan the connecting dApp through **Blockaid** before they show it. A tunnel or
+mesh-VPN hostname (`*.ts.net`, `*.trycloudflare.com`, `*.ngrok-free.app`) is free and anonymous hosting,
+which is exactly what phishing kits use — so those suffixes sit on blocklists, and the wallet answers
+with "malicious dApp" and a Cancel button. Nothing in the page can change that verdict.
+
+- **To test a wallet**, use an origin that has a reputation: `localhost` (an SSH port-forward is enough,
+  and it is a secure context too) or the real deployment domain.
+- `https://<user>.github.io/<repo>/` is the production shape; a custom domain is better still, and can be
+  verified in the Reown dashboard (Domain Verification) so wallets show it as verified rather than
+  unknown.
+- The dApp's `metadata.url` is what the wallet scans, so it must be the page itself, base path included —
+  the bare origin serves nothing.
+
 ### Content Security Policy
 
 None is set today: GitHub Pages cannot send response headers, so a CSP would have to be a `<meta>` tag.

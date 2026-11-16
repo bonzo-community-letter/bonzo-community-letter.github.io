@@ -216,16 +216,18 @@ async function createConnector(): Promise<DAppConnector> {
 
   const [{ connector, shared, sdk }] = await Promise.all([loadModules()])
 
+  // The wallet shows this URL, and scans it: it has to be the page the reader is
+  // actually on — base path included — not the bare origin, which serves nothing.
+  const pageUrl =
+    typeof location === 'undefined'
+      ? 'http://localhost/'
+      : new URL(import.meta.env.BASE_URL, location.origin).toString()
+
   const metadata = {
     name: 'Open letter — Bonzo Lend recovery',
     description: 'An open letter to Hedera, the HBAR Foundation, Supra Labs and the Bonzo Finance Foundation.',
-    // The wallet shows this origin; it must be the page the reader is on, not a guess.
-    url: typeof location === 'undefined' ? 'https://localhost' : location.origin,
-    icons: [
-      typeof location === 'undefined'
-        ? 'https://localhost/icon-256.png'
-        : `${location.origin}${import.meta.env.BASE_URL}icon-256.png`,
-    ],
+    url: pageUrl,
+    icons: [new URL('icon-256.png', pageUrl).toString()],
   }
 
   const ledgerId = config.network === 'mainnet' ? sdk.LedgerId.MAINNET : sdk.LedgerId.TESTNET
