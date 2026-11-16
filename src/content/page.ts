@@ -4,10 +4,10 @@
  * this file is free to change without invalidating anything.
  */
 export const page = {
-  eyebrow: '11 July 2026 · Bonzo Lend oracle exploit',
+  eyebrow: 'Bonzo Lend & Supra Labs Exploit',
 
   /** Working title — still to be decided. */
-  title: 'Open letter on the Bonzo Exploit',
+  title: 'Open Letter',
 
   /**
    * The hero is a letter's address block: who writes, and to whom.
