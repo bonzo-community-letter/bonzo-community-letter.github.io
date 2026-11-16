@@ -187,6 +187,44 @@ export function normalizeAccountId(value: string): string | null {
   return ACCOUNT_ID.test(trimmed) ? trimmed : null
 }
 
+/**
+ * A browser-extension wallet announces itself through the Hedera extension
+ * handshake: the connector posts `hedera-extension-query` and whoever answers is
+ * pushed into `connector.extensions`. Connecting to one of those is a direct
+ * `postMessage` handshake — no QR, no pairing dialog — which is the closest thing
+ * to "the HashPack API" that still exists (HashConnect, the old injected one, was
+ * removed in HashPack 14.3.0).
+ */
+export function findExtension(
+  instance: Pick<DAppConnector, 'extensions'>,
+  kind: WalletKind,
+): { id: string } | null {
+  const pattern = kind === 'hashpack' ? /hashpack/i : kind === 'kabila' ? /kabila/i : null
+  if (!pattern) return null
+  const match = instance.extensions.find(
+    (extension) => pattern.test(extension.id) || pattern.test(extension.name ?? ''),
+  )
+  return match ? { id: match.id } : null
+}
+
+/**
+ * Discovery is asynchronous: the query goes out 200 ms after the connector is
+ * built and answers trickle in. Poll briefly rather than sending the reader to a
+ * QR code while their extension was about to answer.
+ */
+async function waitForExtension(
+  instance: DAppConnector,
+  kind: WalletKind,
+  budgetMs = 450,
+): Promise<{ id: string } | null> {
+  const deadline = Date.now() + budgetMs
+  for (;;) {
+    const found = findExtension(instance, kind)
+    if (found || Date.now() >= deadline) return found
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+}
+
 let pending: Promise<DAppConnector> | null = null
 
 async function loadModules(): Promise<{ connector: ConnectorModule; shared: SharedModule; sdk: SdkModule }> {
@@ -334,7 +372,15 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
   if (existing) return existing
 
   try {
-    if (kind === 'walletconnect') {
+    // 1. An extension that answers the Hedera handshake connects directly.
+    const extension = kind === 'walletconnect' ? null : await waitForExtension(instance, kind)
+    if (extension) {
+      await withTimeout(
+        instance.connectExtension(extension.id),
+        CONNECT_TIMEOUT_MS,
+        'The wallet did not answer in time. Please try again.',
+      )
+    } else if (kind === 'walletconnect') {
       await withTimeout(
         // `true` = reject when the pairing dialog is closed, so closing it is an
         // answer ("rejected") instead of a wait that only the timeout ends.
@@ -343,6 +389,7 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
         'The wallet did not answer in time. Please try again.',
       )
     } else {
+      // 2. No extension: hand the pairing to the wallet's own app on a phone…
       const link = await walletLink(kind, config.walletConnectProjectId, options.fetchImpl ?? fetch)
       const target = isMobileWalletTarget(options.userAgent)
       if (link && target) {
@@ -355,8 +402,8 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
           'The wallet did not answer in time. Please try again.',
         )
       } else {
-        // Desktop, or no deep link known: the pairing dialog shows the code the
-        // wallet's extension pastes, which is the documented flow for both.
+        // 3. …and on a desktop without the extension, the pairing dialog is the
+        // only path left: it shows the code the wallet pastes or scans.
         await withTimeout(
           instance.openModal(undefined, true),
           CONNECT_TIMEOUT_MS,

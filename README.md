@@ -216,15 +216,20 @@ protocol underneath.
   to WalletConnect, and the library's `HashConnect`-era API is gone.
 - The page never holds a key, never sees a seed phrase and never asks for one. The wallet signs and
   pays the network fee (~0.0001 HBAR per message).
+- **There is no separate "HashPack API" any more.** HashConnect — the injected handshake dApps used until
+  2024 — was removed in HashPack 14.3.0, and HashPack's own developer docs point at WalletConnect. Bonzo's
+  shipped bundle has the same shape: `DAppConnector` from `@hashgraph/hedera-wallet-connect`, the same three
+  buttons, and no `hashconnect` or `window.hashpack` anywhere. So the three buttons are one protocol with
+  three routes, in this order:
+  1. **Browser extension that answers the Hedera handshake** (`hedera-extension-query` → the connector's
+     `extensions`) — a direct `postMessage` pairing, no QR. This is the closest thing left to the old API.
+  2. **Phone** — the wallet's own link from the registry gets the pairing: `<link>/wc?uri=wc%3A…`.
+  3. **Desktop without the extension** — the pairing dialog, which shows the code the extension pastes and
+     a QR a phone can scan. For all three buttons, because that is the only path the protocol leaves.
 - **Least privilege**: the session requests exactly one method, `hedera_signAndExecuteTransaction`, on
   exactly one chain. Nothing about the letter needs anything else, and a session that can do more is a
   session that can be abused if the page is ever compromised.
-- **HashPack / Kabila**: the wallet's own deep link is read from the WalletConnect explorer registry and
-  the pairing is appended to it — `<link>/wc?uri=wc%3A…`. No scheme is hardcoded: a wallet moves its own
-  link, and a guessed `hashpack://` is how a Connect button quietly stops working. On a desktop browser
-  (or when the registry cannot be read) the pairing dialog opens instead, which shows the code the
-  HashPack and Kabila extensions paste.
-- **WalletConnect**: the pairing dialog, for every other wallet, by QR code.
+- **WalletConnect** always means the pairing dialog, for every wallet, by QR code.
 - **Nothing loads until it is needed.** The connector, the WalletConnect client and the Hedera SDK are
   one lazy chunk (~600 kB gzipped) fetched on hover/click of the button; a reader who only reads the
   letter downloads none of it. The main bundle stays at ~80 kB gzipped.

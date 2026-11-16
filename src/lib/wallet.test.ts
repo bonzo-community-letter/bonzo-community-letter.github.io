@@ -4,6 +4,7 @@ import {
   connect,
   deepLinkFor,
   describeWalletError,
+  findExtension,
   hasStoredSession,
   hasWebCrypto,
   isMobileWalletTarget,
@@ -213,6 +214,35 @@ describe('hasWebCrypto', () => {
   it('refuses to start a connection without it, instead of hanging', async () => {
     Object.defineProperty(globalThis, 'crypto', { value: {}, configurable: true, writable: true })
     await expect(connect('walletconnect')).rejects.toThrow(/secure connection/)
+  })
+})
+
+describe('findExtension', () => {
+  const withExtensions = (extensions: { id: string; name?: string }[]) =>
+    ({ extensions }) as unknown as Parameters<typeof findExtension>[0]
+
+  it('finds HashPack by id', () => {
+    expect(findExtension(withExtensions([{ id: 'hashpack', name: 'HashPack' }]), 'hashpack')).toEqual({
+      id: 'hashpack',
+    })
+  })
+
+  it('finds a wallet whose id is not the brand name', () => {
+    expect(
+      findExtension(withExtensions([{ id: 'ext-42', name: 'Kabila Wallet' }]), 'kabila'),
+    ).toEqual({ id: 'ext-42' })
+  })
+
+  it('ignores extensions that are not the wallet asked for', () => {
+    expect(findExtension(withExtensions([{ id: 'blade', name: 'Blade' }]), 'hashpack')).toBeNull()
+  })
+
+  it('has no extension for the generic WalletConnect option', () => {
+    expect(findExtension(withExtensions([{ id: 'hashpack', name: 'HashPack' }]), 'walletconnect')).toBeNull()
+  })
+
+  it('is null when nothing answered the handshake', () => {
+    expect(findExtension(withExtensions([]), 'hashpack')).toBeNull()
   })
 })
 
