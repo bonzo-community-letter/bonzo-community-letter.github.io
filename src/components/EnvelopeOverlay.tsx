@@ -111,10 +111,11 @@ export function EnvelopeOverlay() {
         if (front.current) front.current.style.marginTop = `${placed.current.top}px`
         if (back.current) back.current.style.marginTop = `${placed.current.top}px`
         // the body's shadow on the page: a box shadow, not an SVG filter, which iOS
-        // re-rasterises while the layer moves
+        // re-rasterises while the layer moves. It goes on the *back* layer, behind the
+        // letter — on the front one it would also fall across the fold onto the paper.
         const scale = front.current.offsetWidth / ENVELOPE_VIEW.width
         const shadow = `0 ${Math.round(14 * scale)}px ${Math.round(32 * scale)}px rgba(0, 0, 0, 0.55)`
-        if (front.current) front.current.style.boxShadow = shadow
+        if (back.current) back.current.style.boxShadow = shadow
       }
 
       if (front.current) front.current.style.transform = transform
