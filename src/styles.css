@@ -82,6 +82,18 @@ body {
   }
 }
 
+/*
+ * The envelope's fixed layers are as tall as the viewport and align their content to
+ * the bottom edge. `100lvh`, not `100vh`: iOS Safari resolves `100vh` to the *visible*
+ * height, so with the address bar showing the envelope ended at the bar and the letter
+ * showed through it. The large viewport reaches the screen's bottom edge, so the
+ * envelope runs on behind the bar.
+ */
+.envelope-layer {
+  height: 100vh;
+  height: 100lvh;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

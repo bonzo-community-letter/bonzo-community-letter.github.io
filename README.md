@@ -34,11 +34,18 @@ First layout, in `src/components/`:
   open, so mirroring the flap about the fold is the whole difference. What cross-fades is only what
   the flap hides — the outside surface gives way to the dark inside, and the paper face of the flap
   gives way to its shadowed back.
-- `EnvelopeOverlay.tsx` — places that drawing on the letter sheet: lifted by 40% of its height so the
-  body's top edge sits on the sheet's top edge, with the standing flap reaching up over the hero. It
-  is scroll-driven, not time-driven; the reveal takes a fixed 150 px, short on purpose, because the
-  envelope is anchored to the sheet and leaves the viewport as you scroll. With
-  `prefers-reduced-motion: reduce` it is drawn in its open state, without scroll coupling.
+- `EnvelopeOverlay.tsx` — places that drawing, in two layers with the letter between them: the standing
+  flap at `z-10`, the sheet at `z-20`, the body and its flaps at `z-30`. So the letter rises in front of
+  the flap and behind the pocket — it is never drawn as SVG. Everything is scroll-driven, not
+  time-driven: the reveal takes 240 px, the drift out 700 px, and both start together. Where the letter
+  starts is measured against the envelope in the DOM rather than derived from the viewport, so it lands
+  correctly whichever height the browser reports. Below `sm` there is no room to watch an envelope open,
+  so it starts open and scrolling only carries it away. With `prefers-reduced-motion: reduce` it is
+  drawn open, without scroll coupling.
+- The envelope's layers are `100lvh` tall, not `100vh`: iOS Safari resolves `100vh` to the *visible*
+  height, so with the address bar showing the envelope ended at the bar and the letter showed through
+  it. `.envelope-layer` in `styles.css` carries that, and `LetterSheet` re-places the paper when
+  `visualViewport` resizes, because the bar moves the fold without firing a window resize.
 - `DevStatus.tsx` — build facts and the payload a signer would submit, collapsed at the bottom. Not for
   readers.
 - `src/content/page.ts` — all page copy except the letter itself (title, subtitle, letterhead labels).

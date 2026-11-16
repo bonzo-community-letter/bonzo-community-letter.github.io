@@ -141,7 +141,7 @@ export function EnvelopeOverlay() {
        element's bottom on the *visual* viewport, so it ends at the address bar and the
        letter shows through the translucent bar below it. Anchored this way the envelope
        reaches the layout viewport's bottom and runs on behind the bar. */
-    <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 top-0 flex h-screen items-end ${z}`}>
+    <div aria-hidden="true" className={`envelope-layer pointer-events-none fixed inset-x-0 top-0 flex items-end ${z}`}>
       {/* a little air at the sides, at every width: the envelope reaches past the
           letter's edges, but never touches the screen's */}
       <div className="mx-auto w-full max-w-5xl px-3">
