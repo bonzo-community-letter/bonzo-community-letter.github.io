@@ -113,20 +113,19 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
       </defs>
 
       {part === 'back' ? (
-        /* only the standing flap belongs behind the letter */
-        lifted ? flap : null
-      ) : (
+        /* Everything behind the letter: the envelope's shadow on the page, the paper
+           of its back panel, and the dark inside it. The letter lies on top of all of
+           it, so you look past the letter into the envelope. */
         <>
           {/* The drop shadow sits on a static silhouette, not on the animated content:
               Safari re-rasterises an SVG filter on every frame in which anything inside
               it moves. This element never changes, so its filter is computed once; the
-              opaque body covers the black shape. */}
+              paper below covers the black shape. */}
           <g filter={`url(#${id('drop')})`}>
             <path d={CLIP} fill="#14110e" />
           </g>
 
           <g clipPath={`url(#${id('bodyClip')})`}>
-            {/* paper behind everything, so no gap can show the page */}
             <rect x={BODY.x} y={BODY.y} width={BODY.w} height={BODY.h} fill={`url(#${id('face')})`} />
 
             {/* the inside — always there, revealed as the flap lifts off it */}
@@ -146,6 +145,22 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
               </g>
             ))}
 
+            {/* the shadow the flap throws while it still lies on the paper. It has to go
+                at once: the flap is off the paper after the first pixels of scroll. */}
+            {p < 0.12 ? (
+              <g fill="none" stroke="#5a4d3a" opacity={(1 - p / 0.12).toFixed(3)}>
+                <path d={FLAP_SHADOW} strokeWidth="11" opacity="0.05" />
+                <path d={FLAP_SHADOW} strokeWidth="5" opacity="0.06" />
+              </g>
+            ) : null}
+          </g>
+
+          {/* once the flap stands it is behind the letter too */}
+          {lifted ? flap : null}
+        </>
+      ) : (
+        <>
+          <g clipPath={`url(#${id('bodyClip')})`}>
             {/* the bottom flap */}
             <path d={POCKET} fill={`url(#${id('pocket')})`} />
             <path d={POCKET} fill="none" stroke="#c9ba9f" strokeWidth="1.1" opacity="0.6" />
@@ -153,19 +168,8 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
             {/* seams from the bottom corners to the side flaps */}
             <path d="M26 619 L290 453" fill="none" stroke="#b9a98d" opacity="0.45" />
             <path d="M614 619 L350 453" fill="none" stroke="#b9a98d" opacity="0.45" />
-          </g>
 
-          {/* the shadow the flap throws while it still lies on the paper. It has to go
-              at once: the flap is off the paper after the first pixels of scroll. */}
-          {p < 0.12 ? (
-            <g fill="none" stroke="#5a4d3a" opacity={(1 - p / 0.12).toFixed(3)}>
-              <path d={FLAP_SHADOW} strokeWidth="11" opacity="0.05" />
-              <path d={FLAP_SHADOW} strokeWidth="5" opacity="0.06" />
-            </g>
-          ) : null}
-
-          <g clipPath={`url(#${id('bodyClip')})`}>
-            {/* the side flaps folded in */}
+            {/* the side flaps folded in, in front of the letter */}
             <path d={SIDE_LEFT} fill={`url(#${id('side')})`} />
             <path d={SIDE_RIGHT} fill={`url(#${id('side')})`} />
 
