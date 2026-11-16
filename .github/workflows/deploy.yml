@@ -42,7 +42,8 @@ jobs:
         env:
           # Public by design — these end up in the client bundle. Never a secret.
           VITE_HEDERA_NETWORK: ${{ vars.VITE_HEDERA_NETWORK }}
-          VITE_HCS_TOPIC_ID: ${{ vars.VITE_HCS_TOPIC_ID }}
+          VITE_HCS_TOPIC_ID_TESTNET: ${{ vars.VITE_HCS_TOPIC_ID_TESTNET }}
+          VITE_HCS_TOPIC_ID_MAINNET: ${{ vars.VITE_HCS_TOPIC_ID_MAINNET }}
           VITE_WALLETCONNECT_PROJECT_ID: ${{ vars.VITE_WALLETCONNECT_PROJECT_ID }}
           VITE_CONTACT_URL: ${{ vars.VITE_CONTACT_URL }}
 
