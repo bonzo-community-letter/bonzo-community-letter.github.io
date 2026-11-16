@@ -59,6 +59,29 @@ body {
   color: var(--color-sheet-ink);
 }
 
+/*
+ * The hero ends a little below the envelope's opening, so the envelope overlaps it the
+ * way it does on a desktop instead of leaving a band of page between the two.
+ *
+ * `--envelope-body`: the drawing's height, 363 of its 588 units wide, minus the side
+ * air it keeps on a phone. `--envelope-hidden`: the part of it that hangs below the
+ * viewport's bottom edge. Both mirror `envelopeGutter` and `envelopeHidden`.
+ */
+.hero-height {
+  --envelope-width: calc(100vw - 24px);
+  --envelope-body: calc(var(--envelope-width) * 0.61735);
+  --envelope-hidden: 0;
+  min-height: calc(100lvh - (1 - var(--envelope-hidden)) * var(--envelope-body) + 4rem);
+}
+
+@media (min-width: 40rem) {
+  .hero-height {
+    --envelope-width: min(100vw, 64rem);
+    --envelope-body: calc(var(--envelope-width) * 0.61735);
+    --envelope-hidden: 0.32;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

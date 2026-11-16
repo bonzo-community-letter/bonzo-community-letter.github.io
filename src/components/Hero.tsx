@@ -8,7 +8,7 @@ import { page } from '../content/page'
  */
 export function Hero({ signatureCount }: { signatureCount: number | null }) {
   return (
-    <header className="border-b border-rule bg-hero">
+    <header className="hero-height border-b border-rule bg-hero">
       <div className="mx-auto w-full max-w-5xl px-6 pt-14 pb-24 text-center sm:pt-20 sm:pb-32">
         <p className="eyebrow">{page.eyebrow}</p>
 
