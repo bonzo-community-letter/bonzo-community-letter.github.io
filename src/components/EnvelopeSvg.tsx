@@ -19,8 +19,11 @@
 import { page } from '../content/page'
 
 interface EnvelopeSvgProps {
-  /** 0 = sealed, 1 = open */
+  /** 0 = sealed, 1 = open — only for the first paint of the flap; after that the
+   *  overlay writes its transform directly. */
   progress?: number
+  /** past vertical: which side of the fold the flap is drawn on */
+  lifted?: boolean
   /** which half of the drawing to render */
   part?: 'back' | 'front'
   className?: string
@@ -30,6 +33,24 @@ const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
 /* ── geometry, measured off the approved drawings ─────────────────────────── */
 const BODY = { x: 26, y: 256, w: 588, h: 363 }
+/** The body's paper is carried on below it by this much, inside the viewBox: a browser
+ *  that ends a fixed layer above the screen's bottom would otherwise show the letter
+ *  through the address bar instead of the envelope. */
+const SKIRT = 320
+const VIEW_H = BODY.h + SKIRT
+
+/** The drawing's box, for the layer that places it: it is taller than the body by the
+ *  skirt, which hangs below the viewport's bottom edge. */
+export const ENVELOPE_VIEW = {
+  width: BODY.w,
+  height: VIEW_H,
+  /** how much of the box hangs below the body, as a fraction of its width */
+  skirtOfWidth: SKIRT / BODY.w,
+  /** the body's height as a fraction of the box's, for distances given in body heights */
+  bodyShare: BODY.h / VIEW_H,
+  /** the body's own height for a given width */
+  bodyHeightFor: (width: number): number => (width * BODY.h) / BODY.w,
+} as const
 const HINGE = 256
 const FLAP_TIP = 479 // 223 below the hinge; mirrored, it is 223 above
 const FLAP = `M33 ${HINGE} L607 ${HINGE} L320 ${FLAP_TIP} Z`
@@ -70,14 +91,17 @@ const fromLines =
     ? [fromName]
     : [fromName.slice(0, breakAt + FLAP_BREAK.length).trim(), fromName.slice(breakAt + FLAP_BREAK.length)]
 
-export function EnvelopeSvg({ progress = 0, part = 'front', className }: EnvelopeSvgProps) {
+export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', className }: EnvelopeSvgProps) {
   const p = clamp01(progress)
-  const lifted = p >= 0.5 // past vertical: the flap's back is what we see
+  const lifted = liftedProp ?? p >= 0.5 // past vertical: the flap's back is what we see
   // both parts live in one document, so their ids must not collide
   const id = (name: string): string => `${part}-${name}`
 
   const flap = (
-    <g transform={`translate(0 ${(2 * HINGE * p).toFixed(2)}) scale(1 ${(1 - 2 * p).toFixed(3)})`}>
+    <g
+      data-flap={part}
+      transform={`translate(0 ${(2 * HINGE * p).toFixed(2)}) scale(1 ${(1 - 2 * p).toFixed(3)})`}
+    >
       <path d={FLAP} fill={`url(#${id('shadow')})`} opacity={lifted ? 1 : 0} />
       {!lifted ? <path d={FLAP} fill={`url(#${id('flapShut')})`} /> : null}
       {!lifted ? <path d={FLAP_EDGE} fill="none" stroke="#d3c6ae" strokeWidth="1" /> : null}
@@ -108,7 +132,7 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
 
   return (
     <svg
-      viewBox="26 256 588 363"
+      viewBox={`26 256 588 ${VIEW_H}`}
       className={className}
       role="presentation"
       aria-hidden="true"
@@ -217,11 +241,11 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
             <path d={OUTLINE} fill="none" stroke="#c9bba3" />
           </g>
 
-          {/* The body's paper carried on below its bottom edge, drawn outside the viewBox
-              (the SVG lets it out). iOS Safari can end a fixed element above the screen's
-              bottom — at the address bar — and then the letter shows through the
-              translucent bar instead of the envelope. Everywhere else this is off-screen. */}
-          <rect x={BODY.x} y={BODY.y + BODY.h} width={BODY.w} height={420} fill="#dccfb4" />
+          {/* The body's paper carried on below its bottom edge. Part of the viewBox, so
+              no browser can clip it: one that ends a fixed layer above the screen's bottom
+              would otherwise show the letter through the address bar. Everywhere else it
+              is off-screen. */}
+          <rect x={BODY.x} y={BODY.y + BODY.h} width={BODY.w} height={SKIRT} fill="#dccfb4" />
 
           {/* while sealed the flap lies on the body, so it is painted here, on top */}
           {lifted ? null : flap}

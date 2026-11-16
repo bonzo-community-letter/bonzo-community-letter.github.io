@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 import { page } from '../content/page'
 import { ENVELOPE, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
+import { ENVELOPE_VIEW } from './EnvelopeSvg'
 import { letterText } from 'virtual:letter'
 
 /** How far through the flap's travel the paper should reach the fold. */
@@ -38,7 +39,8 @@ function useStartDepth(
       if (!box || !paper || !envelope) return
 
       const rect = envelope.getBoundingClientRect()
-      const bodyHeight = rect.height
+      // the box includes the skirt below the body, so the body's height comes from the width
+      const bodyHeight = ENVELOPE_VIEW.bodyHeightFor(rect.width)
       const width = window.innerWidth
       if (!anchor.current || anchor.current.width !== width) {
         // the fold has already descended by however far the page is scrolled

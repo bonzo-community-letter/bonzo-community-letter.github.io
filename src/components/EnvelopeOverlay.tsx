@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { EnvelopeSvg } from './EnvelopeSvg'
+import { ENVELOPE_VIEW, EnvelopeSvg } from './EnvelopeSvg'
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
@@ -66,13 +66,6 @@ export const ENVELOPE = {
   maxWidth: 1024,
 } as const
 
-interface EnvelopeState {
-  /** 0 = sealed, 1 = open */
-  progress: number
-  /** 0 = still in place, 1 = carried fully out of the viewport */
-  exit: number
-}
-
 /**
  * The envelope, pinned to the bottom edge of the viewport — in two layers, with the
  * letter between them.
@@ -86,33 +79,59 @@ interface EnvelopeState {
  * covering the letter.
  */
 export function EnvelopeOverlay() {
-  const latest = useRef<EnvelopeState>({ progress: 0, exit: 0 })
-  const [state, setState] = useState<EnvelopeState>({ progress: 0, exit: 0 })
+  const front = useRef<HTMLDivElement | null>(null)
+  const back = useRef<HTMLDivElement | null>(null)
+  const latest = useRef({ progress: 0, exit: 0, lifted: false })
+  const [lifted, setLifted] = useState(false)
   const reduced = usePrefersReducedMotion()
   // on a phone the envelope is open before the page moves at all
   const [opensOnScroll, setOpensOnScroll] = useState(() => envelopeOpensOnScroll(window.innerWidth))
 
   useEffect(() => {
-    if (reduced) return
+    // written straight onto the elements: a React render per frame repaints both
+    // drawings and their filters, which an iPhone cannot keep up with
+    const apply = (): void => {
+      const { progress, exit } = latest.current
+      // in body heights, then as a share of the taller box
+      const shift = (BODY_HIDDEN + exit * envelopeTravel()) * ENVELOPE_VIEW.bodyShare * 100
+      const transform = `translateY(${shift.toFixed(2)}%)`
+      if (front.current) front.current.style.transform = transform
+      if (back.current) back.current.style.transform = transform
+
+      const flap = document.querySelector<SVGGElement>('[data-flap]')
+      if (flap) {
+        flap.setAttribute(
+          'transform',
+          `translate(0 ${(2 * 256 * progress).toFixed(2)}) scale(1 ${(1 - 2 * progress).toFixed(4)})`,
+        )
+      }
+
+      // the flap changes sides once, when it passes vertical: that is the only thing
+      // React has to be asked about again
+      const nowLifted = progress >= 0.5
+      if (nowLifted !== latest.current.lifted) {
+        latest.current.lifted = nowLifted
+        setLifted(nowLifted)
+      }
+    }
+
+    if (reduced) {
+      latest.current = { progress: 1, exit: 0, lifted: true }
+      apply()
+      return
+    }
 
     let frame = 0
 
     const update = (): void => {
       // the envelope is fixed, so its viewport position never changes — both values
       // are simply how far the page has been scrolled. They start together.
-      const progress = clamp01(window.scrollY / REVEAL_DISTANCE)
-      const exit = clamp01(window.scrollY / EXIT_DISTANCE)
-      // whether there is an opening to watch depends on the viewport's width, and this
-      // is the only place a resize is noticed
-      setOpensOnScroll(envelopeOpensOnScroll(window.innerWidth))
-      const previous = latest.current
-      // only re-render when a value actually moves: every render repaints the whole
-      // drawing, and scroll fires far more often than a frame
-      if (Math.abs(progress - previous.progress) < 0.004 && Math.abs(exit - previous.exit) < 0.004) {
-        return
-      }
-      latest.current = { progress, exit }
-      setState({ progress, exit })
+      const scroll = window.scrollY
+      const onScroll = envelopeOpensOnScroll(window.innerWidth)
+      latest.current.progress = onScroll ? clamp01(scroll / REVEAL_DISTANCE) : 1
+      latest.current.exit = clamp01(scroll / EXIT_DISTANCE)
+      if (onScroll !== opensOnScroll) setOpensOnScroll(onScroll)
+      apply()
     }
 
     const onScroll = (): void => {
@@ -129,12 +148,7 @@ export function EnvelopeOverlay() {
       window.removeEventListener('resize', onScroll)
       cancelAnimationFrame(frame)
     }
-  }, [reduced])
-
-  const progress = reduced || !opensOnScroll ? 1 : state.progress
-  const exit = reduced ? 0 : state.exit
-  // from hanging below the edge to sitting entirely below it — body and flap
-  const shift = (BODY_HIDDEN + exit * envelopeTravel()) * 100
+  }, [reduced, opensOnScroll])
 
   const layer = (part: 'back' | 'front', z: string) => (
     /* `top-0` plus a viewport height, rather than `bottom-0`: iOS Safari puts a fixed
@@ -146,14 +160,18 @@ export function EnvelopeOverlay() {
           letter's edges, but never touches the screen's */}
       <div className="mx-auto w-full max-w-5xl px-3">
         <div
+          ref={part === 'front' ? front : back}
           data-envelope={part}
           className="relative"
           style={{
-            aspectRatio: `${BODY_ASPECT}`,
-            transform: `translateY(${shift.toFixed(2)}%)`,
+            // the box includes the skirt; the negative margin makes its body sit on the
+            // layer's bottom edge, with the skirt hanging below
+            aspectRatio: `${ENVELOPE_VIEW.width} / ${ENVELOPE_VIEW.height}`,
+            marginBottom: `-${(ENVELOPE_VIEW.skirtOfWidth * 100).toFixed(3)}%`,
+            transform: `translateY(${(BODY_HIDDEN * ENVELOPE_VIEW.bodyShare * 100).toFixed(2)}%)`,
           }}
         >
-          <EnvelopeSvg part={part} progress={progress} className="h-full w-full" />
+          <EnvelopeSvg part={part} lifted={lifted} className="h-full w-full" />
         </div>
       </div>
     </div>
