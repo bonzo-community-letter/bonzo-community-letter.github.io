@@ -18,8 +18,9 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
     <div className="relative z-20 mx-auto -mt-28 w-full max-w-5xl px-4 sm:-mt-36 sm:px-6">
       {/* The sheet starts inside the envelope, not at its opening: this gap is the
           distance it has to travel to come out. It is covered by the envelope until
-          the page starts scrolling. */}
-      <div aria-hidden="true" className="h-[380px]" />
+          the page starts scrolling. 418px ≈ 11cm — a centimetre more than the 10cm it
+          was, so the flap is further up before the paper reaches the fold. */}
+      <div aria-hidden="true" className="h-[418px]" />
       <div className="relative">
         {/* the sheet underneath, so it reads as paper rather than a card */}
         <div
