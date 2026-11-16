@@ -107,6 +107,11 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
         <filter id={id('drop')} x="-40%" y="-60%" width="180%" height="220%">
           <feDropShadow dx="0" dy="14" stdDeviation="16" floodColor="#000000" floodOpacity="0.55" />
         </filter>
+        {/* the flaps in front of the letter throw a little shadow onto it. The group
+            they are applied to never moves, so Safari rasterises this once. */}
+        <filter id={id('flapShadow')} x="-20%" y="-25%" width="140%" height="150%">
+          <feDropShadow dx="0" dy="-5" stdDeviation="7" floodColor="#2a2118" floodOpacity="0.22" />
+        </filter>
         <clipPath id={id('bodyClip')}>
           <path d={CLIP} />
         </clipPath>
@@ -161,17 +166,20 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
       ) : (
         <>
           <g clipPath={`url(#${id('bodyClip')})`}>
-            {/* the bottom flap */}
-            <path d={POCKET} fill={`url(#${id('pocket')})`} />
+            {/* the flaps in front of the letter: their shadow falls onto it */}
+            <g filter={`url(#${id('flapShadow')})`}>
+              {/* the bottom flap */}
+              <path d={POCKET} fill={`url(#${id('pocket')})`} />
+              {/* the side flaps folded in */}
+              <path d={SIDE_LEFT} fill={`url(#${id('side')})`} />
+              <path d={SIDE_RIGHT} fill={`url(#${id('side')})`} />
+            </g>
+
             <path d={POCKET} fill="none" stroke="#c9ba9f" strokeWidth="1.1" opacity="0.6" />
 
             {/* seams from the bottom corners to the side flaps */}
             <path d="M26 619 L290 453" fill="none" stroke="#b9a98d" opacity="0.45" />
             <path d="M614 619 L350 453" fill="none" stroke="#b9a98d" opacity="0.45" />
-
-            {/* the side flaps folded in, in front of the letter */}
-            <path d={SIDE_LEFT} fill={`url(#${id('side')})`} />
-            <path d={SIDE_RIGHT} fill={`url(#${id('side')})`} />
 
             {/* the contour: left, bottom, right — the top edge stays open */}
             <path d={OUTLINE} fill="none" stroke="#c9bba3" />

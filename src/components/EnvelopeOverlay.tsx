@@ -97,7 +97,8 @@ export function EnvelopeOverlay() {
 
   const layer = (part: 'back' | 'front', z: string) => (
     <div aria-hidden="true" className={`pointer-events-none fixed inset-x-0 bottom-0 ${z}`}>
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+      {/* no side padding: the envelope reaches past the letter's edges */}
+      <div className="mx-auto w-full max-w-5xl">
         <div
           style={{
             aspectRatio: `${BODY_ASPECT}`,
