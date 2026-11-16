@@ -355,7 +355,15 @@ export interface ConnectOptions {
   fetchImpl?: typeof fetch
   /** Called with the `wc:` pairing string when a wallet is deep-linked. */
   onPairing?: (uri: string) => void
+  /**
+   * Which road the pairing took. `dialog` on a HashPack/Kabila click means no
+   * extension answered the handshake — worth saying out loud in the UI, because
+   * a QR code after clicking "HashPack" otherwise looks like a bug.
+   */
+  onRoute?: (route: ConnectRoute) => void
 }
+
+export type ConnectRoute = 'extension' | 'deep-link' | 'dialog'
 
 /**
  * Open a session. Returns the account the wallet approved, or throws a
@@ -375,12 +383,14 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
     // 1. An extension that answers the Hedera handshake connects directly.
     const extension = kind === 'walletconnect' ? null : await waitForExtension(instance, kind)
     if (extension) {
+      options.onRoute?.('extension')
       await withTimeout(
         instance.connectExtension(extension.id),
         CONNECT_TIMEOUT_MS,
         'The wallet did not answer in time. Please try again.',
       )
     } else if (kind === 'walletconnect') {
+      options.onRoute?.('dialog')
       await withTimeout(
         // `true` = reject when the pairing dialog is closed, so closing it is an
         // answer ("rejected") instead of a wait that only the timeout ends.
@@ -393,6 +403,7 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
       const link = await walletLink(kind, config.walletConnectProjectId, options.fetchImpl ?? fetch)
       const target = isMobileWalletTarget(options.userAgent)
       if (link && target) {
+        options.onRoute?.('deep-link')
         await withTimeout(
           instance.connect((uri) => {
             options.onPairing?.(uri)
@@ -404,6 +415,7 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
       } else {
         // 3. …and on a desktop without the extension, the pairing dialog is the
         // only path left: it shows the code the wallet pastes or scans.
+        options.onRoute?.('dialog')
         await withTimeout(
           instance.openModal(undefined, true),
           CONNECT_TIMEOUT_MS,

@@ -5,6 +5,7 @@ import {
   disconnect as closeSessions,
   hasStoredSession,
   restore,
+  type ConnectRoute,
   type WalletKind,
 } from '../lib/wallet'
 
@@ -15,10 +16,12 @@ export interface WalletState {
   accountId: string | null
   /** The wallet the reader picked; null once a session was restored. */
   kind: WalletKind | null
+  /** How the pairing is being made, once the attempt got that far. */
+  route: ConnectRoute | null
   error: string | null
 }
 
-const IDLE: WalletState = { status: 'idle', accountId: null, kind: null, error: null }
+const IDLE: WalletState = { status: 'idle', accountId: null, kind: null, route: null, error: null }
 
 export interface WalletApi extends WalletState {
   connect: (kind: WalletKind) => Promise<void>
@@ -46,7 +49,7 @@ export function useWallet(): WalletApi {
       if (cancelled || attempt.current !== 0) return
       setState(
         session
-          ? { status: 'connected', accountId: session.accountId, kind: null, error: null }
+          ? { status: 'connected', accountId: session.accountId, kind: null, route: null, error: null }
           : IDLE,
       )
     })
@@ -58,14 +61,18 @@ export function useWallet(): WalletApi {
 
   const connect = useCallback(async (kind: WalletKind) => {
     const current = ++attempt.current
-    setState({ status: 'connecting', accountId: null, kind, error: null })
+    setState({ status: 'connecting', accountId: null, kind, route: null, error: null })
     try {
-      const session = await openSession(kind)
+      const session = await openSession(kind, {
+        onRoute: (route) => {
+          if (attempt.current === current) setState((state) => ({ ...state, route }))
+        },
+      })
       if (attempt.current !== current) return
-      setState({ status: 'connected', accountId: session.accountId, kind, error: null })
+      setState({ status: 'connected', accountId: session.accountId, kind, route: null, error: null })
     } catch (error) {
       if (attempt.current !== current) return
-      setState({ status: 'error', accountId: null, kind, error: describeWalletError(error) })
+      setState({ status: 'error', accountId: null, kind, route: null, error: describeWalletError(error) })
     }
   }, [])
 

@@ -123,6 +123,12 @@ export function ConnectDialog({ open, onClose, wallet }: Props) {
             <p className="mt-2 text-xs leading-relaxed text-ink-faint">
               Nothing is signed yet. This only opens a session.
             </p>
+            {wallet.route === 'dialog' && wallet.kind && wallet.kind !== 'walletconnect' ? (
+              <p className="mt-2 text-xs leading-relaxed text-ink-faint">
+                No {current ? current.label : 'wallet'} extension answered on this browser, so the pairing
+                code is the way in: scan it with the app, or paste it into the extension.
+              </p>
+            ) : null}
             <button
               type="button"
               onClick={() => {
