@@ -19,9 +19,10 @@ function usePrefersReducedMotion(): boolean {
 
 /** How much scrolling opens the envelope, in pixels. */
 const REVEAL_DISTANCE = 420
-/** How much scrolling then carries the opened envelope out of the viewport.
- *  Short enough that the drift completes on a short page too. */
-const EXIT_DISTANCE = 260
+/** How much scrolling carries the opened envelope out of the viewport. It starts
+ *  together with the reveal — the envelope sinks and fades while its flap is still
+ *  coming up — and is long enough to finish at the end of a short page. */
+const EXIT_DISTANCE = 700
 
 /** The body's proportions: 588 × 363 of the drawing's units. */
 const BODY_ASPECT = 588 / 363
@@ -64,9 +65,10 @@ export function EnvelopeOverlay() {
 
     const update = (): void => {
       // the envelope is fixed, so its viewport position never changes — both values
-      // are simply how far the page has been scrolled
+      // are simply how far the page has been scrolled. They start together: the
+      // envelope is already sinking while its flap comes up.
       const progress = clamp01(window.scrollY / REVEAL_DISTANCE)
-      const exit = clamp01((window.scrollY - REVEAL_DISTANCE) / EXIT_DISTANCE)
+      const exit = clamp01(window.scrollY / EXIT_DISTANCE)
       const previous = latest.current
       // only re-render when a value actually moves: every render repaints the whole
       // drawing, and scroll fires far more often than a frame
@@ -105,7 +107,6 @@ export function EnvelopeOverlay() {
           style={{
             aspectRatio: `${BODY_ASPECT}`,
             transform: `translateY(${shift.toFixed(2)}%)`,
-            opacity: (1 - exit).toFixed(3),
           }}
         >
           <EnvelopeSvg progress={reduced ? 1 : state.progress} className="h-full w-full" />
