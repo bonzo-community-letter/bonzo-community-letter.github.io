@@ -32,6 +32,7 @@ const REVEAL_DISTANCE = 150
  */
 export function EnvelopeOverlay() {
   const ref = useRef<HTMLDivElement | null>(null)
+  const latest = useRef(0)
   const [progress, setProgress] = useState(0)
   const reduced = usePrefersReducedMotion()
 
@@ -49,7 +50,12 @@ export function EnvelopeOverlay() {
         element.getBoundingClientRect().top + window.scrollY + 0.4 * element.offsetHeight
       // open over a fixed distance, starting once the sheet is comfortably in view
       const start = Math.max(0, untransformedTop - window.innerHeight * 0.55)
-      setProgress(clamp01((window.scrollY - start) / REVEAL_DISTANCE))
+      const next = clamp01((window.scrollY - start) / REVEAL_DISTANCE)
+      // only re-render when the value actually moves; a scroll event fires far more
+      // often than a frame, and every render repaints the whole drawing
+      if (Math.abs(next - latest.current) < 0.004) return
+      latest.current = next
+      setProgress(next)
     }
 
     const onScroll = (): void => {

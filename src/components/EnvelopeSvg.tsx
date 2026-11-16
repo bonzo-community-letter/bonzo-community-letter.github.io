@@ -45,6 +45,14 @@ const OUTLINE =
 const CLIP =
   'M26 256 L614 256 L614 612 C614 615.87 610.87 619 607 619 L33 619 C29.13 619 26 615.87 26 612 Z'
 
+/** A soft edge without a blur filter: three strokes, each narrower and stronger,
+ *  composited over one another. Cheaper than feGaussianBlur on every frame. */
+const SOFT_BANDS = [
+  { width: 24, opacity: 0.05 },
+  { width: 15, opacity: 0.06 },
+  { width: 7, opacity: 0.07 },
+]
+
 export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
   const p = clamp01(progress)
   const lifted = p >= 0.5 // past vertical: the flap's back is what we see
@@ -79,9 +87,6 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
           <stop offset="0" stopColor="#f1e8d7" />
           <stop offset="1" stopColor="#dfd2b8" />
         </linearGradient>
-        <filter id="env-soft" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="3.5" />
-        </filter>
         <filter id="env-drop" x="-40%" y="-60%" width="180%" height="220%">
           <feDropShadow dx="0" dy="14" stdDeviation="16" floodColor="#000000" floodOpacity="0.55" />
         </filter>
@@ -90,7 +95,15 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
         </clipPath>
       </defs>
 
+      {/* The drop shadow sits on a static silhouette, not on the animated content:
+          Safari re-rasterises an SVG filter on every frame in which anything inside
+          it moves, which made the whole reveal crawl. This element never changes, so
+          its filter is computed once; the opaque body covers the black shape. */}
       <g filter="url(#env-drop)">
+        <path d={CLIP} fill="#14110e" />
+      </g>
+
+      <g>
         <g clipPath="url(#env-bodyClip)">
           {/* 1 · paper behind everything, so no gap can show the page */}
           <rect x={BODY.x} y={BODY.y} width={BODY.w} height={BODY.h} fill="url(#env-face)" />
@@ -98,9 +111,21 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
           {/* 2 · the inside — always there, revealed as the flap lifts off it */}
           <path d={INTERIOR} fill="url(#env-shadow)" />
 
-          {/* 3 · the side flaps' edges casting onto the inside */}
-          <path d={SIDE_EDGE_LEFT} fill="none" stroke="#2b2417" strokeWidth="12" opacity="0.22" filter="url(#env-soft)" />
-          <path d={SIDE_EDGE_RIGHT} fill="none" stroke="#2b2417" strokeWidth="12" opacity="0.22" filter="url(#env-soft)" />
+          {/* 3 · the side flaps' edges casting onto the inside. Stacked strokes of
+               decreasing width, not a blur filter: Safari re-rasterises an SVG filter
+               in every frame where anything inside its region changes. */}
+          {SOFT_BANDS.map((band) => (
+            <g
+              key={band.width}
+              fill="none"
+              stroke="#2b2417"
+              strokeWidth={band.width}
+              opacity={band.opacity}
+            >
+              <path d={SIDE_EDGE_LEFT} />
+              <path d={SIDE_EDGE_RIGHT} />
+            </g>
+          ))}
 
           {/* 4 · the bottom flap */}
           <path d={POCKET} fill="url(#env-pocket)" />
@@ -115,14 +140,10 @@ export function EnvelopeSvg({ progress = 0, className }: EnvelopeSvgProps) {
              go at once: the flap is off the paper after the first few pixels of
              scroll, and a shadow left behind floats on its own. */}
         {p < 0.12 ? (
-          <path
-            d={FLAP_SHADOW}
-            fill="none"
-            stroke="#5a4d3a"
-            strokeWidth="7"
-            opacity={(0.1 * (1 - p / 0.12)).toFixed(3)}
-            filter="url(#env-soft)"
-          />
+          <g fill="none" stroke="#5a4d3a" opacity={(1 - p / 0.12).toFixed(3)}>
+            <path d={FLAP_SHADOW} strokeWidth="11" opacity="0.05" />
+            <path d={FLAP_SHADOW} strokeWidth="5" opacity="0.06" />
+          </g>
         ) : null}
 
         <g clipPath="url(#env-bodyClip)">
