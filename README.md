@@ -158,13 +158,14 @@ operator rights once (`sudo tailscale set --operator=$USER`); then run with `PUB
 **Wallets do not work over plain HTTP from a hostname.** `http://<host>.<tailnet>.ts.net:5173` is not a
 secure context, so the browser withholds `crypto.subtle` and the WalletConnect handshake can never
 complete — the dialog says so instead of hanging. `localhost`/`127.0.0.1` are secure contexts and do
-work. To test a wallet from another device, put HTTPS in front:
+work. To test a wallet from another device, put HTTPS in front (once, on the machine that runs Vite):
 
 ```bash
-tailscale serve --bg 5173            # https://<host>.<tailnet>.ts.net/
-PUBLIC_DEV_PROXY=1 npm run dev:tailnet
+sudo tailscale serve --bg 5173              # https://<host>.<tailnet>.ts.net/ → 127.0.0.1:5173
+PUBLIC_DEV_PROXY=1 npm run dev:tailnet      # binds loopback + HMR over wss:443
 ```
 
+`tailscale serve` keeps serving after the command returns (`--bg`); `tailscale serve reset` removes it.
 The deployed site is HTTPS on GitHub Pages, so this only bites during local testing.
 
 ## Configuration
