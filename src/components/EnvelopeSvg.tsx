@@ -36,7 +36,7 @@ const BODY = { x: 26, y: 256, w: 588, h: 363 }
 /** The body's paper is carried on below it by this much, inside the viewBox: a browser
  *  that ends a fixed layer above the screen's bottom would otherwise show the letter
  *  through the address bar instead of the envelope. */
-const SKIRT = 320
+const SKIRT = 0
 const VIEW_H = BODY.h + SKIRT
 
 /** The drawing's box, for the layer that places it: it is taller than the body by the
@@ -60,6 +60,9 @@ const FLAP_SHADOW = `M33 ${HINGE + 3} L320 ${FLAP_TIP + 3} L607 ${HINGE + 3}`
 const INTERIOR = FLAP
 const POCKET =
   'M26 619 L290.2 452.75 C290.2 452.75 308.26 443 320 443 C331.78 443 349.91 452.82 349.91 452.82 L614 619 Z'
+/** the pocket's top edge, for the soft shadow it casts onto the letter */
+const POCKET_EDGE =
+  'M26 619 L290.2 452.75 C290.2 452.75 308.26 443 320 443 C331.78 443 349.91 452.82 349.91 452.82 L614 619'
 const SIDE_LEFT = 'M26 619 L290 453 C290 453 138 321 57 261 C50 256 26 256 26 256 Z'
 const SIDE_RIGHT = 'M614 619 L350 453 C350 453 502 321 583 261 C590 256 614 256 614 256 Z'
 const SIDE_EDGE_LEFT = 'M26 256 C26 256 50 256 57 261 C138 321 290 453 290 453'
@@ -163,11 +166,6 @@ export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', 
         <filter id={id('drop')} x="-40%" y="-60%" width="180%" height="220%">
           <feDropShadow dx="0" dy="14" stdDeviation="16" floodColor="#000000" floodOpacity="0.55" />
         </filter>
-        {/* the flaps in front of the letter throw a little shadow onto it. The group
-            they are applied to never moves, so Safari rasterises this once. */}
-        <filter id={id('flapShadow')} x="-20%" y="-25%" width="140%" height="150%">
-          <feDropShadow dx="0" dy="-5" stdDeviation="7" floodColor="#2a2118" floodOpacity="0.22" />
-        </filter>
         <clipPath id={id('bodyClip')}>
           <path d={CLIP} />
         </clipPath>
@@ -222,14 +220,20 @@ export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', 
       ) : (
         <>
           <g clipPath={`url(#${id('bodyClip')})`}>
-            {/* the flaps in front of the letter: their shadow falls onto it */}
-            <g filter={`url(#${id('flapShadow')})`}>
-              {/* the bottom flap */}
-              <path d={POCKET} fill={`url(#${id('pocket')})`} />
-              {/* the side flaps folded in */}
-              <path d={SIDE_LEFT} fill={`url(#${id('side')})`} />
-              <path d={SIDE_RIGHT} fill={`url(#${id('side')})`} />
+            {/* the flaps in front of the letter: soft bands along their inner edges,
+                which a phone can draw without rasterising a filter per frame */}
+            <g fill="none" stroke="#2a2118">
+              <path d={POCKET_EDGE} strokeWidth="16" opacity="0.05" />
+              <path d={POCKET_EDGE} strokeWidth="9" opacity="0.06" />
+              <path d={POCKET_EDGE} strokeWidth="4" opacity="0.07" />
             </g>
+
+            {/* the bottom flap */}
+            <path d={POCKET} fill={`url(#${id('pocket')})`} />
+
+            {/* the side flaps folded in */}
+            <path d={SIDE_LEFT} fill={`url(#${id('side')})`} />
+            <path d={SIDE_RIGHT} fill={`url(#${id('side')})`} />
 
             <path d={POCKET} fill="none" stroke="#c9ba9f" strokeWidth="1.1" opacity="0.6" />
 
@@ -240,12 +244,6 @@ export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', 
             {/* the contour: left, bottom, right — the top edge stays open */}
             <path d={OUTLINE} fill="none" stroke="#c9bba3" />
           </g>
-
-          {/* The body's paper carried on below its bottom edge. Part of the viewBox, so
-              no browser can clip it: one that ends a fixed layer above the screen's bottom
-              would otherwise show the letter through the address bar. Everywhere else it
-              is off-screen. */}
-          <rect x={BODY.x} y={BODY.y + BODY.h} width={BODY.w} height={SKIRT} fill="#dccfb4" />
 
           {/* while sealed the flap lies on the body, so it is painted here, on top */}
           {lifted ? null : flap}

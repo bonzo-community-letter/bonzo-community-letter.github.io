@@ -81,6 +81,7 @@ export const ENVELOPE = {
 export function EnvelopeOverlay() {
   const front = useRef<HTMLDivElement | null>(null)
   const back = useRef<HTMLDivElement | null>(null)
+  const tint = useRef<HTMLDivElement | null>(null)
   const latest = useRef({ progress: 0, exit: 0, lifted: false })
   const [lifted, setLifted] = useState(false)
   const reduced = usePrefersReducedMotion()
@@ -97,6 +98,9 @@ export function EnvelopeOverlay() {
       const transform = `translateY(${shift.toFixed(2)}%)`
       if (front.current) front.current.style.transform = transform
       if (back.current) back.current.style.transform = transform
+      // the tint strip belongs to the envelope: once it starts to leave, the bottom of
+      // the screen is the letter again and the bar should show that
+      if (tint.current) tint.current.style.opacity = exit > 0.02 ? '0' : '1'
 
       const flap = document.querySelector<SVGGElement>('[data-flap]')
       if (flap) {
@@ -158,7 +162,7 @@ export function EnvelopeOverlay() {
     <div aria-hidden="true" className={`envelope-layer pointer-events-none fixed inset-x-0 top-0 flex items-end ${z}`}>
       {/* a little air at the sides, at every width: the envelope reaches past the
           letter's edges, but never touches the screen's */}
-      <div className="mx-auto w-full max-w-5xl px-3">
+      <div className="relative mx-auto w-full max-w-5xl px-3">
         <div
           ref={part === 'front' ? front : back}
           data-envelope={part}
@@ -169,10 +173,22 @@ export function EnvelopeOverlay() {
             aspectRatio: `${ENVELOPE_VIEW.width} / ${ENVELOPE_VIEW.height}`,
             marginBottom: `-${(ENVELOPE_VIEW.skirtOfWidth * 100).toFixed(3)}%`,
             transform: `translateY(${(BODY_HIDDEN * ENVELOPE_VIEW.bodyShare * 100).toFixed(2)}%)`,
+            willChange: 'transform',
           }}
         >
           <EnvelopeSvg part={part} lifted={lifted} className="h-full w-full" />
         </div>
+
+        {/* iOS Safari stops a fixed element at the bottom bar, so the envelope cannot
+            reach behind it — but an element that touches the bar tints it with its own
+            background colour. This strip is that colour, and is what the bar picks up. */}
+        {part === 'front' ? (
+          <div
+            ref={tint}
+            aria-hidden="true"
+            className="absolute inset-x-0 bottom-0 h-2 bg-[#dccfb4] transition-opacity duration-150"
+          />
+        ) : null}
       </div>
     </div>
   )
