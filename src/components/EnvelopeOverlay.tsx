@@ -154,13 +154,6 @@ export function EnvelopeOverlay() {
           }}
         >
           <EnvelopeSvg part={part} progress={progress} className="h-full w-full" />
-          {/* The body's paper carried on below its bottom edge. iOS Safari can end a
-              fixed element above the screen's bottom — at the address bar — and then the
-              letter shows through the translucent bar instead of the envelope. This is
-              below the viewport everywhere the browser agrees with itself. */}
-          {part === 'front' ? (
-            <div aria-hidden="true" className="absolute inset-x-0 top-full h-[260px] bg-[#dccfb4]" />
-          ) : null}
         </div>
       </div>
     </div>

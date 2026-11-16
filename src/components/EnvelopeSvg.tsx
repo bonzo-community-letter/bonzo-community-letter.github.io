@@ -217,6 +217,12 @@ export function EnvelopeSvg({ progress = 0, part = 'front', className }: Envelop
             <path d={OUTLINE} fill="none" stroke="#c9bba3" />
           </g>
 
+          {/* The body's paper carried on below its bottom edge, drawn outside the viewBox
+              (the SVG lets it out). iOS Safari can end a fixed element above the screen's
+              bottom — at the address bar — and then the letter shows through the
+              translucent bar instead of the envelope. Everywhere else this is off-screen. */}
+          <rect x={BODY.x} y={BODY.y + BODY.h} width={BODY.w} height={420} fill="#dccfb4" />
+
           {/* while sealed the flap lies on the body, so it is painted here, on top */}
           {lifted ? null : flap}
         </>
