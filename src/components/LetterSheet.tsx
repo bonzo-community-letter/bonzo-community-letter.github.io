@@ -2,7 +2,6 @@ import { useLayoutEffect, useRef } from 'react'
 import { page } from '../content/page'
 import { ENVELOPE, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
-import { WaxSeal } from './WaxSeal'
 import { letterText } from 'virtual:letter'
 
 /** How far through the flap's travel the paper should reach the fold. */
@@ -156,11 +155,6 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
               </span>
               <span className="font-mono text-[0.6875rem] text-sheet-ink-faint">{letterHash.slice(0, 16)}…</span>
             </div>
-          </div>
-
-          {/* the seal hangs over the sheet's edge, as a seal does */}
-          <div className="pointer-events-none absolute -bottom-8 right-6 -rotate-[7deg] sm:-bottom-10 sm:right-14">
-            <WaxSeal monogram={page.seal.monogram} className="h-auto w-[88px] sm:w-[120px]" />
           </div>
         </article>
       </div>
