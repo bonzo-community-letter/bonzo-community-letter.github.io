@@ -20,6 +20,14 @@ export const page = {
 
   status: 'Draft — not yet published',
 
+  /**
+   * The wax seal closing the letter. The monogram is the campaign's own mark —
+   * never a third party's logo, which would read as their endorsement of the text.
+   */
+  seal: {
+    monogram: 'OL',
+  },
+
   letterhead: {
     date: '15 November 2026',
     to: 'Hedera, the HBAR Foundation, Supra Labs and the Bonzo Finance Foundation',
