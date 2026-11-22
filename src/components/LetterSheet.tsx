@@ -1,8 +1,8 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { page } from '../content/page'
 import { ENVELOPE, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
-import { SignatureBlock } from './SignatureBlock'
+import { SignDialog } from './SignDialog'
 import type { WalletApi } from '../hooks/useWallet'
 import { letterText } from 'virtual:letter'
 
@@ -114,6 +114,7 @@ export function LetterSheet({
 }) {
   const wrapper = useRef<HTMLDivElement | null>(null)
   const sheet = useRef<HTMLDivElement | null>(null)
+  const [signOpen, setSignOpen] = useState(false)
   useStartDepth(wrapper, sheet)
 
   const paragraphs = letterText
@@ -162,13 +163,17 @@ export function LetterSheet({
             )}
           </div>
 
-          <SignatureBlock
-            wallet={wallet}
-            letterHash={letterHash}
-            count={signatureCount}
-            onConnect={onConnect}
-            onSigned={onSigned}
-          />
+          {/* The letter keeps one action, nothing else: the rest lives in the dialog. */}
+          <div className="mt-10">
+            <button
+              type="button"
+              onClick={() => setSignOpen(true)}
+              aria-haspopup="dialog"
+              className="rounded-sm border border-sheet-ink bg-sheet-ink px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet transition-opacity hover:opacity-85"
+            >
+              Add signature
+            </button>
+          </div>
 
           <div className="mt-8 border-t border-sheet-rule pt-4">
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
@@ -180,6 +185,16 @@ export function LetterSheet({
           </div>
         </article>
       </div>
+
+      <SignDialog
+        open={signOpen}
+        onClose={() => setSignOpen(false)}
+        wallet={wallet}
+        letterHash={letterHash}
+        count={signatureCount}
+        onConnect={onConnect}
+        onSigned={onSigned}
+      />
     </div>
   )
 }

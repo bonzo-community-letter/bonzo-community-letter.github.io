@@ -343,11 +343,15 @@ bonzo-exploit-open-letter:v1:<letterHash>
 
 ### How a signature is made
 
-`Add your signature`, at the end of the letter, is the only write path on the page:
+`Add your signature`, at the end of the letter, is the only write path on the page — and the letter keeps
+nothing but the button. It opens a dialog, because the warning, the comment and the exact bytes belong
+where the reader went on purpose, not in the middle of the text they came to read.
 
-1. The reader connects a wallet — from the top bar or from the block itself. It is **one session**,
-   held in `App`, so the bar and the block can never disagree about who is connected.
-2. They may write a comment, capped at 512 UTF-8 bytes; the counter turns red past it.
+1. The reader connects a wallet — from the top bar or from the dialog itself. It is **one session**,
+   held in `App`, so the bar and the dialog can never disagree about who is connected.
+2. Above the comment field the dialog says what the comment is: public, permanent, impossible to edit or
+   delete, and no place for insults. The field itself stays a field, capped at 512 UTF-8 bytes, with the
+   counter turning red past it.
 3. `What will be published` shows the exact message, with the timestamp left as a placeholder — it is
    stamped at submission.
 4. `buildSignature()` checks everything the contract requires before a wallet is involved, so the page
@@ -358,7 +362,7 @@ bonzo-exploit-open-letter:v1:<letterHash>
 6. The transaction id comes back, the block links it on HashScan, and the feed re-reads the topic
    immediately instead of waiting for its next minute.
 
-With no topic configured, the block says signing opens at launch and offers no button.
+With no topic configured, the dialog says signing opens at launch and the button signs nothing.
 
 ### The hash is computed at build time
 
