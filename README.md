@@ -176,7 +176,7 @@ All public. Never a Hedera private key or account secret — the page has no way
 
 | variable | meaning |
 |---|---|
-| `VITE_HEDERA_NETWORK` | **the switch**: `mainnet` or `testnet` (default `testnet`) |
+| `VITE_HEDERA_NETWORK` | **the switch**: `mainnet` or `testnet` (default `mainnet`) |
 | `VITE_HCS_TOPIC_ID_TESTNET` | signature topic on testnet. Empty ⇒ signing closed, no messages read |
 | `VITE_HCS_TOPIC_ID_MAINNET` | signature topic on mainnet. Empty ⇒ signing closed, no messages read |
 | `VITE_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project id for the wallet handshake |
@@ -341,6 +341,25 @@ Topic memo convention: `<subject>:v<version>:<letterHash>`, e.g.
 bonzo-exploit-open-letter:v1:<letterHash>
 ```
 
+### How a signature is made
+
+`Add your signature`, at the end of the letter, is the only write path on the page:
+
+1. The reader connects a wallet — from the top bar or from the block itself. It is **one session**,
+   held in `App`, so the bar and the block can never disagree about who is connected.
+2. They may write a comment, capped at 512 UTF-8 bytes; the counter turns red past it.
+3. `What will be published` shows the exact message, with the timestamp left as a placeholder — it is
+   stamped at submission.
+4. `buildSignature()` checks everything the contract requires before a wallet is involved, so the page
+   never asks for a signature that would fail on chain.
+5. `submitTopicMessage()` freezes a `TopicMessageSubmitTransaction` — topic, message, transaction id,
+   node ids — and hands it to the wallet through `hedera_signAndExecuteTransaction`. The wallet signs and
+   pays; the page never sees a key.
+6. The transaction id comes back, the block links it on HashScan, and the feed re-reads the topic
+   immediately instead of waiting for its next minute.
+
+With no topic configured, the block says signing opens at launch and offers no button.
+
 ### The hash is computed at build time
 
 `build/letter-hash.ts` is a Vite plugin: it bundles `src/content/letter.ts` with esbuild, imports it,
@@ -354,9 +373,8 @@ every signature meaningless. Signing must stay closed until the text exists.
 
 ## Still open
 
-Content, layout, the signing UI (the wallet *session* exists; `submitTopicMessage()` in
-`src/lib/wallet.ts` is the submit path, not yet wired to a button), topic creation, and the awareness
-campaign.
+The letter's text, topic creation (the block stays closed until `VITE_HCS_TOPIC_ID_MAINNET` is set), and
+the awareness campaign.
 
 **Decided:** comments are shown in full, from everyone, uncensored. Two consequences to build for:
 

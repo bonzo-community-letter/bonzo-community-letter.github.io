@@ -16,7 +16,7 @@ const read = (key: string): string => {
  * `DEFAULT_NETWORK` below. There is deliberately no runtime toggle: a reader
  * must never be able to sign on a network the letter was not published on.
  */
-export const DEFAULT_NETWORK: HederaNetwork = 'testnet'
+export const DEFAULT_NETWORK: HederaNetwork = 'mainnet'
 
 const requested = read('VITE_HEDERA_NETWORK').toLowerCase()
 

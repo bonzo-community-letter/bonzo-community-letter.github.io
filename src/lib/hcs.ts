@@ -229,6 +229,18 @@ export function hashscanTopicUrl(network: HederaNetwork, topicId: string): strin
   return `https://${host}/topic/${topicId}`
 }
 
+/**
+ * HashScan wants `shard.realm.num-seconds-nanos`, while wallets hand the
+ * transaction id back as `shard.realm.num@seconds.nanos`. Both are the same
+ * transaction; this is only the URL spelling.
+ */
+export function hashscanTransactionUrl(network: HederaNetwork, transactionId: string): string {
+  const trimmed = transactionId.trim()
+  const [account, timestamp] = trimmed.split('@')
+  const normalised = timestamp ? `${account}-${timestamp.replace('.', '-')}` : trimmed
+  return `${HASHSCAN_BASE[network]}/transaction/${normalised}`
+}
+
 export interface FetchOptions {
   network: HederaNetwork
   topicId: string

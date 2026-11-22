@@ -4,6 +4,7 @@ import {
   buildSignature,
   decodeMessage,
   encodePayload,
+  hashscanTransactionUrl,
   parseMessages,
   payloadByteLength,
   sha256Hex,
@@ -177,6 +178,20 @@ describe('parseMessages', () => {
     expect(sig?.comment).toBe('a supplier')
     expect(sig?.consensusTimestamp).toBe('1700000007.000000000')
     expect(sig?.payerAccountId).toBe('0.0.1234')
+  })
+})
+
+describe('hashscanTransactionUrl', () => {
+  it('rewrites the wallet form into the explorer form', () => {
+    expect(hashscanTransactionUrl('mainnet', '0.0.1234@1700000000.123456789')).toBe(
+      'https://hashscan.io/mainnet/transaction/0.0.1234-1700000000-123456789',
+    )
+  })
+
+  it('leaves an already-normalised id alone', () => {
+    expect(hashscanTransactionUrl('testnet', '0.0.1234-1700000000-123456789')).toBe(
+      'https://hashscan.io/testnet/transaction/0.0.1234-1700000000-123456789',
+    )
   })
 })
 

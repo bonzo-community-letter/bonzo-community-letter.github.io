@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fetchSignatures, type Signature } from '../lib/hcs'
 import { config } from '../config'
 
@@ -13,6 +13,11 @@ export interface SignatureQuery {
   letterHash: string
 }
 
+export type SignatureFeed = SignatureState & {
+  /** Re-read the topic now — after a signature was submitted, waiting a minute is silly. */
+  refresh: () => void
+}
+
 /**
  * Reads the topic from the public mirror node. No backend, no key, no tracking:
  * one GET to a public API, repeated every minute while the tab is open.
@@ -20,8 +25,10 @@ export interface SignatureQuery {
  * Both the slug and the hash come from the build (virtual:letter), so the page
  * can never read a different version of the letter than the one it shows.
  */
-export function useSignatures({ subject, letterHash }: SignatureQuery): SignatureState {
+export function useSignatures({ subject, letterHash }: SignatureQuery): SignatureFeed {
   const [state, setState] = useState<SignatureState>({ status: 'closed', signatures: [] })
+  const [refreshKey, setRefreshKey] = useState(0)
+  const refresh = useCallback(() => setRefreshKey((key) => key + 1), [])
 
   useEffect(() => {
     if (!config.topicId || !letterHash) {
@@ -61,7 +68,7 @@ export function useSignatures({ subject, letterHash }: SignatureQuery): Signatur
       controller.abort()
       window.clearInterval(timer)
     }
-  }, [subject, letterHash])
+  }, [subject, letterHash, refreshKey])
 
-  return state
+  return { ...state, refresh }
 }

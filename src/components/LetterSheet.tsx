@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef } from 'react'
 import { page } from '../content/page'
 import { ENVELOPE, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
+import { SignatureBlock } from './SignatureBlock'
+import type { WalletApi } from '../hooks/useWallet'
 import { letterText } from 'virtual:letter'
 
 /** How far through the flap's travel the paper should reach the fold. */
@@ -97,7 +99,19 @@ function useStartDepth(
  * It sits at z-20: above the envelope's standing flap and below its body, so it can
  * emerge from the envelope as the page scrolls.
  */
-export function LetterSheet({ letterHash }: { letterHash: string }) {
+export function LetterSheet({
+  letterHash,
+  wallet,
+  signatureCount,
+  onConnect,
+  onSigned,
+}: {
+  letterHash: string
+  wallet: WalletApi
+  signatureCount: number | null
+  onConnect: () => void
+  onSigned: () => void
+}) {
   const wrapper = useRef<HTMLDivElement | null>(null)
   const sheet = useRef<HTMLDivElement | null>(null)
   useStartDepth(wrapper, sheet)
@@ -148,7 +162,15 @@ export function LetterSheet({ letterHash }: { letterHash: string }) {
             )}
           </div>
 
-          <div className="mt-10 border-t border-sheet-rule pt-4">
+          <SignatureBlock
+            wallet={wallet}
+            letterHash={letterHash}
+            count={signatureCount}
+            onConnect={onConnect}
+            onSigned={onSigned}
+          />
+
+          <div className="mt-8 border-t border-sheet-rule pt-4">
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
               <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-sheet-ink-faint">
                 Signed on the Hedera Consensus Service
