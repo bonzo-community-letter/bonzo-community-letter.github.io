@@ -341,6 +341,29 @@ Topic memo convention: `<subject>:v<version>:<letterHash>`, e.g.
 bonzo-exploit-open-letter:v1:<letterHash>
 ```
 
+### Creating the topic
+
+`scripts/create-topic.mjs` creates it with **no admin key and no submit key**: anyone can write, nobody
+can censor, edit or delete. It runs on your machine and reads the key from the environment or a file —
+never from an argument, so it stays out of your shell history, and it is never printed.
+
+```bash
+# key in a file (recommended — the shell does not keep it)
+HEDERA_ACCOUNT_ID=0.0.1234 node scripts/create-topic.mjs --key-file ~/.hedera-open-letter.key
+
+# or from the environment
+HEDERA_ACCOUNT_ID=0.0.1234 HEDERA_PRIVATE_KEY=302e... npm run topic:create -- --network mainnet
+```
+
+It prints the account and its balance, asks before spending, and ends with the topic id, its HashScan
+link, and the two repository variables to set.
+
+The default memo is `bonzo-exploit-open-letter:v1` — deliberately **not** the full
+`<subject>:v1:<hash>` convention: a topic memo is immutable, and the letter's text (and with it the hash)
+is not final yet. Once the text is frozen, pass `--memo "bonzo-exploit-open-letter:v1:<hash>"`;
+`npm run build` prints the current hash. What each signature binds to is the hash in the message, which
+the reader filters on anyway.
+
 ### How a signature is made
 
 `Add your signature`, at the end of the letter, is the only write path on the page — and the letter keeps
