@@ -40,6 +40,9 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          # The site is served from the root of the custom domain, so the assets
+          # live at /assets/… — not at /open-letter/assets/… like a project page.
+          VITE_BASE: /
           # Public by design — these end up in the client bundle. Never a secret.
           VITE_HEDERA_NETWORK: ${{ vars.VITE_HEDERA_NETWORK }}
           VITE_HCS_TOPIC_ID_TESTNET: ${{ vars.VITE_HCS_TOPIC_ID_TESTNET }}

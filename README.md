@@ -129,8 +129,10 @@ npm run dev                    # http://localhost:5173/open-letter/
 | `npm run build` | typecheck + production build into `dist/` |
 | `npm run preview` | serves the **built** site at `/open-letter/` — check asset paths here, not in dev |
 
-`base` in `vite.config.ts` is `/open-letter/` because this is a GitHub Pages *project* page. A custom
-domain means changing it to `/`.
+`base` in `vite.config.ts` defaults to `/open-letter/` (the shape of a GitHub Pages *project* page) and
+CI overrides it with `VITE_BASE=/`, because the site is published on a custom domain served from the
+root: **https://bonzo-community-letter.com/**. To match production locally, put `VITE_BASE=/` in
+`.env.local` — otherwise the dev server lives at `/open-letter/`.
 
 ### Seeing it from another device (tailnet)
 

@@ -21,10 +21,10 @@ const hmr =
     ? { host: publicDevHost, protocol: 'wss' as const, clientPort: 443 }
     : undefined
 
-// GitHub Pages project site: https://<owner>.github.io/open-letter/
-// `base` must match the repository name, otherwise every asset 404s in production.
-// For a custom domain (letter.example.org), or for a static copy served from a
-// folder root, set base to '/':  VITE_BASE=/ npm run build
+// The site is published on a custom domain (bonzo-community-letter.com), served
+// from the root — so `base` is '/' in production and CI sets VITE_BASE=/.
+// Without a custom domain it would be a GitHub Pages project page, and base would
+// have to match the repository name ('/open-letter/'), or every asset 404s.
 const base = process.env.VITE_BASE?.trim() || '/open-letter/'
 
 export default defineConfig({
