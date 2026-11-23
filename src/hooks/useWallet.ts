@@ -3,8 +3,12 @@ import {
   connect as openSession,
   describeWalletError,
   disconnect as closeSessions,
+  hasConnectedBefore,
   hasStoredSession,
+  isWalletReturn,
   restore,
+  RETURN_PARAM,
+  watchSession,
   type ConnectRoute,
   type WalletKind,
 } from '../lib/wallet'
@@ -14,7 +18,7 @@ export type WalletStatus = 'idle' | 'restoring' | 'connecting' | 'connected' | '
 export interface WalletState {
   status: WalletStatus
   accountId: string | null
-  /** The wallet the reader picked; null once a session was restored. */
+  /** The wallet the user picked; null once a session was restored. */
   kind: WalletKind | null
   /** How the pairing is being made, once the attempt got that far. */
   route: ConnectRoute | null
@@ -22,6 +26,18 @@ export interface WalletState {
 }
 
 const IDLE: WalletState = { status: 'idle', accountId: null, kind: null, route: null, error: null }
+
+/** How long the page waits for a session after a wallet app sent the user back. */
+const RETURN_WAIT_MS = 20_000
+
+/** Drop the marker from the address bar, so a reload does not wait again. */
+function clearReturnMarker(): void {
+  if (typeof location === 'undefined' || typeof history === 'undefined') return
+  const url = new URL(location.href)
+  if (!url.searchParams.has(RETURN_PARAM)) return
+  url.searchParams.delete(RETURN_PARAM)
+  history.replaceState(null, '', url.toString())
+}
 
 export interface WalletApi extends WalletState {
   connect: (kind: WalletKind) => Promise<void>
@@ -32,8 +48,10 @@ export interface WalletApi extends WalletState {
 
 /**
  * The wallet session as React state. A session this browser already holds is
- * picked up on mount without prompting — but only if one is in storage, so a
- * first-time reader never loads the wallet libraries at all.
+ * picked up on mount without prompting, but only if this browser has connected
+ * before, so a first-time reader never loads the wallet libraries at all.
+ * Nothing about the session is persisted by this page beyond the one marker in
+ * `lib/wallet`.
  */
 export function useWallet(): WalletApi {
   const [state, setState] = useState<WalletState>(IDLE)
@@ -41,21 +59,42 @@ export function useWallet(): WalletApi {
   const attempt = useRef(0)
 
   useEffect(() => {
-    if (!hasStoredSession()) return
     let cancelled = false
 
-    setState({ ...IDLE, status: 'restoring' })
-    void restore().then((session) => {
+    const settle = (session: { accountId: string } | null): void => {
       if (cancelled || attempt.current !== 0) return
       setState(
         session
           ? { status: 'connected', accountId: session.accountId, kind: null, route: null, error: null }
           : IDLE,
       )
+    }
+
+    // A session this browser already holds is read back, never re-negotiated:
+    // connector init rebuilds the signers from storage, and a wallet is not
+    // asked anything. A browser that connected before (WalletConnect's own
+    // storage, or an extension it used) is the only one that pays for it —
+    // plus the one a wallet app has just sent back here.
+    const returning = isWalletReturn()
+    const known = hasStoredSession() || hasConnectedBefore()
+    if (!known && !returning) return
+    setState({ ...IDLE, status: 'restoring' })
+    void restore(returning ? { waitMs: RETURN_WAIT_MS } : {}).then((session) => {
+      settle(session)
+      if (returning) clearReturnMarker()
+    })
+
+    // The one-shot read above is not enough on a phone: the wallet's approval
+    // can land a moment later, and the page must pick it up by itself instead
+    // of waiting for the user to press Connect again.
+    const stopWatching = watchSession((session) => {
+      if (cancelled || attempt.current !== 0) return
+      setState({ status: 'connected', accountId: session.accountId, kind: null, route: null, error: null })
     })
 
     return () => {
       cancelled = true
+      stopWatching()
     }
   }, [])
 

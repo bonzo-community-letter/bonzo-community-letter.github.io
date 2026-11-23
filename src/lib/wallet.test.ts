@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   HASHPACK_EXTENSION_ID,
   WalletError,
@@ -10,6 +10,10 @@ import {
   hasWebCrypto,
   isMobileWalletTarget,
   normalizeAccountId,
+  isWalletReturn,
+  pollForSession,
+  rememberedExtension,
+  hasConnectedBefore,
   walletLink,
   withTimeout,
 } from './wallet'
@@ -38,8 +42,9 @@ describe('deepLinkFor', () => {
     expect(deepLinkFor('hashpack:', 'wc:abc')).toBe('hashpack://wc?uri=wc%3Aabc')
   })
 
-  it('keeps a native scheme that has no colon', () => {
-    expect(deepLinkFor('kabila', 'wc:abc')).toBe('kabila/wc?uri=wc%3Aabc')
+  it('builds the same doubled slash from a scheme written with its slashes', () => {
+    expect(deepLinkFor('hashpack://', 'wc:abc')).toBe('hashpack://wc?uri=wc%3Aabc')
+    expect(deepLinkFor('kabila-wallet://', 'wc:abc')).toBe('kabila-wallet://wc?uri=wc%3Aabc')
   })
 
   it('encodes characters that would break the link', () => {
@@ -88,11 +93,17 @@ describe('walletLink', () => {
     },
   })
 
-  it('prefers the universal link', async () => {
+  it('prefers the app scheme, which opens the app instead of its website', async () => {
     const link = await walletLink('hashpack', projectId, (async () =>
       jsonResponse(
         listing({ slug: 'hashpack', mobile: { universal: 'https://link.hashpack.app', native: 'hashpack://' } }),
       )) as unknown as typeof fetch)
+    expect(link).toBe('hashpack://')
+  })
+
+  it('falls back to the universal link when the wallet publishes no scheme', async () => {
+    const link = await walletLink('hashpack', projectId, (async () =>
+      jsonResponse(listing({ slug: 'hashpack', mobile: { universal: 'https://link.hashpack.app' } }))) as unknown as typeof fetch)
     expect(link).toBe('https://link.hashpack.app')
   })
 
@@ -299,5 +310,98 @@ describe('describeWalletError', () => {
       'The wallet connection failed. Please try again.',
     )
     expect(describeWalletError(undefined)).toBe('The wallet connection failed. Please try again.')
+  })
+})
+
+describe('isWalletReturn', () => {
+  it('reads the marker a wallet app comes back with', () => {
+    expect(isWalletReturn('?wallet=return')).toBe(true)
+    expect(isWalletReturn('?foo=1&wallet=return')).toBe(true)
+    expect(isWalletReturn('?wallet=other')).toBe(false)
+    expect(isWalletReturn('')).toBe(false)
+  })
+})
+
+describe('pollForSession', () => {
+  it('picks up a session that only arrives after the page is up', async () => {
+    vi.useFakeTimers()
+    try {
+      const seen: string[] = []
+      let reads = 0
+      const stop = pollForSession(
+        () => {
+          reads += 1
+          return reads >= 3 ? { accountId: '0.0.5', network: 'mainnet' as const } : null
+        },
+        (session) => seen.push(session.accountId),
+        { intervalMs: 1_000, budgetMs: 10_000 },
+      )
+      await vi.advanceTimersByTimeAsync(3_500)
+      expect(seen).toEqual(['0.0.5'])
+      stop()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('stops at its budget instead of watching forever', async () => {
+    vi.useFakeTimers()
+    try {
+      let reads = 0
+      const stop = pollForSession(
+        () => {
+          reads += 1
+          return null
+        },
+        () => undefined,
+        { intervalMs: 1_000, budgetMs: 5_000 },
+      )
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(reads).toBeLessThanOrEqual(6)
+      stop()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
+describe('the connection marker', () => {
+  const withMarker = (value: string | null): void => {
+    const store = new Map<string, string>()
+    if (value !== null) store.set('treasury.wallet.extension', value)
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, next: string) => void store.set(key, next),
+        removeItem: (key: string) => void store.delete(key),
+        key: (index: number) => [...store.keys()][index] ?? null,
+        get length() {
+          return store.size
+        },
+        clear: () => store.clear(),
+      },
+    })
+  }
+  const withoutStorage = (): void => {
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: undefined })
+  }
+
+  it('reads a legacy bare kind as an extension', () => {
+    withMarker('hashpack')
+    expect(rememberedExtension()).toBe('hashpack')
+    expect(hasConnectedBefore()).toBe(true)
+    withoutStorage()
+  })
+
+  it('knows the road: only an extension road is an extension', () => {
+    withMarker('hashpack:extension')
+    expect(rememberedExtension()).toBe('hashpack')
+    withMarker('hashpack:deep-link')
+    expect(rememberedExtension()).toBeNull()
+    expect(hasConnectedBefore()).toBe(true)
+    withMarker('walletconnect:dialog')
+    expect(hasConnectedBefore()).toBe(true)
+    withoutStorage()
   })
 })

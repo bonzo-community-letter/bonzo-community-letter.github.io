@@ -4,8 +4,8 @@
  * Everything here goes through **Hedera Wallet Connect** — the HIP-820
  * implementation of the WalletConnect v2 protocol — so the page never talks to
  * a wallet's internals and never holds a key. HashPack and Kabila are reached
- * by deep-linking the pairing they would otherwise get from a QR code;
- * "WalletConnect" opens the pairing dialog itself, for every other wallet.
+ * by the extension handshake first, then the pairing deep link, then the
+ * pairing dialog — the same three roads, in the same order, on every device.
  *
  * Three rules this file exists to keep:
  *
@@ -67,11 +67,9 @@ export type WalletErrorCode =
 /**
  * The WalletConnect handshake generates an X25519 key pair with WebCrypto. The
  * browser only exposes `crypto.subtle` in a **secure context** — HTTPS, or
- * `localhost`/`127.0.0.1`. Served over plain HTTP from a hostname (a tailnet
- * name, a LAN address), `crypto.subtle` is `undefined` and the SDK's
- * `connect()` never settles: the button sits on "Connecting…" forever.
- *
- * So the page checks first and says why, instead of hanging.
+ * `localhost`/`127.0.0.1`. Served over plain HTTP from a hostname, `crypto.subtle`
+ * is `undefined` and the SDK's `connect()` never settles. localhost qualifies —
+ * but a check costs nothing and explains the rule.
  */
 export function hasWebCrypto(): boolean {
   const subtle = (globalThis.crypto as Crypto | undefined)?.subtle
@@ -91,7 +89,7 @@ export class WalletError extends Error {
   }
 }
 
-/** Shown to the reader — never a stack trace, never a raw SDK message. */
+/** Shown to the user — never a stack trace, never a raw SDK message. */
 export function describeWalletError(error: unknown): string {
   if (error instanceof WalletError) return error.message
   const raw = error instanceof Error ? error.message : String(error ?? '')
@@ -115,10 +113,6 @@ export function describeWalletError(error: unknown): string {
  * hardcode `hashpack://…` or a universal link: the registry is where a wallet
  * publishes the one it keeps working, and guessing it is how a "Connect" button
  * silently stops opening the app.
- *
- * The registry is keyed by a hex id, and its `ids` filter takes those ids — a
- * slug returns an empty list. So: search by name, then pick the listing by slug
- * (Kabila's is `kabila-wallet`, not `kabila`), falling back to the display name.
  */
 const EXPLORER_URL = 'https://explorer-api.walletconnect.com/v3/wallets'
 
@@ -133,28 +127,56 @@ const REGISTRY: Partial<Record<WalletKind, { search: string; slug: string; name:
   kabila: { search: 'kabila', slug: 'kabila-wallet', name: 'kabila' },
 }
 
-/** The wallet's mobile link, or null when the registry cannot be read. */
-export async function walletLink(
+export interface WalletLinks {
+  /** The app's own scheme, e.g. `hashpack:` — opens the app itself. */
+  native: string | null
+  /** The https landing page — opens a website, where the app is one tap away. */
+  universal: string | null
+}
+
+/** Both mobile links the registry publishes, or two nulls. */
+export async function walletLinks(
   kind: WalletKind,
   projectId: string,
   fetchImpl: typeof fetch = fetch,
-): Promise<string | null> {
+): Promise<WalletLinks> {
+  const none: WalletLinks = { native: null, universal: null }
   const entry = REGISTRY[kind]
-  if (!entry || !projectId) return null
+  if (!entry || !projectId) return none
   try {
     const url = `${EXPLORER_URL}?projectId=${encodeURIComponent(projectId)}&entries=10&search=${encodeURIComponent(entry.search)}`
     const res = await fetchImpl(url, { headers: { accept: 'application/json' } })
-    if (!res.ok) return null
+    if (!res.ok) return none
     const body = (await res.json()) as { listings?: Record<string, ExplorerListing> }
     const listings = Object.values(body.listings ?? {})
     const match =
       listings.find((listing) => listing.slug === entry.slug) ??
       listings.find((listing) => listing.name?.toLowerCase() === entry.name)
-    const link = match?.mobile?.universal || match?.mobile?.native
-    return typeof link === 'string' && link.length > 0 ? link : null
+    const clean = (value: string | undefined): string | null =>
+      typeof value === 'string' && value.length > 0 ? value : null
+    return {
+      native: clean(match?.mobile?.native),
+      universal: clean(match?.mobile?.universal),
+    }
   } catch {
-    return null
+    return none
   }
+}
+
+/**
+ * The link to open on a phone: the wallet's own scheme, because that opens the
+ * app in one step. The registry's https link lands on the wallet's *website*
+ * first — the user then has to find "open app" there, and stays on that site
+ * afterwards. The universal link stays as the fallback for wallets that
+ * publish nothing else.
+ */
+export async function walletLink(
+  kind: WalletKind,
+  projectId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string | null> {
+  const links = await walletLinks(kind, projectId, fetchImpl)
+  return links.native ?? links.universal
 }
 
 /**
@@ -164,18 +186,15 @@ export async function walletLink(
  */
 export function deepLinkFor(link: string, uri: string): string {
   const encoded = encodeURIComponent(uri)
-  if (/^https?:/i.test(link)) return `${link.replace(/\/+$/, '')}/wc?uri=${encoded}`
-  return `${link}${link.endsWith(':') ? '//' : '/'}wc?uri=${encoded}`
+  const base = link.replace(/\/+$/, '')
+  if (/^https?:/i.test(base)) return `${base}/wc?uri=${encoded}`
+  // `hashpack:`, `hashpack://` and `hashpack://host` all become `hashpack://wc?uri=…`.
+  return `${base}//wc?uri=${encoded}`
 }
 
-/**
- * Whether to deep-link or to show the pairing code. A phone has the wallet app;
- * a desktop browser has an extension that pastes the code, which is the flow
- * both HashPack and Kabila document.
- */
+/** Whether to deep-link or to show the pairing code. */
 export function isMobileWalletTarget(userAgent?: string): boolean {
-  const ua =
-    userAgent ?? (typeof navigator === 'undefined' ? '' : navigator.userAgent)
+  const ua = userAgent ?? (typeof navigator === 'undefined' ? '' : navigator.userAgent)
   return /android|iphone|ipad|ipod/i.test(ua)
 }
 
@@ -188,17 +207,9 @@ export function normalizeAccountId(value: string): string | null {
 }
 
 /**
- * A browser-extension wallet announces itself through the Hedera extension
- * handshake: the connector posts `hedera-extension-query` and whoever answers is
- * pushed into `connector.extensions`. Connecting to one of those is a direct
- * `postMessage` handshake — no QR, no pairing dialog — which is the closest thing
- * to "the HashPack API" that still exists (HashConnect, the old injected one, was
- * removed in HashPack 14.3.0).
- */
-/**
  * The id HashPack's extension announces itself with (read from its own
- * `content_script.js`, v15.1.1). The display name also matches, but a name is
- * text the wallet can change; the id is what the handshake actually keys on.
+ * `content_script.js`, v15.1.1, as in the sibling repos). The handshake
+ * keys on the id, not the display name.
  */
 export const HASHPACK_EXTENSION_ID = 'gjagmgiddbbciopjhllkdnddhcglnemk'
 
@@ -221,11 +232,7 @@ export function findExtension(
   return match ? { id: match.id } : null
 }
 
-/**
- * Discovery is asynchronous: the query goes out 200 ms after the connector is
- * built and answers trickle in. Poll briefly rather than sending the reader to a
- * QR code while their extension was about to answer.
- */
+/** Discovery is asynchronous; poll briefly before falling back to the dialog. */
 async function waitForExtension(
   instance: DAppConnector,
   kind: WalletKind,
@@ -241,7 +248,11 @@ async function waitForExtension(
 
 let pending: Promise<DAppConnector> | null = null
 
-async function loadModules(): Promise<{ connector: ConnectorModule; shared: SharedModule; sdk: SdkModule }> {
+async function loadModules(): Promise<{
+  connector: ConnectorModule
+  shared: SharedModule
+  sdk: SdkModule
+}> {
   try {
     const [connector, shared, sdk] = await Promise.all([
       import('@hashgraph/hedera-wallet-connect/dist/lib/dapp/index.js'),
@@ -268,18 +279,25 @@ async function createConnector(): Promise<DAppConnector> {
 
   const [{ connector, shared, sdk }] = await Promise.all([loadModules()])
 
-  // The wallet shows this URL, and scans it: it has to be the page the reader is
-  // actually on — base path included — not the bare origin, which serves nothing.
   const pageUrl =
     typeof location === 'undefined'
-      ? 'http://localhost/'
+      ? 'http://127.0.0.1:5173/'
       : new URL(import.meta.env.BASE_URL, location.origin).toString()
+
+  // The wallet returns the user here once the session is approved. Without
+  // this the phone stays on the wallet's own page and the dApp never learns
+  // the answer until it is opened by hand. The marker tells the page it was
+  // reached that way, so it may wait for the session instead of assuming none.
+  const returnUrl = new URL(pageUrl)
+  returnUrl.searchParams.set(RETURN_PARAM, 'return')
 
   const metadata = {
     name: 'Open letter — Bonzo Lend recovery',
-    description: 'An open letter to Hedera, the HBAR Foundation, Supra Labs and the Bonzo Finance Foundation.',
+    description:
+      'An open letter to Hedera, the HBAR Foundation, Supra Labs and the Bonzo Finance Foundation.',
     url: pageUrl,
     icons: [new URL('icon-256.png', pageUrl).toString()],
+    redirect: { universal: returnUrl.toString() },
   }
 
   const ledgerId = config.network === 'mainnet' ? sdk.LedgerId.MAINNET : sdk.LedgerId.TESTNET
@@ -288,7 +306,7 @@ async function createConnector(): Promise<DAppConnector> {
     metadata,
     ledgerId,
     projectId,
-    // Least privilege: submit is all a signature needs.
+    // Least privilege: exactly the one call every action in this app needs.
     [shared.HederaJsonRpcMethod.SignAndExecuteTransaction],
     [shared.HederaSessionEvent.AccountsChanged, shared.HederaSessionEvent.ChainChanged],
     // One chain only — the one this build is switched to.
@@ -308,10 +326,15 @@ function connector(): Promise<DAppConnector> {
   return pending
 }
 
+/** The cached connector for `lib/create.ts` and `lib/transfer.ts` — the one door to the session. */
+export function getConnector(): Promise<DAppConnector> {
+  return connector()
+}
+
+/** The SDK + shared modules, loaded once, for the signing paths. */
 /**
  * Warm the wallet chunks while the pointer is on the button. It only fetches
- * code — no connector is created, no relay connection is opened, nothing is
- * sent anywhere — so hovering a button is not a privacy event.
+ * code — no connector, no relay connection, nothing sent anywhere.
  */
 export function prefetchWallet(): void {
   if (!config.walletConnectProjectId || !hasWebCrypto()) return
@@ -334,24 +357,43 @@ export function sessionOf(instance: DAppConnector): WalletSession | null {
 /**
  * Whether a stored session exists, without starting the connector.
  *
- * The WalletConnect client keeps its state in localStorage under
- * `wc@2:client:` (sessions, pairings, history) — nothing else on this page uses
- * that prefix, so its presence means this browser has connected before.
+ * The WalletConnect client keeps its own session records in localStorage under
+ * `wc@2:client:` — that is the protocol's, not this page's: the app itself
+ * stores nothing (README → "Nothing is stored"). Its presence means this
+ * browser has connected before, and lets the session be picked up quietly.
  */
 export function hasStoredSession(): boolean {
   if (typeof localStorage === 'undefined') return false
   try {
-    return Object.keys(localStorage).some((key) => key.startsWith('wc@2:client:'))
+    // Any WalletConnect record counts — the client's storage layout has moved
+    // between versions, and a narrower prefix once missed a session that was
+    // there all along.
+    return Object.keys(localStorage).some((key) => key.startsWith('wc@2:'))
   } catch {
     return false
   }
 }
 
-/**
- * How long a pairing may stay unanswered. A wallet that never answers leaves the
- * promise pending forever — the UI must not sit on "Connecting…" without a way out.
- */
+/** How long a pairing may stay unanswered before the UI lets go. */
 export const CONNECT_TIMEOUT_MS = 120_000
+
+/** How long a wallet may stay silent on a signature before the page gives up. */
+export const WALLET_ANSWER_TIMEOUT_MS = 90_000
+
+/** A silent restore gives up quickly — nobody asked for it. */
+export const RESTORE_TIMEOUT_MS = 10_000
+
+/** How long the page waits for a wallet app to take over before offering the code. */
+export const APP_OPEN_GRACE_MS = 2_500
+
+/** The query parameter a wallet app is told to come back with. */
+export const RETURN_PARAM = 'wallet'
+
+/** Whether this page load is a wallet app sending the user back. */
+export function isWalletReturn(search?: string): boolean {
+  const query = search ?? (typeof location === 'undefined' ? '' : location.search)
+  return new URLSearchParams(query).get(RETURN_PARAM) === 'return'
+}
 
 export function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -364,16 +406,11 @@ export function withTimeout<T>(promise: Promise<T>, ms: number, message: string)
 }
 
 export interface ConnectOptions {
-  /** Overridable for tests. */
   userAgent?: string
   fetchImpl?: typeof fetch
   /** Called with the `wc:` pairing string when a wallet is deep-linked. */
   onPairing?: (uri: string) => void
-  /**
-   * Which road the pairing took. `dialog` on a HashPack/Kabila click means no
-   * extension answered the handshake — worth saying out loud in the UI, because
-   * a QR code after clicking "HashPack" otherwise looks like a bug.
-   */
+  /** Which road the pairing took — see ConnectDialog for what each implies. */
   onRoute?: (route: ConnectRoute) => void
 }
 
@@ -381,7 +418,7 @@ export type ConnectRoute = 'extension' | 'deep-link' | 'dialog'
 
 /**
  * Open a session. Returns the account the wallet approved, or throws a
- * `WalletError` with a sentence that can be shown to a reader.
+ * `WalletError` with a sentence that can be shown to the user.
  */
 export async function connect(kind: WalletKind, options: ConnectOptions = {}): Promise<WalletSession> {
   if (!hasWebCrypto()) {
@@ -393,18 +430,25 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
   const existing = sessionOf(instance)
   if (existing) return existing
 
+  // Which road this attempt took, so the marker records how to restore it.
+  let route: ConnectRoute = 'dialog'
+  const note = (taken: ConnectRoute): void => {
+    route = taken
+    options.onRoute?.(taken)
+  }
+
   try {
     // 1. An extension that answers the Hedera handshake connects directly.
     const extension = kind === 'walletconnect' ? null : await waitForExtension(instance, kind)
     if (extension) {
-      options.onRoute?.('extension')
+      note('extension')
       await withTimeout(
         instance.connectExtension(extension.id),
         CONNECT_TIMEOUT_MS,
         'The wallet did not answer in time. Please try again.',
       )
     } else if (kind === 'walletconnect') {
-      options.onRoute?.('dialog')
+      note('dialog')
       await withTimeout(
         // `true` = reject when the pairing dialog is closed, so closing it is an
         // answer ("rejected") instead of a wait that only the timeout ends.
@@ -417,11 +461,49 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
       const link = await walletLink(kind, config.walletConnectProjectId, options.fetchImpl ?? fetch)
       const target = isMobileWalletTarget(options.userAgent)
       if (link && target) {
-        options.onRoute?.('deep-link')
+        note('deep-link')
         await withTimeout(
           instance.connect((uri) => {
             options.onPairing?.(uri)
+            // Whether the app actually took over is the only question the
+            // fallback may ask. A page that was hidden and came back has
+            // already been answered by the app — opening the pairing code then
+            // covers the page the user just returned to, which is exactly what
+            // it must not do.
+            let appTookOver = false
+            const watchForApp = (): void => {
+              if (typeof document === 'undefined') return
+              if (document.visibilityState === 'hidden') appTookOver = true
+            }
+            if (typeof document !== 'undefined') {
+              document.addEventListener('visibilitychange', watchForApp)
+            }
+            // Only a page restored from the back-forward cache is a return from
+            // the app. A plain `pageshow` also fires when a scheme navigation
+            // fails, and treating that as "the app opened" would suppress the
+            // pairing code exactly when it is needed.
+            const onBack = (event: PageTransitionEvent): void => {
+              if (event.persisted) appTookOver = true
+            }
+            if (typeof window !== 'undefined') {
+              window.addEventListener('pageshow', onBack)
+            }
+
             window.location.href = deepLinkFor(link, uri)
+
+            // A scheme that opens nothing leaves the user staring at the same
+            // page. If this one is still in front after a moment, offer the
+            // pairing code for the same URI instead of a dead end.
+            setTimeout(() => {
+              if (typeof document !== 'undefined') {
+                document.removeEventListener('visibilitychange', watchForApp)
+              }
+              if (typeof window !== 'undefined') window.removeEventListener('pageshow', onBack)
+              if (appTookOver) return
+              if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+              note('dialog')
+              instance.walletConnectModal.openModal({ uri })
+            }, APP_OPEN_GRACE_MS)
           }),
           CONNECT_TIMEOUT_MS,
           'The wallet did not answer in time. Please try again.',
@@ -429,7 +511,7 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
       } else {
         // 3. …and on a desktop without the extension, the pairing dialog is the
         // only path left: it shows the code the wallet pastes or scans.
-        options.onRoute?.('dialog')
+        note('dialog')
         await withTimeout(
           instance.openModal(undefined, true),
           CONNECT_TIMEOUT_MS,
@@ -438,8 +520,7 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
       }
     }
   } catch (error) {
-    // A pairing that timed out leaves the WalletConnect dialog open; close it so
-    // the reader is not left with two overlapping panels.
+    // A pairing that timed out leaves the WalletConnect dialog open; close it.
     instance.walletConnectModal.closeModal()
     if (error instanceof WalletError) throw error
     throw new WalletError('rejected', describeWalletError(error))
@@ -452,28 +533,205 @@ export async function connect(kind: WalletKind, options: ConnectOptions = {}): P
       `The wallet connected without a Hedera account on ${config.network}.`,
     )
   }
+  // Any road counts: a phone has no extension, and its reload still has to know
+  // that this browser may read a session back.
+  rememberWallet(kind, route)
   return session
 }
 
 /** Close every session and pairing this page opened. */
 export async function disconnect(): Promise<void> {
+  forgetExtension()
   if (!pending) return
   const instance = await pending
   await instance.disconnectAll()
 }
 
+
 /**
- * Pick up a session this browser already holds, without showing anything. Only
- * called when a WalletConnect session is in storage, so a reader who never
- * connected never downloads the connector.
+ * The one thing this page keeps in the browser: which wallet kind this
+ * browser last connected with, and by which road (`hashpack:deep-link`). It is
+ * not a session and not a key — it only tells a reload that this browser has
+ * connected before, so it may quietly read the session back instead of asking
+ * anyone. Older values are a bare kind, which meant an extension.
  */
-export async function restore(): Promise<WalletSession | null> {
-  if (!hasStoredSession()) return null
+const EXTENSION_MARKER_KEY = 'treasury.wallet.extension'
+
+function readMarker(): string | null {
+  if (typeof localStorage === 'undefined') return null
   try {
-    return sessionOf(await connector())
+    return localStorage.getItem(EXTENSION_MARKER_KEY)
   } catch {
     return null
   }
+}
+
+/** The extension that connected, if that is how this browser last did it. */
+export function rememberedExtension(): WalletKind | null {
+  const value = readMarker()
+  if (!value) return null
+  const [kind, road = 'extension'] = value.split(':')
+  if (road !== 'extension') return null
+  return kind === 'hashpack' || kind === 'kabila' ? kind : null
+}
+
+function rememberWallet(kind: WalletKind, route: ConnectRoute): void {
+  try {
+    localStorage.setItem(EXTENSION_MARKER_KEY, `${kind}:${route}`)
+  } catch {
+    // Private mode or a full quota: the reload simply will not restore.
+  }
+}
+
+function forgetExtension(): void {
+  try {
+    localStorage.removeItem(EXTENSION_MARKER_KEY)
+  } catch {
+    // Nothing to do — the marker is a convenience, not state.
+  }
+}
+
+/** Whether this browser has connected before, by any road. */
+export function hasConnectedBefore(): boolean {
+  return readMarker() !== null
+}
+
+/**
+ * Pick up a session this browser already holds — WalletConnect's own storage
+ * is read, nothing is negotiated. A restore must never open a wallet prompt:
+ * `connector()` initialises the client, `init` rebuilds the signers from the
+ * stored session, and `sessionOf` answers from that. When nothing is stored,
+ * this answers null and the page stays disconnected.
+ */
+export async function restore(options: { waitMs?: number } = {}): Promise<WalletSession | null> {
+  if (!hasStoredSession() && !hasConnectedBefore() && !options.waitMs) return null
+  try {
+    const instance = await connector()
+    const found = sessionOf(instance)
+    if (found || !options.waitMs) return found
+    // Coming back from a wallet app: the approval may still be on its way, so
+    // wait for the session instead of answering "not connected" too early.
+    const deadline = Date.now() + options.waitMs
+    for (;;) {
+      if (Date.now() >= deadline) return null
+      await new Promise((resolve) => setTimeout(resolve, 300))
+      const session = sessionOf(instance)
+      if (session) return session
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Watch for a session that shows up *after* the page is already up.
+ *
+ * On a phone the wallet's approval often reaches the relay after the page has
+ * loaded — the client reconnects, the settle arrives, and the signer exists a
+ * second or two later. A page that checked once would sit on "Connect" while
+ * the session was already there, which is why a click used to make it appear
+ * instantly. This keeps looking, and stops at the first session.
+ */
+export function pollForSession(
+  read: () => WalletSession | null,
+  onSession: (session: WalletSession) => void,
+  options: { budgetMs?: number; intervalMs?: number } = {},
+): () => void {
+  const budgetMs = options.budgetMs ?? 60_000
+  const intervalMs = options.intervalMs ?? 1_000
+  const started = Date.now()
+  let stopped = false
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const tick = (): void => {
+    if (stopped) return
+    const session = read()
+    if (session) {
+      stopped = true
+      onSession(session)
+      return
+    }
+    if (Date.now() - started >= budgetMs) return
+    timer = setTimeout(tick, intervalMs)
+  }
+
+  timer = setTimeout(tick, intervalMs)
+  return () => {
+    stopped = true
+    if (timer) clearTimeout(timer)
+  }
+}
+
+/**
+ * The same watch, over the real connector — plus an immediate look whenever the
+ * page comes back into view, which is exactly the moment a phone returns from
+ * the wallet app. Waiting for the next tick there is a second of nothing.
+ */
+export function watchSession(
+  onSession: (session: WalletSession) => void,
+  options: { budgetMs?: number; intervalMs?: number } = {},
+): () => void {
+  let instance: DAppConnector | null = null
+  let priming = false
+  let delivered = false
+
+  const read = (): WalletSession | null => {
+    if (!instance && !priming) {
+      priming = true
+      void connector()
+        .then((created) => {
+          instance = created
+        })
+        .catch(() => {
+          // A connector that will not start simply means no session yet.
+        })
+    }
+    return instance ? sessionOf(instance) : null
+  }
+
+  const deliver = (session: WalletSession): void => {
+    if (delivered) return
+    delivered = true
+    onSession(session)
+  }
+
+  const stopPolling = pollForSession(read, deliver, { intervalMs: 750, ...options })
+
+  const onVisible = (): void => {
+    if (typeof document === 'undefined' || document.visibilityState !== 'visible') return
+    const session = read()
+    if (session) deliver(session)
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', onVisible)
+  }
+
+  return () => {
+    stopPolling()
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }
+}
+
+/** Test seam: drop the cached connector between cases. */
+export function resetConnectorForTests(): void {
+  pending = null
+}
+
+/** Same voice as describeWalletError, for the submit call specifically. */
+export function describeSubmitError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error ?? '')
+  if (/user rejected|user canceled|user cancelled|rejected by user|denied/i.test(raw)) {
+    return 'The request was rejected in your wallet.'
+  }
+  if (/session (not found|does not exist)|no matching key|session topic doesn't exist/i.test(raw)) {
+    return 'The wallet session expired. Please connect again.'
+  }
+  if (/timed out|timeout/i.test(raw)) {
+    return 'The wallet did not answer in time. Please try again.'
+  }
+  return 'The transaction could not be submitted. Please try again.'
 }
 
 export interface SubmittedMessage {
@@ -489,6 +747,9 @@ export interface SubmittedMessage {
  * executes exactly the bytes it was given — an unfrozen transaction cannot be
  * serialised, and a transaction the wallet had to finish itself would be one the
  * page did not build.
+ *
+ * The wallet is given `WALLET_ANSWER_TIMEOUT_MS` to answer: a wallet that never
+ * answers must not leave the dialog on "Waiting for your wallet…" forever.
  */
 export async function submitTopicMessage(opts: {
   topicId: string
@@ -510,9 +771,16 @@ export async function submitTopicMessage(opts: {
 
   transaction.freezeWith(sdk.Client.forName(config.network))
 
-  const response = await instance.signAndExecuteTransaction({
-    signerAccountId: `${config.profile.chainId}:${accountId}`,
-    transactionList: shared.transactionToBase64String(transaction),
+  const response = await withTimeout(
+    instance.signAndExecuteTransaction({
+      signerAccountId: `${config.profile.chainId}:${accountId}`,
+      transactionList: shared.transactionToBase64String(transaction),
+    }),
+    WALLET_ANSWER_TIMEOUT_MS,
+    'The wallet did not answer in time. The signature may still have been submitted — check the explorer before trying again.',
+  ).catch((error: unknown) => {
+    if (error instanceof WalletError) throw error
+    throw new WalletError('unknown', describeSubmitError(error))
   })
 
   const result = response.result as { transactionId?: string; status?: string }
@@ -520,9 +788,4 @@ export async function submitTopicMessage(opts: {
     transactionId: result.transactionId ?? '',
     status: result.status ?? 'UNKNOWN',
   }
-}
-
-/** Test seam: drop the cached connector between cases. */
-export function resetConnectorForTests(): void {
-  pending = null
 }

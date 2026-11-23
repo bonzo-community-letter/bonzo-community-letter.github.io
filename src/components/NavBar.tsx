@@ -1,6 +1,7 @@
 import type { WalletApi } from '../hooks/useWallet'
 import { config } from '../config'
 import { prefetchWallet } from '../lib/wallet'
+import { Spinner } from './Spinner'
 
 /**
  * A thin bar, not a website chrome: the letter is the page. It carries the one
@@ -34,6 +35,8 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
           >
             {connected ? (
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
+            ) : busy ? (
+              <Spinner className="text-accent" />
             ) : null}
             <span className={connected ? 'font-mono text-[0.6875rem] tracking-normal normal-case' : ''}>
               {label}

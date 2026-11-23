@@ -11,6 +11,7 @@ import {
   prettyPayload,
 } from '../lib/hcs'
 import { describeWalletError, submitTopicMessage } from '../lib/wallet'
+import { Spinner } from './Spinner'
 import { subject } from 'virtual:letter'
 
 type SigningState =
@@ -235,8 +236,9 @@ export function SignDialog({
                   type="button"
                   onClick={() => void sign()}
                   disabled={busy || tooLong}
-                  className="rounded-sm border border-accent bg-accent px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-page transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex items-center gap-2 rounded-sm border border-accent bg-accent px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-page transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
                 >
+                  {busy ? <Spinner /> : null}
                   {busy ? 'Waiting for your wallet…' : 'Add signature'}
                 </button>
               ) : (

@@ -1,6 +1,13 @@
 import { useEffect, useRef } from 'react'
 import type { WalletApi } from '../hooks/useWallet'
-import { INSECURE_CONTEXT_MESSAGE, WALLET_OPTIONS, hasWebCrypto, type WalletKind } from '../lib/wallet'
+import {
+  INSECURE_CONTEXT_MESSAGE,
+  WALLET_OPTIONS,
+  hasWebCrypto,
+  isMobileWalletTarget,
+  type WalletKind,
+} from '../lib/wallet'
+import { Spinner } from './Spinner'
 import { config } from '../config'
 
 interface Props {
@@ -46,6 +53,9 @@ export function ConnectDialog({ open, onClose, wallet }: Props) {
   const connected = wallet.status === 'connected' && wallet.accountId !== null
   const secure = hasWebCrypto()
   const current = wallet.kind ? WALLET_OPTIONS.find((option) => option.kind === wallet.kind) : null
+  // A phone has no extension to miss, and the app is opened by a link rather
+  // than a code — the same sentence has to say different things.
+  const mobile = isMobileWalletTarget()
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
@@ -113,7 +123,8 @@ export function ConnectDialog({ open, onClose, wallet }: Props) {
           </>
         ) : busy ? (
           <div className="mt-5">
-            <p className="text-sm leading-relaxed text-ink-soft">
+            <p className="flex items-center gap-2 text-sm leading-relaxed text-ink-soft">
+              <Spinner className="text-accent" />
               {wallet.status === 'restoring'
                 ? 'Restoring your previous session…'
                 : current
@@ -123,10 +134,16 @@ export function ConnectDialog({ open, onClose, wallet }: Props) {
             <p className="mt-2 text-xs leading-relaxed text-ink-faint">
               Nothing is signed yet. This only opens a session.
             </p>
+            {wallet.route === 'deep-link' && current ? (
+              <p className="mt-2 text-xs leading-relaxed text-ink-faint">
+                Opening {current.label}. If the app does not come up, the pairing code follows.
+              </p>
+            ) : null}
             {wallet.route === 'dialog' && wallet.kind && wallet.kind !== 'walletconnect' ? (
               <p className="mt-2 text-xs leading-relaxed text-ink-faint">
-                No {current ? current.label : 'wallet'} extension answered on this browser, so the pairing
-                code is the way in: scan it with the app, or paste it into the extension.
+                {mobile
+                  ? `The ${current ? current.label : 'wallet'} app did not open, so the pairing code is the way in: scan it with the app.`
+                  : `No ${current ? current.label : 'wallet'} extension answered on this browser, so the pairing code is the way in: scan it with the app, or paste it into the extension.`}
               </p>
             ) : null}
             <button
