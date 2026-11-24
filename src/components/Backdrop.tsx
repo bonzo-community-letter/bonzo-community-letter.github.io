@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 /**
  * The signers' account ids, written across the background like a signature wall.
@@ -11,8 +11,17 @@ import { useEffect, useMemo, useRef, useState } from 'react'
  * the wall hit-tests itself against the pointer and lifts the id under it — bigger,
  * darker, in the accent — while still painting behind the text.
  *
- * Positions come from a small seeded generator keyed by the accounts themselves, so the
- * wall is the same on every render and changes only when the signatures do.
+ * Two separate draws decide what you see:
+ *
+ *  - **Where** a mark sits, how big and how tilted, comes from a generator seeded by the
+ *    accounts themselves, so the wall does not jump around while you read.
+ *  - **Which** account is written there is shuffled fresh on every load, so a reload is
+ *    a different slice of the signatures and every signer turns up eventually.
+ *
+ * Marks are laid out on a measured grid: the number of columns and the size of the hand
+ * follow the window, and the jitter stays inside the cell, so two ids rarely land on top
+ * of each other. A cell holds one mark; the size is derived from the cell, not the other
+ * way round.
  */
 
 /** mulberry32 — small, fast, and stable enough to lay out a wall. */
@@ -35,8 +44,21 @@ function hash(text: string): number {
   return h >>> 0
 }
 
-interface Mark {
-  accountId: string
+/** Fisher–Yates on a copy. */
+function shuffled<T>(items: readonly T[], random: () => number): T[] {
+  const out = [...items]
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1))
+    const a = out[i]
+    const b = out[j]
+    if (a === undefined || b === undefined) continue
+    out[i] = b
+    out[j] = a
+  }
+  return out
+}
+
+interface Slot {
   left: number
   top: number
   size: number
@@ -44,38 +66,81 @@ interface Mark {
   opacity: number
 }
 
-export function Backdrop({ accounts }: { accounts: readonly string[] }) {
-  const marks = useMemo<Mark[]>(() => {
-    const unique = [...new Set(accounts.map((id) => id.trim()).filter(Boolean))]
-    if (unique.length === 0) return []
+const MIN_COLUMNS = 3
+const MAX_COLUMNS = 9
+/** Roughly the width a cell needs for a 12-character id to sit inside it. */
+const COLUMN_WIDTH = 165
+const ROW_HEIGHT = 86
 
-    const random = seeded(hash(unique.join('|')))
+/**
+ * Where the marks go, in percentages, for a viewport of this size.
+ *
+ * One mark per cell, jittered by at most a fifth of a cell in each direction, with the
+ * type size tied to the cell width — a wide window gets more columns and larger hands,
+ * a phone gets three and small ones, and neither stacks ids on top of each other.
+ */
+export function layoutSlots(width: number, height: number, random: () => number): Slot[] {
+  const columns = Math.min(MAX_COLUMNS, Math.max(MIN_COLUMNS, Math.round(width / COLUMN_WIDTH)))
+  const rows = Math.max(3, Math.round(height / ROW_HEIGHT))
+  const cellWidth = width / columns
+  // A twelve-character id in this hand is about five times its font size wide; keep it
+  // inside 70% of the cell and nothing has to overlap to fit.
+  const baseSize = Math.min(1.55, Math.max(0.6, (cellWidth * 0.14) / 16))
 
-    // A jittered grid, not free scatter: scatter clumps and leaves holes, and a wall is
-    // coverage. Seven columns by ten rows fills a viewport at any size, twice over.
-    const columns = 7
-    const rows = 10
-    const cells = columns * rows
-    const count = Math.min(cells * 2, Math.max(48, unique.length * 12))
-    const out: Mark[] = []
-    for (let i = 0; i < count; i += 1) {
-      const accountId = unique[i % unique.length]
-      if (accountId === undefined) continue
-      const column = i % columns
-      const row = Math.floor(i / columns) % rows
+  const slots: Slot[] = []
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
       // one in six is written larger and darker, as a hand would not keep one weight
-      const loud = random() < 0.18
-      out.push({
-        accountId,
-        left: ((column + 0.5 + (random() - 0.5) * 0.95) / columns) * 100,
-        top: ((row + 0.5 + (random() - 0.5) * 0.9) / rows) * 100,
-        size: loud ? 1.4 + random() * 0.7 : 0.72 + random() * 0.42,
-        rotate: (random() - 0.5) * 16,
-        opacity: loud ? 0.22 + random() * 0.07 : 0.1 + random() * 0.055,
+      const loud = random() < 0.16
+      const jitterX = (random() - 0.5) * 0.34
+      const jitterY = (random() - 0.5) * 0.3
+      slots.push({
+        left: ((column + 0.5 + jitterX) / columns) * 100,
+        top: ((row + 0.5 + jitterY) / rows) * 100,
+        // the loud ones are bigger, but never beyond what the cell holds
+        size: Math.min(1.7, baseSize * (loud ? 1.22 : 0.82 + random() * 0.18)),
+        rotate: (random() - 0.5) * 9,
+        opacity: loud ? 0.2 + random() * 0.05 : 0.09 + random() * 0.04,
       })
     }
-    return out
-  }, [accounts])
+  }
+  return slots
+}
+
+export function Backdrop({ accounts }: { accounts: readonly string[] }) {
+  const unique = useMemo(
+    () => [...new Set(accounts.map((id) => id.trim()).filter(Boolean))],
+    [accounts],
+  )
+
+  const [viewport, setViewport] = useState(() =>
+    typeof window === 'undefined' ? { width: 1280, height: 800 } : { width: window.innerWidth, height: window.innerHeight },
+  )
+
+  useLayoutEffect(() => {
+    const measure = () => setViewport({ width: window.innerWidth, height: window.innerHeight })
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
+
+  // Positions: stable for a given set of signers and window, so nothing shifts while reading.
+  const slots = useMemo(
+    () => layoutSlots(viewport.width, viewport.height, seeded(hash(unique.join('|')) || 1)),
+    [unique, viewport.width, viewport.height],
+  )
+
+  // Who is written where: reshuffled on every load, so a reload shows other signers.
+  const [loadSeed] = useState(() => Math.floor(Math.random() * 0xffffffff))
+
+  const marks = useMemo(() => {
+    if (unique.length === 0) return []
+    const order = shuffled(unique, seeded(loadSeed || 1))
+    return slots.map((slot, index) => ({
+      ...slot,
+      accountId: order[index % order.length] ?? '',
+    }))
+  }, [slots, unique, loadSeed])
 
   const nodes = useRef<(HTMLSpanElement | null)[]>([])
   const boxes = useRef<{ left: number; top: number; right: number; bottom: number }[]>([])
@@ -148,7 +213,7 @@ export function Backdrop({ accounts }: { accounts: readonly string[] }) {
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none">
       {marks.map((mark, index) => (
         <span
-          key={`${mark.accountId}-${index}`}
+          key={`${index}-${mark.accountId}`}
           ref={(node) => {
             nodes.current[index] = node
           }}
@@ -156,10 +221,10 @@ export function Backdrop({ accounts }: { accounts: readonly string[] }) {
           style={{
             left: `${mark.left}%`,
             top: `${mark.top}%`,
-            fontSize: `${mark.size}rem`,
+            fontSize: `${mark.size.toFixed(3)}rem`,
             opacity: lifted === index ? 0.6 : mark.opacity,
             color: lifted === index ? 'var(--color-accent)' : undefined,
-            transform: `rotate(${mark.rotate.toFixed(2)}deg) scale(${lifted === index ? 1.9 : 1})`,
+            transform: `translate(-50%, -50%) rotate(${mark.rotate.toFixed(2)}deg) scale(${lifted === index ? 1.9 : 1})`,
           }}
         >
           {mark.accountId}

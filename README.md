@@ -410,8 +410,15 @@ Long comments are cut at six lines with an ellipsis — a band is a strip, not a
 
 ### The wall behind the page
 
-`components/Backdrop.tsx` writes the account ids of every signer across the background in Caveat, on a
-jittered 7 × 10 grid at very low opacity, tilted a few degrees each way — texture, not a list. A
+`components/Backdrop.tsx` writes the account ids of every signer across the background in Caveat, at
+very low opacity, tilted a few degrees each way — texture, not a list.
+
+Two separate draws decide what is on screen. **Where** a mark sits, how big and how tilted comes from a
+generator seeded by the accounts, so the wall does not move while someone reads. **Which** account is
+written there is reshuffled on every load, so a reload is a different slice of the signatures and every
+signer turns up eventually. Positions come from a grid measured against the window (`layoutSlots`): one
+mark per cell, jitter inside the cell, and the type size derived from the cell width, so ids rarely land
+on each other — 80 marks at 1280 with no overlap, 30 at 390. A
 pointer lifts the id under it: 1.9×, 60% opacity, in the accent. That hover is driven from a
 `pointermove` listener rather than `:hover`, because the ids paint behind the page and every section
 would otherwise swallow the pointer first; the wall hit-tests itself and measures again once the hand
