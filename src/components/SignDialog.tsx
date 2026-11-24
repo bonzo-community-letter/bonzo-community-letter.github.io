@@ -334,7 +334,7 @@ export function SignDialog({
               rows={4}
               spellCheck
               className="mt-2 w-full resize-y rounded-sm border border-rule bg-page/40 px-3 py-2 font-serif text-[0.9375rem] leading-relaxed text-ink outline-none placeholder:text-ink-faint focus:border-accent"
-              placeholder="Why you are signing."
+              placeholder="Your personal message to the recipients …"
             />
             <div className="mt-1 flex justify-end">
               <span className={`font-mono text-[0.6875rem] ${tooLong ? 'text-red-400' : 'text-ink-faint'}`}>
