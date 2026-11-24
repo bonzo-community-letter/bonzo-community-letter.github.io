@@ -22,8 +22,17 @@
       property="og:description"
       content="Signatures are written to the Hedera Consensus Service. Your wallet signs and pays; this page never sees a key."
     />
-    <meta property="og:image" content="%BASE_URL%icon-256.png" />
+    <!--
+      Absolute, unlike everything else here: a link preview fetches these out of context, and
+      many scrapers drop a relative og:image. The campaign has one canonical address, whatever
+      path this build is served from.
+    -->
+    <meta property="og:url" content="https://bonzo-community-letter.com/" />
+    <meta property="og:image" content="https://bonzo-community-letter.com/icon-256.png" />
+    <meta property="og:image:width" content="256" />
+    <meta property="og:image:height" content="256" />
     <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="%BASE_URL%favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="%BASE_URL%icon-256.png" />
     <link rel="apple-touch-icon" href="%BASE_URL%icon-256.png" />
   </head>
