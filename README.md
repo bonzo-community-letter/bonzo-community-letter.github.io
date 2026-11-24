@@ -383,6 +383,19 @@ being restored is not a missing session.
 
 With no topic configured, the dialog says signing opens at launch and the button signs nothing.
 
+### One signature per account
+
+The page refuses a second one. The connected account is looked up in what the mirror returned, and —
+for the few seconds before the mirror has indexed a fresh message — in a record of what this browser
+just signed (`lib/signedHere.ts`, keyed by subject and letter hash, so a new letter starts clean).
+With a signature already on file the button reads **You have signed** and the dialog names the date
+and the comment that are already there instead of offering the form.
+
+The chain cannot enforce this, and the README should not pretend otherwise: a topic is append-only and
+the payload carries no nonce, so a second message from the same wallet is possible from any other
+client. What the page can do, it does — and the reader dedupes by account (`uniqueSigners`), so a
+repeat is visible on the topic without being counted twice.
+
 ### What a signature costs
 
 Hedera's fees are dollar-denominated, and the chain proves it. Reading three transaction types back

@@ -7,6 +7,7 @@ import { LetterSheet } from './components/LetterSheet'
 import { NavBar } from './components/NavBar'
 import { SiteFooter } from './components/SiteFooter'
 import { useSignatures } from './hooks/useSignatures'
+import { uniqueSigners } from './lib/hcs'
 import { useWallet } from './hooks/useWallet'
 import { letterHash, subject } from 'virtual:letter'
 
@@ -18,7 +19,10 @@ export function App() {
   const [connectOpen, setConnectOpen] = useState(false)
   const openConnect = useCallback(() => setConnectOpen(true), [])
 
-  const signatureCount = signatures.status === 'ready' ? signatures.signatures.length : null
+  // One signature per account, whoever wrote it: a second message from the same wallet
+  // is on the topic for good, but it does not count twice.
+  const signers = uniqueSigners(signatures.signatures)
+  const signatureCount = signatures.status === 'ready' ? signers.length : null
 
   return (
     <div className="min-h-dvh bg-page">
@@ -29,6 +33,7 @@ export function App() {
           letterHash={letterHash}
           wallet={wallet}
           signatureCount={signatureCount}
+          signatures={signers}
           onConnect={openConnect}
           onSigned={signatures.refresh}
         />

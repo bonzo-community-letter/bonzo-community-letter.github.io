@@ -11,9 +11,12 @@ import {
   hashscanTopicUrl,
   hashscanTransactionUrl,
   prettyPayload,
+  signatureBy,
   waitForTransactionResult,
+  type Signature,
 } from '../lib/hcs'
 import { clearPending, readPending, savePending } from '../lib/pending'
+import { localSignature, rememberSignature } from '../lib/signedHere'
 import { describeWalletError, submitTopicMessage, type SubmitOutcome } from '../lib/wallet'
 import { Spinner } from './Spinner'
 import { subject } from 'virtual:letter'
@@ -27,6 +30,21 @@ type SigningState =
   /** The network's verdict — the only place a result is claimed. */
   | { status: 'result'; outcome: SubmitOutcome }
   | { status: 'error'; message: string }
+
+/** "24 Nov 2026, 15:49 UTC" — the instant the payload carries, in the reader's words. */
+function signedWhen(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  const stamp = date.toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  })
+  return `${stamp} UTC`
+}
 
 /** Turn a mirror answer into the same verdict shape the submit returns. */
 function outcomeOf(transactionId: string, status: string | null): SubmitOutcome {
@@ -57,6 +75,7 @@ export function SignDialog({
   wallet,
   letterHash,
   count,
+  signatures,
   onConnect,
   onSigned,
 }: {
@@ -65,6 +84,7 @@ export function SignDialog({
   wallet: WalletApi
   letterHash: string
   count: number | null
+  signatures: readonly Signature[]
   onConnect: () => void
   onSigned: () => void
 }) {
@@ -147,6 +167,14 @@ export function SignDialog({
   const busy = state.status === 'signing' || state.status === 'verifying'
   const settled = state.status === 'result'
 
+  // One signature per account. The topic is append-only, so this is the only place a
+  // second one can be refused: the mirror knows what landed, and the local record
+  // covers the few seconds before the mirror has it.
+  const onChain = signatureBy(signatures, wallet.accountId)
+  const kept = localSignature(wallet.accountId, subject, letterHash, config.network)
+  const already = onChain ?? kept
+  const alreadySigned = already !== null
+
   const preview = prettyPayload({
     accountId: wallet.accountId ?? '0.0.x',
     subject,
@@ -157,7 +185,7 @@ export function SignDialog({
   })
 
   const sign = async (): Promise<void> => {
-    if (!wallet.accountId) return
+    if (!wallet.accountId || alreadySigned) return
     const current = ++attempt.current
     stopped.current = false
     setNotice(null)
@@ -199,6 +227,15 @@ export function SignDialog({
       })
       if (attempt.current !== current) return
       clearPending()
+      // Written down here as well: the mirror needs a few seconds, and until it has
+      // the message this browser must not offer the button again.
+      rememberSignature({
+        accountId,
+        subject,
+        letterHash,
+        signedAt: built.payload.signedAt,
+        network: config.network,
+      })
       setState({ status: 'result', outcome })
       if (outcome.kind !== 'failed') {
         setComment('')
@@ -355,6 +392,29 @@ export function SignDialog({
               Stop waiting
             </button>
           </div>
+        ) : alreadySigned ? (
+          <>
+            <p className="mt-4 text-sm leading-relaxed text-ink-soft">
+              This account has already signed this letter. One signature per account — a topic has no
+              delete, so a second message could not replace the first, only stand beside it.
+            </p>
+            <dl className="mt-4 grid gap-x-8 gap-y-2 text-xs sm:grid-cols-2">
+              <Fact label="Account">{wallet.accountId ?? '—'}</Fact>
+              {already?.signedAt ? <Fact label="Signed">{signedWhen(already.signedAt)}</Fact> : null}
+            </dl>
+            {'comment' in already && already.comment ? (
+              <blockquote className="mt-4 border-l-2 border-rule pl-3 text-[0.8125rem] leading-relaxed text-ink-soft">
+                {already.comment}
+              </blockquote>
+            ) : null}
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-6 rounded-sm border border-rule px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-accent hover:text-ink"
+            >
+              Close
+            </button>
+          </>
         ) : (
           <>
             <p className="mt-4 text-sm leading-relaxed text-ink-soft">

@@ -1,10 +1,13 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import { config } from '../config'
 import { page } from '../content/page'
 import { ENVELOPE, HERO_CLEARANCE, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
+import { signatureBy, type Signature } from '../lib/hcs'
+import { localSignature } from '../lib/signedHere'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
 import { SignDialog } from './SignDialog'
 import type { WalletApi } from '../hooks/useWallet'
-import { letterText } from 'virtual:letter'
+import { letterText, subject } from 'virtual:letter'
 
 /** How far through the flap's travel the paper should reach the fold. */
 const CROSSING = 0.62
@@ -119,18 +122,24 @@ export function LetterSheet({
   letterHash,
   wallet,
   signatureCount,
+  signatures,
   onConnect,
   onSigned,
 }: {
   letterHash: string
   wallet: WalletApi
   signatureCount: number | null
+  signatures: readonly Signature[]
   onConnect: () => void
   onSigned: () => void
 }) {
   const wrapper = useRef<HTMLDivElement | null>(null)
   const sheet = useRef<HTMLDivElement | null>(null)
   const [signOpen, setSignOpen] = useState(false)
+  // One signature per account: the button says so before the dialog has to.
+  const alreadySigned =
+    signatureBy(signatures, wallet.accountId) !== null ||
+    localSignature(wallet.accountId, subject, letterHash, config.network) !== null
   useStartDepth(wrapper, sheet)
 
   const paragraphs = letterText
@@ -187,7 +196,7 @@ export function LetterSheet({
               aria-haspopup="dialog"
               className="rounded-sm border border-sheet-ink bg-sheet-ink px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet transition-opacity hover:opacity-85"
             >
-              Add signature
+              {alreadySigned ? 'You have signed' : 'Add signature'}
             </button>
           </div>
 
@@ -208,6 +217,7 @@ export function LetterSheet({
         wallet={wallet}
         letterHash={letterHash}
         count={signatureCount}
+        signatures={signatures}
         onConnect={onConnect}
         onSigned={onSigned}
       />

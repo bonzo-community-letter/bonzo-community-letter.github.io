@@ -219,6 +219,41 @@ export async function sha256Hex(text: string): Promise<string> {
     .join('')
 }
 
+/**
+ * One signature per account, for counting.
+ *
+ * The chain cannot refuse a second message from the same wallet — a topic is append-only
+ * and the payload carries no nonce — so the reader dedupes: the first signature an
+ * account made is the one that counts, and a repeat stays on the topic as what it is.
+ */
+export function uniqueSigners(signatures: readonly Signature[]): Signature[] {
+  const seen = new Set<string>()
+  const kept: Signature[] = []
+  for (const signature of signatures) {
+    const account = signature.accountId.trim().toLowerCase()
+    if (seen.has(account)) continue
+    seen.add(account)
+    kept.push(signature)
+  }
+  return kept
+}
+
+/**
+ * The signature this account already made, if it made one.
+ *
+ * A topic is append-only: nothing on chain can stop a second message from the same
+ * account. What the page can do is refuse to ask for one — so the reader is told what
+ * they already signed instead of being handed the same button twice.
+ */
+export function signatureBy(
+  signatures: readonly Signature[],
+  accountId: string | null | undefined,
+): Signature | null {
+  const wanted = accountId?.trim().toLowerCase()
+  if (!wanted) return null
+  return signatures.find((signature) => signature.accountId.trim().toLowerCase() === wanted) ?? null
+}
+
 export function hashscanTopicUrl(network: HederaNetwork, topicId: string): string {
   const host = network === 'mainnet' ? 'hashscan.io/mainnet' : 'hashscan.io/testnet'
   return `https://${host}/topic/${topicId}`
