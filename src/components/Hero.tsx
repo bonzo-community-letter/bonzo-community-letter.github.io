@@ -10,20 +10,20 @@ import { page } from '../content/page'
 export function Hero({ signatureCount }: { signatureCount: number | null }) {
   return (
     <header className="hero-height border-b border-rule bg-hero">
-      <div className="mx-auto w-full max-w-5xl px-6 pt-14 pb-24 text-center sm:pt-20 sm:pb-32">
+      <div className="mx-auto w-full max-w-5xl px-6 pt-10 pb-24 text-center sm:pt-20 sm:pb-32">
         <p className="eyebrow-mark">{page.eyebrow}</p>
 
-        <h1 className="mx-auto mt-4 max-w-[18ch] font-serif text-[2.75rem] leading-[1.04] tracking-tight text-ink sm:text-6xl">
+        <h1 className="mx-auto mt-3 max-w-[18ch] font-serif text-[2.25rem] leading-[1.06] tracking-tight text-ink sm:mt-4 sm:text-6xl min-[360px]:text-[2.75rem] min-[360px]:leading-[1.04]">
           {page.title}
         </h1>
 
-        <p className="mx-auto mt-6 max-w-[52ch] text-base leading-relaxed text-ink-soft">
+        <p className="mx-auto mt-5 max-w-[52ch] text-[0.9375rem] leading-relaxed text-ink-soft sm:mt-6 sm:text-base">
           {page.from.note}
         </p>
 
-        <div className="mt-10">
+        <div className="mt-7 sm:mt-10">
           <p className="eyebrow" style={{ fontSize: '0.875rem' }}>To</p>
-          <ul className="mt-3 flex flex-col items-center gap-y-1.5 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2">
+          <ul className="mt-3 flex flex-col items-center gap-y-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2">
             {addressees.map((addressee, i) => (
               <Fragment key={addressee.name}>
                 {/* Six names never share a line inside max-w-5xl, and letting the
@@ -39,14 +39,14 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
                       className="h-4 w-auto shrink-0 opacity-80 grayscale"
                     />
                   ) : null}
-                  <span className="font-serif text-lg leading-snug text-ink">{addressee.name}</span>
+                  <span className="font-serif text-base leading-snug text-ink min-[360px]:text-lg">{addressee.name}</span>
                 </li>
               </Fragment>
             ))}
           </ul>
         </div>
 
-        <p className="mt-10 text-xs text-ink-faint tnum">
+        <p className="mt-6 text-xs text-ink-faint tnum sm:mt-10">
           {page.status}
           {signatureCount !== null ? ` · ${signatureCount.toLocaleString('en-US')} signatures` : null}
         </p>

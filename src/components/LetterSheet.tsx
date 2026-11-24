@@ -12,6 +12,8 @@ const CROSSING = 0.62
  *  paper stands out of the opening, its letterhead — the From line — clear of the fold.
  *  Negative: it starts above the fold, not inside it. */
 const OPEN_DEPTH = -0.5
+/** Air kept between the hero's last line and the paper's top edge. */
+const HERO_CLEARANCE = 28
 
 /**
  * The sheet starts inside the envelope, not at its opening: the gap above it is the
@@ -61,7 +63,23 @@ function useStartDepth(
       const depth = envelopeOpensOnScroll(width)
         ? CROSSING * ENVELOPE.reveal * (1 + foldPerScroll)
         : OPEN_DEPTH * bodyHeight
-      const target = anchor.current.fold + depth
+      let target = anchor.current.fold + depth
+
+      // The envelope says where the paper *may* be; the hero says where it may not
+      // go. On a narrow screen the address list alone is taller than the space the
+      // envelope geometry leaves above the fold, so the sheet used to start on top
+      // of the hero's last line. Measure the hero's own text and stay below it.
+      const hero = document.querySelector<HTMLElement>('header.hero-height')
+      if (hero) {
+        const lines = Array.from(hero.querySelectorAll<HTMLElement>('h1, p, ul, .eyebrow-mark')).filter(
+          (el) => !el.classList.contains('sr-only') && el.getBoundingClientRect().height > 4,
+        )
+        if (lines.length > 0) {
+          const contentBottom =
+            Math.max(...lines.map((el) => el.getBoundingClientRect().bottom)) + window.scrollY
+          target = Math.max(target, contentBottom + HERO_CLEARANCE)
+        }
+      }
 
       // a margin, not a spacer: on a phone the paper starts above the wrapper's top edge
       const top = box.getBoundingClientRect().top + window.scrollY
