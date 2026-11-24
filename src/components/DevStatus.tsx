@@ -1,4 +1,5 @@
-import { NETWORKS, config, signingOpen } from '../config'
+import { NETWORKS, config } from '../config'
+import { signingGate } from '../lib/signing'
 import type { SignatureState } from '../hooks/useSignatures'
 import { MAX_COMMENT_BYTES, buildSignature, prettyPayload, topicMemo } from '../lib/hcs'
 import { isDraft, letterBytes, letterHash, letterText, subject } from 'virtual:letter'
@@ -18,6 +19,7 @@ function Row({ label, value }: { label: string; value: string }) {
  */
 export function DevStatus({ state }: { state: SignatureState }) {
   const draft = buildSignature({ accountId: '0.0.1234', subject, letterHash })
+  const gate = signingGate()
 
   const signatureValue =
     state.status === 'closed'
@@ -38,7 +40,7 @@ export function DevStatus({ state }: { state: SignatureState }) {
           <Row label="base path" value={import.meta.env.BASE_URL} />
           <Row label="network" value={`${config.network} · ${config.profile.chainId}`} />
           <Row label="mirror node" value={config.profile.mirrorBase} />
-          <Row label="signing" value={signingOpen ? 'open' : 'closed'} />
+          <Row label="signing" value={gate.open ? 'open' : `closed (${gate.reason})`} />
           <Row label="subject" value={subject} />
           <Row label="text" value={letterText.length > 0 ? `${letterBytes} bytes` : 'not written yet'} />
           <Row label="draft" value={isDraft ? 'yes' : 'no'} />

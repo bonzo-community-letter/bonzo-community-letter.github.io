@@ -734,6 +734,16 @@ export function describeSubmitError(error: unknown): string {
   return 'The transaction could not be submitted. Please try again.'
 }
 
+/**
+ * The most this page will ever let a wallet authorise for one signature: 0.05 HBAR,
+ * about four times what a 600-byte HCS message costs. It is a cap, not a charge —
+ * the network takes its fee from it and returns the rest.
+ */
+const MAX_FEE_TINYBARS = 5_000_000
+
+/** Public, permanent, and the only thing the wallet's memo line can show. */
+const TRANSACTION_MEMO = 'bonzo-open-letter:v1'
+
 export type SubmitOutcome =
   | { kind: 'succeeded'; transactionId: string; status: string }
   | { kind: 'failed'; transactionId: string; status: string }
@@ -783,6 +793,13 @@ export async function submitTopicMessage(opts: {
     .setTopicId(sdk.TopicId.fromString(opts.topicId))
     .setMessage(opts.message)
     .setTransactionId(sdk.TransactionId.generate(sdk.AccountId.fromString(accountId)))
+    // The wallet has to be able to show what it is asked to pay. Without a cap the
+    // transaction carries no maximum, and HashPack's confirmation screen renders the
+    // fee as "Infinity HBAR" — true to the bytes, useless to a signer. A 600-byte
+    // message costs about 0.013 HBAR; this cap is four times that and still small.
+    .setMaxTransactionFee(sdk.Hbar.fromTinybars(MAX_FEE_TINYBARS))
+    // One line the wallet and the explorer can show instead of an empty memo.
+    .setTransactionMemo(TRANSACTION_MEMO)
 
   transaction.freezeWith(sdk.Client.forName(config.network))
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { config, signingOpen } from '../config'
+import { config } from '../config'
 import type { WalletApi } from '../hooks/useWallet'
 import {
   MAX_COMMENT_BYTES,
@@ -16,6 +16,7 @@ import {
 import { clearPending, readPending, savePending } from '../lib/pending'
 import { describeWalletError, submitTopicMessage, type SubmitOutcome } from '../lib/wallet'
 import { Spinner } from './Spinner'
+import { signingGate } from '../lib/signing'
 import { subject } from 'virtual:letter'
 
 type SigningState =
@@ -125,6 +126,8 @@ export function SignDialog({
   }, [open, onSigned])
 
   if (!open) return null
+
+  const gate = signingGate()
 
   const trimmed = comment.trim()
   const bytes = commentByteLength(trimmed)
@@ -247,11 +250,12 @@ export function SignDialog({
           Add your signature
         </h2>
 
-        {!signingOpen ? (
+        {!gate.open ? (
           <>
             <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-              Signing opens at launch. The letter is still a draft — its text, and with it the hash every
-              signature would commit to, is not final.
+              {gate.reason === 'letter_not_final'
+                ? 'The letter has no final text yet. Every signature commits to a SHA-256 of that text, so signing opens once it is fixed — a signature now would commit to nothing.'
+                : 'Signing is not configured in this build: no HCS topic, or no WalletConnect project id.'}
             </p>
             <button
               type="button"
