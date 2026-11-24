@@ -316,9 +316,9 @@ export function SignDialog({
         ) : (
           <>
             <p className="mt-4 border-l-2 border-accent pl-3 text-[0.8125rem] leading-relaxed text-ink-soft">
-              Your comment is public and permanent. It is written to the Hedera Consensus Service, cannot be
-              edited or deleted, and stays visible forever. Insults and abuse are not helpful – please stay
-              critical, but respectful!
+              Your comment is public and permanent forever. It is written to the Hedera Consensus Service,
+              cannot be edited or deleted, and stays visible to everyone as long as the network exists.
+              Insults and abuse are not helpful – you may be critical, but please remain respectful!
             </p>
 
             <label
