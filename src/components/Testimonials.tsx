@@ -117,7 +117,13 @@ export function Testimonials({
         </h2>
       </div>
 
-      <div className="relative">
+      <div
+        className="relative"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent, #000 14%, #000 86%, transparent)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent, #000 14%, #000 86%, transparent)',
+        }}
+      >
         <div
           ref={strip}
         role="group"
@@ -183,16 +189,6 @@ export function Testimonials({
           ))}
           </div>
         </div>
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-36"
-          style={{ background: 'linear-gradient(to right, var(--color-page), transparent)' }}
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-36"
-          style={{ background: 'linear-gradient(to left, var(--color-page), transparent)' }}
-        />
       </div>
     </section>
   )
