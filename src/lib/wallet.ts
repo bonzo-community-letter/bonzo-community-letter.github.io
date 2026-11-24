@@ -794,6 +794,12 @@ export async function submitTopicMessage(opts: {
   message: string
   accountId: string
   stages?: SubmitStages
+  /**
+   * The reader gave up waiting. The wallet may still answer — a request already sent
+   * cannot be recalled — but the page stops polling the mirror, so the dialog can go
+   * back to its form instead of sitting on a wait that no longer interests anyone.
+   */
+  aborted?: () => boolean
 }): Promise<SubmitOutcome> {
   const accountId = normalizeAccountId(opts.accountId)
   if (!accountId) throw new WalletError('no_account', 'The connected account id is not a Hedera account id.')
@@ -829,6 +835,27 @@ export async function submitTopicMessage(opts: {
   opts.stages?.onBuilt?.(transactionId)
   opts.stages?.onSubmitting?.()
 
+  // A session the wallet deletes never answers: the request was sent into a topic the
+  // wallet has already forgotten, and no reply will ever come back for it. Rejecting
+  // the session in the wallet app — easy to do by accident when a deep link did not
+  // open — used to leave the page waiting the full ninety seconds and then asking the
+  // mirror about a transaction nobody had submitted.
+  let resolveDeleted: () => void = () => {}
+  const sessionDeleted = new Promise<void>((resolve) => {
+    resolveDeleted = resolve
+  })
+  let deleted = false
+  const client = instance.walletConnectClient
+  const onSessionDelete = (): void => {
+    deleted = true
+    resolveDeleted()
+  }
+  try {
+    client?.on('session_delete', onSessionDelete)
+  } catch {
+    // An older client without the event: the timeout still covers it.
+  }
+
   let walletError: unknown
   const walletCall = instance
     .signAndExecuteTransaction({
@@ -838,18 +865,39 @@ export async function submitTopicMessage(opts: {
     .catch((error: unknown) => {
       walletError = error
     })
-  await Promise.race([
-    walletCall,
-    new Promise<void>((resolve) => setTimeout(resolve, WALLET_ANSWER_TIMEOUT_MS)),
-  ])
+
+  try {
+    await Promise.race([
+      walletCall,
+      sessionDeleted,
+      new Promise<void>((resolve) => setTimeout(resolve, WALLET_ANSWER_TIMEOUT_MS)),
+    ])
+  } finally {
+    try {
+      client?.off('session_delete', onSessionDelete)
+    } catch {
+      // Nothing to unsubscribe from.
+    }
+  }
 
   if (walletError !== undefined) {
     if (walletError instanceof WalletError) throw walletError
     throw new WalletError('unknown', describeSubmitError(walletError))
   }
 
+  if (deleted) {
+    throw new WalletError(
+      'no_account',
+      'Your wallet ended the session before answering, so nothing was submitted from this page. Connect again and sign once more.',
+    )
+  }
+
+  if (opts.aborted?.()) return { kind: 'unverified', transactionId }
+
   opts.stages?.onVerifying?.(transactionId)
-  const status = await waitForTransactionResult(config.network, transactionId)
+  const status = await waitForTransactionResult(config.network, transactionId, {
+    aborted: opts.aborted,
+  })
   if (!status) return { kind: 'unverified', transactionId }
   if (status !== 'SUCCESS') return { kind: 'failed', transactionId, status }
   return { kind: 'succeeded', transactionId, status }

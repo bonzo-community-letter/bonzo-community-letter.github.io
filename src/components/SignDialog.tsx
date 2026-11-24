@@ -71,6 +71,15 @@ export function SignDialog({
   const panel = useRef<HTMLDivElement>(null)
   const [comment, setComment] = useState('')
   const [state, setState] = useState<SigningState>({ status: 'idle' })
+  /** Shown above the form after a wait the reader stopped themselves. */
+  const [notice, setNotice] = useState<string | null>(null)
+  /**
+   * Bumped whenever the reader takes the dialog back. An answer that arrives for an
+   * older attempt must not overwrite the view — the wallet can still reply long after
+   * nobody is waiting for it.
+   */
+  const attempt = useRef(0)
+  const stopped = useRef(false)
   /**
    * The account the attempt belongs to. Kept here, not read off the wallet: on
    * a resumed attempt the session may still be restoring, and the record is the
@@ -111,10 +120,15 @@ export function SignDialog({
     if (!pending) return
 
     let cancelled = false
+    const resumedAt = attempt.current
     setAttemptAccount(pending.accountId)
     setState({ status: 'verifying', transactionId: pending.transactionId })
-    void waitForTransactionResult(config.network, pending.transactionId).then((status) => {
-      if (cancelled) return
+    void waitForTransactionResult(config.network, pending.transactionId, {
+      aborted: () => cancelled || stopped.current || attempt.current !== resumedAt,
+    }).then((status) => {
+      // A reader who pressed "Stop waiting" owns the view now, and the record stays for
+      // the next open.
+      if (cancelled || stopped.current || attempt.current !== resumedAt) return
       clearPending()
       setState({ status: 'result', outcome: outcomeOf(pending.transactionId, status) })
       if (status === 'SUCCESS') onSigned()
@@ -144,6 +158,9 @@ export function SignDialog({
 
   const sign = async (): Promise<void> => {
     if (!wallet.accountId) return
+    const current = ++attempt.current
+    stopped.current = false
+    setNotice(null)
     const accountId = wallet.accountId
     const built = buildSignature({
       accountId,
@@ -163,6 +180,7 @@ export function SignDialog({
         topicId: config.topicId,
         message: built.encoded,
         accountId,
+        aborted: () => stopped.current || attempt.current !== current,
         stages: {
           onBuilt: (id) => {
             transactionId = id
@@ -179,6 +197,7 @@ export function SignDialog({
           onVerifying: (id) => setState({ status: 'verifying', transactionId: id }),
         },
       })
+      if (attempt.current !== current) return
       clearPending()
       setState({ status: 'result', outcome })
       if (outcome.kind !== 'failed') {
@@ -188,9 +207,11 @@ export function SignDialog({
     } catch (error) {
       // A refusal in the wallet is a verdict, but a session that died mid-flight
       // is not: ask the chain once before saying the signature did not happen.
-      const status = transactionId
-        ? await fetchTransactionResult(config.network, transactionId).catch(() => null)
-        : null
+      const status =
+        transactionId && !stopped.current
+          ? await fetchTransactionResult(config.network, transactionId).catch(() => null)
+          : null
+      if (attempt.current !== current) return
       clearPending()
       if (status) {
         const outcome = outcomeOf(transactionId, status)
@@ -203,6 +224,20 @@ export function SignDialog({
         setState({ status: 'error', message: describeWalletError(error) })
       }
     }
+  }
+
+  /**
+   * Take the dialog back. The wallet may still answer — a request already sent cannot
+   * be recalled — so nothing is claimed about the outcome: the count picks up a
+   * signature by itself if one lands.
+   */
+  const stopWaiting = (): void => {
+    stopped.current = true
+    attempt.current += 1
+    setState({ status: 'idle' })
+    setNotice(
+      'Stopped waiting. Your wallet may still submit it — the count above picks a signature up by itself if it does. Nothing is lost either way, but check the explorer before signing again.',
+    )
   }
 
   // Portalled to the body: the letter sheet sits in its own stacking context
@@ -312,6 +347,13 @@ export function SignDialog({
               If the wallet app takes you away and brings you back, this dialog picks the attempt up again —
               the transaction id was written down before your wallet was asked.
             </p>
+            <button
+              type="button"
+              onClick={stopWaiting}
+              className="mt-4 rounded-sm border border-rule px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-accent hover:text-ink"
+            >
+              Stop waiting
+            </button>
           </div>
         ) : (
           <>
@@ -350,6 +392,12 @@ export function SignDialog({
                 {preview}
               </pre>
             </details>
+
+            {notice ? (
+              <p role="status" className="mt-4 border-l-2 border-rule pl-3 text-xs leading-relaxed text-ink-faint">
+                {notice}
+              </p>
+            ) : null}
 
             {state.status === 'error' ? (
               <p role="alert" className="mt-4 border-l-2 border-accent pl-3 text-xs leading-relaxed text-ink-soft">
