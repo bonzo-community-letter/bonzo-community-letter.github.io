@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { page } from '../content/page'
-import { ENVELOPE, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
+import { ENVELOPE, HERO_CLEARANCE, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
 import { SignDialog } from './SignDialog'
 import type { WalletApi } from '../hooks/useWallet'
@@ -12,8 +12,6 @@ const CROSSING = 0.62
  *  paper stands out of the opening, its letterhead — the From line — clear of the fold.
  *  Negative: it starts above the fold, not inside it. */
 const OPEN_DEPTH = -0.5
-/** Air kept between the hero's last line and the paper's top edge. */
-const HERO_CLEARANCE = 28
 
 /**
  * The sheet starts inside the envelope, not at its opening: the gap above it is the
