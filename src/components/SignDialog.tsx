@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { config, signingOpen } from '../config'
 import type { WalletApi } from '../hooks/useWallet'
@@ -7,19 +7,33 @@ import {
   PAYLOAD_VERSION,
   buildSignature,
   commentByteLength,
+  fetchTransactionResult,
   hashscanTopicUrl,
   hashscanTransactionUrl,
   prettyPayload,
+  waitForTransactionResult,
 } from '../lib/hcs'
-import { describeWalletError, submitTopicMessage } from '../lib/wallet'
+import { clearPending, readPending, savePending } from '../lib/pending'
+import { describeWalletError, submitTopicMessage, type SubmitOutcome } from '../lib/wallet'
 import { Spinner } from './Spinner'
 import { subject } from 'virtual:letter'
 
 type SigningState =
   | { status: 'idle' }
-  | { status: 'signing' }
-  | { status: 'done'; transactionId: string }
+  /** The wallet has been asked and has not answered yet. */
+  | { status: 'signing'; transactionId: string }
+  /** The wallet is done, or quiet, and the mirror is being asked. */
+  | { status: 'verifying'; transactionId: string }
+  /** The network's verdict — the only place a result is claimed. */
+  | { status: 'result'; outcome: SubmitOutcome }
   | { status: 'error'; message: string }
+
+/** Turn a mirror answer into the same verdict shape the submit returns. */
+function outcomeOf(transactionId: string, status: string | null): SubmitOutcome {
+  if (!status) return { kind: 'unverified', transactionId }
+  if (status !== 'SUCCESS') return { kind: 'failed', transactionId, status }
+  return { kind: 'succeeded', transactionId, status }
+}
 
 /**
  * Where a signature is actually made. The letter itself keeps only the button —
@@ -30,6 +44,12 @@ type SigningState =
  * timestamp, comment — never the letter itself, and never anything the wallet
  * keeps. A message on HCS is permanent and public: it cannot be edited or
  * deleted, which is what the warning above the field says before anyone types.
+ *
+ * The dialog is deliberately not a mirror of the wallet's state. Once a
+ * submission starts, its progress is owned here: the wallet app takes the
+ * browser away to approve and can send it back as a fresh load, and a page that
+ * read "connected" off a session still being restored would answer "connect a
+ * wallet" while the signature was already on the topic.
  */
 export function SignDialog({
   open,
@@ -51,6 +71,12 @@ export function SignDialog({
   const panel = useRef<HTMLDivElement>(null)
   const [comment, setComment] = useState('')
   const [state, setState] = useState<SigningState>({ status: 'idle' })
+  /**
+   * The account the attempt belongs to. Kept here, not read off the wallet: on
+   * a resumed attempt the session may still be restoring, and the record is the
+   * only thing that knows whose signature this was.
+   */
+  const [attemptAccount, setAttemptAccount] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -75,14 +101,37 @@ export function SignDialog({
     }
   }, [open, onClose])
 
+  // A submission started in this tab is written down before the wallet is
+  // asked. If the wallet app took the page away and sent it back as a fresh
+  // load, this is how the dialog picks the attempt up again instead of
+  // forgetting it — and asks the chain, not the wallet, how it ended.
+  useEffect(() => {
+    if (!open) return
+    const pending = readPending(config.network)
+    if (!pending) return
+
+    let cancelled = false
+    setAttemptAccount(pending.accountId)
+    setState({ status: 'verifying', transactionId: pending.transactionId })
+    void waitForTransactionResult(config.network, pending.transactionId).then((status) => {
+      if (cancelled) return
+      clearPending()
+      setState({ status: 'result', outcome: outcomeOf(pending.transactionId, status) })
+      if (status === 'SUCCESS') onSigned()
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [open, onSigned])
+
   if (!open) return null
 
   const trimmed = comment.trim()
   const bytes = commentByteLength(trimmed)
   const tooLong = bytes > MAX_COMMENT_BYTES
   const connected = wallet.status === 'connected' && wallet.accountId !== null
-  const busy = state.status === 'signing'
-  const signed = state.status === 'done'
+  const busy = state.status === 'signing' || state.status === 'verifying'
+  const settled = state.status === 'result'
 
   const preview = prettyPayload({
     accountId: wallet.accountId ?? '0.0.x',
@@ -95,8 +144,9 @@ export function SignDialog({
 
   const sign = async (): Promise<void> => {
     if (!wallet.accountId) return
+    const accountId = wallet.accountId
     const built = buildSignature({
-      accountId: wallet.accountId,
+      accountId,
       subject,
       letterHash,
       comment: trimmed,
@@ -106,18 +156,52 @@ export function SignDialog({
       return
     }
 
-    setState({ status: 'signing' })
+    setState({ status: 'signing', transactionId: '' })
+    let transactionId = ''
     try {
-      const result = await submitTopicMessage({
+      const outcome = await submitTopicMessage({
         topicId: config.topicId,
         message: built.encoded,
-        accountId: wallet.accountId,
+        accountId,
+        stages: {
+          onBuilt: (id) => {
+            transactionId = id
+            setAttemptAccount(accountId)
+            savePending({
+              transactionId: id,
+              accountId,
+              topicId: config.topicId,
+              network: config.network,
+              startedAt: Date.now(),
+            })
+            setState({ status: 'signing', transactionId: id })
+          },
+          onVerifying: (id) => setState({ status: 'verifying', transactionId: id }),
+        },
       })
-      setState({ status: 'done', transactionId: result.transactionId })
-      setComment('')
-      onSigned()
+      clearPending()
+      setState({ status: 'result', outcome })
+      if (outcome.kind !== 'failed') {
+        setComment('')
+        onSigned()
+      }
     } catch (error) {
-      setState({ status: 'error', message: describeWalletError(error) })
+      // A refusal in the wallet is a verdict, but a session that died mid-flight
+      // is not: ask the chain once before saying the signature did not happen.
+      const status = transactionId
+        ? await fetchTransactionResult(config.network, transactionId).catch(() => null)
+        : null
+      clearPending()
+      if (status) {
+        const outcome = outcomeOf(transactionId, status)
+        setState({ status: 'result', outcome })
+        if (outcome.kind !== 'failed') {
+          setComment('')
+          onSigned()
+        }
+      } else {
+        setState({ status: 'error', message: describeWalletError(error) })
+      }
     }
   }
 
@@ -160,7 +244,7 @@ export function SignDialog({
           ) : null}
         </div>
         <h2 id="sign-dialog-title" className="mt-2 font-serif text-2xl leading-tight text-ink">
-          {signed ? 'Signature submitted' : 'Add your signature'}
+          Add your signature
         </h2>
 
         {!signingOpen ? (
@@ -177,30 +261,58 @@ export function SignDialog({
               Close
             </button>
           </>
-        ) : signed ? (
+        ) : settled ? (
           <>
-            <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-              Your signature is on the topic. It appears in the count once the mirror node has it — usually
-              a few seconds.
-            </p>
-            {state.transactionId ? (
-              <a
-                href={hashscanTransactionUrl(config.network, state.transactionId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 block break-all font-mono text-[0.75rem] text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink"
+            <Confirmation outcome={state.outcome} accountId={wallet.accountId ?? attemptAccount} />
+            <div className="mt-5 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-sm border border-rule px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-accent hover:text-ink"
               >
-                {state.transactionId} ↗
-              </a>
-            ) : null}
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-6 rounded-sm border border-rule px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-accent hover:text-ink"
-            >
-              Close
-            </button>
+                Close
+              </button>
+              {state.outcome.kind === 'failed' ? (
+                <button
+                  type="button"
+                  onClick={() => setState({ status: 'idle' })}
+                  className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint hover:text-ink-soft"
+                >
+                  Try again
+                </button>
+              ) : null}
+            </div>
           </>
+        ) : busy ? (
+          <div className="mt-4 border border-rule bg-page px-4 py-4">
+            <div className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border border-rule text-accent"
+              >
+                <Spinner />
+              </span>
+              <div className="min-w-0">
+                <h3 className="font-serif text-xl leading-tight text-ink">
+                  {state.status === 'signing' ? 'Waiting for your wallet' : 'Reading the network'}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                  {state.status === 'signing'
+                    ? 'Approve the message in your wallet. Nothing else is asked of it, and this page never sees a key.'
+                    : 'The wallet is done. The mirror node is being asked what the network did with it — this takes a few seconds.'}
+                </p>
+              </div>
+            </div>
+            <dl className="mt-4 grid gap-x-8 gap-y-2 border-t border-rule/60 pt-4 text-xs sm:grid-cols-2">
+              <Fact label="Account">{wallet.accountId ?? attemptAccount ?? '—'}</Fact>
+              <Fact label="Topic">{config.topicId}</Fact>
+              {state.transactionId ? <Fact label="Transaction">{state.transactionId}</Fact> : null}
+            </dl>
+            <p className="mt-4 text-[0.75rem] leading-relaxed text-ink-faint">
+              If the wallet app takes you away and brings you back, this dialog picks the attempt up again —
+              the transaction id was written down before your wallet was asked.
+            </p>
+          </div>
         ) : (
           <>
             <p className="mt-4 border-l-2 border-accent pl-3 text-[0.8125rem] leading-relaxed text-ink-soft">
@@ -250,11 +362,10 @@ export function SignDialog({
                 <button
                   type="button"
                   onClick={() => void sign()}
-                  disabled={busy || tooLong}
+                  disabled={tooLong}
                   className="inline-flex items-center gap-2 rounded-sm border border-accent bg-accent px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-page transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {busy ? <Spinner /> : null}
-                  {busy ? 'Waiting for your wallet…' : 'Add signature'}
+                  Add signature
                 </button>
               ) : (
                 <button
@@ -283,5 +394,113 @@ export function SignDialog({
       </div>
     </div>,
     document.body,
+  )
+}
+
+/**
+ * The receipt, in the treasury page's shape: one verdict, then the facts it is
+ * made of. Nothing here is assumed — the status word is the network's own, read
+ * back from the mirror.
+ */
+function Confirmation({ outcome, accountId }: { outcome: SubmitOutcome; accountId: string | null }) {
+  const succeeded = outcome.kind === 'succeeded'
+  const failed = outcome.kind === 'failed'
+
+  const verdict = succeeded
+    ? 'Thank you — it is on the record'
+    : failed
+      ? 'The network refused it'
+      : 'Not confirmed yet'
+  const badge = succeeded ? 'Confirmed' : failed ? 'Failed' : 'Unconfirmed'
+  const badgeTone = succeeded
+    ? 'border-accent text-accent'
+    : failed
+      ? 'border-accent bg-accent text-page'
+      : 'border-rule text-ink-soft'
+
+  const note = succeeded
+    ? 'Your signature is on the topic. It joins the count once the mirror has indexed it — usually a few seconds.'
+    : failed
+      ? `The network answered ${outcome.status}. Nothing was written to the topic.`
+      : 'Your wallet is done, but the mirror has not indexed the transaction yet. Check the explorer before signing again — a second message would stay on the topic too.'
+
+  return (
+    <section
+      aria-live="polite"
+      className={`mt-4 border ${succeeded ? 'border-accent/60 bg-accent/[0.05]' : 'border-rule bg-page'}`}
+    >
+      <div className="flex items-start gap-3 px-4 py-4">
+        <span
+          aria-hidden="true"
+          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border ${
+            succeeded
+              ? 'border-accent text-accent'
+              : failed
+                ? 'border-accent bg-accent text-page'
+                : 'border-rule text-ink-faint'
+          }`}
+        >
+          {succeeded ? (
+            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5">
+              <path d="M2.5 8.5l3.5 3.5 7-8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            </svg>
+          ) : failed ? (
+            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5">
+              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5">
+              <path d="M8 4v4.5M8 11.5v.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            </svg>
+          )}
+        </span>
+
+        <div className="min-w-0">
+          <span
+            className={`inline-block border px-2 py-0.5 text-[0.5625rem] font-semibold uppercase tracking-[0.14em] ${badgeTone}`}
+          >
+            {badge}
+          </span>
+          <h3 className="mt-2 font-serif text-xl leading-tight text-ink">{verdict}</h3>
+          <p className="mt-1 text-sm leading-relaxed text-ink-soft">{note}</p>
+        </div>
+      </div>
+
+      <dl className="grid gap-x-8 gap-y-2 border-t border-rule/60 px-4 py-4 text-xs sm:grid-cols-2">
+        {accountId ? <Fact label="Account">{accountId}</Fact> : null}
+        <Fact label="Topic">
+          <a
+            href={hashscanTopicUrl(config.network, config.topicId)}
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-rule underline-offset-2 hover:decoration-accent"
+          >
+            {config.topicId}
+          </a>
+        </Fact>
+        <Fact label="Transaction">
+          <a
+            href={hashscanTransactionUrl(config.network, outcome.transactionId)}
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-rule underline-offset-2 hover:decoration-accent"
+          >
+            {outcome.transactionId}
+          </a>
+        </Fact>
+        <Fact label="Status">
+          {failed ? outcome.status : succeeded ? outcome.status : 'not indexed yet'}
+        </Fact>
+      </dl>
+    </section>
+  )
+}
+
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-rule/40 pb-1.5 last:border-b-0">
+      <dt className="shrink-0 text-[0.5625rem] uppercase tracking-[0.16em] text-ink-faint">{label}</dt>
+      <dd className="min-w-0 break-all text-right font-mono text-[0.6875rem] text-ink-soft">{children}</dd>
+    </div>
   )
 }

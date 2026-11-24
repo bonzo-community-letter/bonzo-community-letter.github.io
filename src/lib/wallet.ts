@@ -21,7 +21,7 @@
  *    dynamic and happens on the first "Connect".
  */
 import { config } from '../config'
-import type { HederaNetwork } from './hcs'
+import { waitForTransactionResult, type HederaNetwork } from './hcs'
 
 /**
  * Deep imports, not the package root: the root entry also exports the
@@ -734,9 +734,18 @@ export function describeSubmitError(error: unknown): string {
   return 'The transaction could not be submitted. Please try again.'
 }
 
-export interface SubmittedMessage {
-  transactionId: string
-  status: string
+export type SubmitOutcome =
+  | { kind: 'succeeded'; transactionId: string; status: string }
+  | { kind: 'failed'; transactionId: string; status: string }
+  | { kind: 'unverified'; transactionId: string }
+
+export interface SubmitStages {
+  /** Called with the id the transaction will carry — before the wallet is asked. */
+  onBuilt?: (transactionId: string) => void
+  /** The wallet has been asked and the page is waiting on it. */
+  onSubmitting?: () => void
+  /** The wallet answered, or went quiet, and the mirror is being asked instead. */
+  onVerifying?: (transactionId: string) => void
 }
 
 /**
@@ -748,14 +757,20 @@ export interface SubmittedMessage {
  * serialised, and a transaction the wallet had to finish itself would be one the
  * page did not build.
  *
- * The wallet is given `WALLET_ANSWER_TIMEOUT_MS` to answer: a wallet that never
- * answers must not leave the dialog on "Waiting for your wallet…" forever.
+ * The verdict is the network's, not the wallet's. A wallet that never answered
+ * used to surface as a plain failure — while the transaction, already signed and
+ * submitted on the phone, landed on the topic anyway. So the id is read off the
+ * frozen transaction *before* the wallet is asked, the wallet call is given
+ * `WALLET_ANSWER_TIMEOUT_MS` and then left running, and the mirror is asked for
+ * the result either way. `unverified` means exactly that: the mirror had not
+ * indexed it within its own budget, so nothing is claimed.
  */
 export async function submitTopicMessage(opts: {
   topicId: string
   message: string
   accountId: string
-}): Promise<SubmittedMessage> {
+  stages?: SubmitStages
+}): Promise<SubmitOutcome> {
   const accountId = normalizeAccountId(opts.accountId)
   if (!accountId) throw new WalletError('no_account', 'The connected account id is not a Hedera account id.')
   if (!opts.topicId) throw new WalletError('not_configured', 'No HCS topic is configured for this network.')
@@ -771,21 +786,37 @@ export async function submitTopicMessage(opts: {
 
   transaction.freezeWith(sdk.Client.forName(config.network))
 
-  const response = await withTimeout(
-    instance.signAndExecuteTransaction({
+  const transactionId = transaction.transactionId?.toString() ?? ''
+  if (!transactionId) {
+    throw new WalletError('unknown', 'The frozen transaction has no id — what was submitted could not be checked.')
+  }
+
+  // From here on the chain can be asked back, whether the wallet answers or not.
+  opts.stages?.onBuilt?.(transactionId)
+  opts.stages?.onSubmitting?.()
+
+  let walletError: unknown
+  const walletCall = instance
+    .signAndExecuteTransaction({
       signerAccountId: `${config.profile.chainId}:${accountId}`,
       transactionList: shared.transactionToBase64String(transaction),
-    }),
-    WALLET_ANSWER_TIMEOUT_MS,
-    'The wallet did not answer in time. The signature may still have been submitted — check the explorer before trying again.',
-  ).catch((error: unknown) => {
-    if (error instanceof WalletError) throw error
-    throw new WalletError('unknown', describeSubmitError(error))
-  })
+    })
+    .catch((error: unknown) => {
+      walletError = error
+    })
+  await Promise.race([
+    walletCall,
+    new Promise<void>((resolve) => setTimeout(resolve, WALLET_ANSWER_TIMEOUT_MS)),
+  ])
 
-  const result = response.result as { transactionId?: string; status?: string }
-  return {
-    transactionId: result.transactionId ?? '',
-    status: result.status ?? 'UNKNOWN',
+  if (walletError !== undefined) {
+    if (walletError instanceof WalletError) throw walletError
+    throw new WalletError('unknown', describeSubmitError(walletError))
   }
+
+  opts.stages?.onVerifying?.(transactionId)
+  const status = await waitForTransactionResult(config.network, transactionId)
+  if (!status) return { kind: 'unverified', transactionId }
+  if (status !== 'SUCCESS') return { kind: 'failed', transactionId, status }
+  return { kind: 'succeeded', transactionId, status }
 }

@@ -241,6 +241,72 @@ export function hashscanTransactionUrl(network: HederaNetwork, transactionId: st
   return `${HASHSCAN_BASE[network]}/transaction/${normalised}`
 }
 
+/**
+ * The mirror node's spelling of a transaction id. `TransactionId.toString()`
+ * gives `0.0.1234@1700000000.000000000`; the REST API answers that form with
+ * HTTP 400 and wants the dashed one. Same conversion as the treasury page.
+ */
+export function mirrorTransactionId(transactionId: string): string {
+  return transactionId.trim().replace(/^(\d+\.\d+\.\d+)@(\d+)\.(\d+)$/, '$1-$2-$3')
+}
+
+export interface WaitOptions {
+  /** How long to keep asking before giving up. */
+  budgetMs?: number
+  delayMs?: number
+  sleep?: (ms: number) => Promise<void>
+  fetchImpl?: typeof fetch
+  aborted?: () => boolean
+}
+
+/**
+ * The network's own word for one transaction — `SUCCESS`, `INVALID_SIGNATURE`,
+ * anything else — or null while the mirror has not indexed it yet.
+ *
+ * This exists because a wallet going quiet is not an answer. The transaction id
+ * is generated here, before the wallet is asked, so the chain can always be
+ * asked back: the signature either landed or it did not.
+ */
+export async function fetchTransactionResult(
+  network: HederaNetwork,
+  transactionId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string | null> {
+  const id = mirrorTransactionId(transactionId)
+  if (!/^\d+\.\d+\.\d+-\d+-\d+$/.test(id)) return null
+  try {
+    const res = await fetchImpl(`${MIRROR_BASE[network]}/transactions/${encodeURIComponent(id)}`, {
+      headers: { accept: 'application/json' },
+    })
+    if (!res.ok) return null
+    const body = (await res.json()) as { transactions?: { result?: unknown }[] }
+    const result = body.transactions?.[0]?.result
+    return typeof result === 'string' && result.length > 0 ? result : null
+  } catch {
+    // A flaky read is not a verdict; the caller treats null as "not indexed".
+    return null
+  }
+}
+
+/** Poll the mirror until the transaction is indexed or the budget runs out. */
+export async function waitForTransactionResult(
+  network: HederaNetwork,
+  transactionId: string,
+  options: WaitOptions = {},
+): Promise<string | null> {
+  const { budgetMs = 45_000, delayMs = 2_000, sleep, fetchImpl = fetch, aborted } = options
+  const pause = sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
+  const polls = Math.max(1, Math.ceil(budgetMs / delayMs))
+  for (let poll = 0; poll < polls; poll += 1) {
+    if (aborted?.()) return null
+    const result = await fetchTransactionResult(network, transactionId, fetchImpl)
+    if (result) return result
+    if (poll + 1 >= polls) return null
+    await pause(delayMs)
+  }
+  return null
+}
+
 export interface FetchOptions {
   network: HederaNetwork
   topicId: string

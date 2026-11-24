@@ -359,8 +359,21 @@ where the reader went on purpose, not in the middle of the text they came to rea
 5. `submitTopicMessage()` freezes a `TopicMessageSubmitTransaction` — topic, message, transaction id,
    node ids — and hands it to the wallet through `hedera_signAndExecuteTransaction`. The wallet signs and
    pays; the page never sees a key.
-6. The transaction id comes back, the block links it on HashScan, and the feed re-reads the topic
-   immediately instead of waiting for its next minute.
+6. **The verdict comes from the mirror, not from the wallet.** The transaction id is generated here and
+   read off the frozen transaction *before* the wallet is asked, so the chain can always be asked back.
+   The wallet call is given 90 s; if it answers with an error, that is the answer. If it never answers,
+   or the wallet app took the browser away and sent it back as a fresh load, `waitForTransactionResult()`
+   polls `/transactions/{id}` for up to 45 s and reports `succeeded`, `failed` (with the network's own
+   status word) or `unverified`. A signature that landed is never reported as a failure.
+7. The result is one block in the treasury page's shape — badge, serif verdict, one sentence, then the
+   facts: account, topic, transaction, status, each linked to HashScan. On success it thanks the signer;
+   on failure it says the network refused it and offers `Try again`; on `unverified` it says so plainly
+   and warns that a second message would also stay on the topic.
+
+The attempt is written to `sessionStorage` before the wallet is asked (`lib/pending.ts`, 15 min). That is
+what lets a reload resume the dialog on "reading the network" instead of falling back to "connect a
+wallet" — and why the dialog owns its own progress state instead of reading `wallet.status`: a session
+being restored is not a missing session.
 
 With no topic configured, the dialog says signing opens at launch and the button signs nothing.
 
