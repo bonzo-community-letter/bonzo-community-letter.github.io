@@ -7,6 +7,7 @@ import { LetterSheet } from './components/LetterSheet'
 import { NavBar } from './components/NavBar'
 import { SiteFooter } from './components/SiteFooter'
 import { Testimonials } from './components/Testimonials'
+import { sampleSignatures } from './content/demo'
 import { useSignatures } from './hooks/useSignatures'
 import { uniqueSigners } from './lib/hcs'
 import { useWallet } from './hooks/useWallet'
@@ -25,6 +26,11 @@ export function App() {
   const signers = uniqueSigners(signatures.signatures)
   const signatureCount = signatures.status === 'ready' ? signers.length : null
 
+  // `?demo=1` puts ten sample comments under the letter, so the section can be looked at
+  // before it has signers. They are not signatures: the count above ignores them and the
+  // section says they are samples.
+  const sample = typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo')
+
   return (
     <div className="min-h-dvh bg-page">
       <NavBar wallet={wallet} onConnect={openConnect} />
@@ -38,7 +44,10 @@ export function App() {
           onConnect={openConnect}
           onSigned={signatures.refresh}
         />
-        <Testimonials signatures={signers} />
+        <Testimonials
+          signatures={sample ? [...sampleSignatures(subject, letterHash), ...signers] : signers}
+          sample={sample}
+        />
         <DevStatus state={signatures} />
       </main>
       <SiteFooter />

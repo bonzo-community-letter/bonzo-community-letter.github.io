@@ -385,6 +385,10 @@ With no topic configured, the dialog says signing opens at launch and the button
 
 ### Testimonials
 
+Open the page with `?demo=1` to see the section filled with ten sample comments, their lengths
+spread from 77 to 512 bytes (the field's limit) — the section then says "Sample comments — not
+signatures" and the count above the letter still ignores them (`content/demo.ts`).
+
 Under the letter, `components/Testimonials.tsx` shows what each account wrote: the first comment
 that account left, with its account id and the date it signed. The rule is the same one the count
 follows (`testimonials` → `uniqueSigners`), so an account that signed twice appears once, and an
