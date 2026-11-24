@@ -7,6 +7,7 @@ import { LetterSheet } from './components/LetterSheet'
 import { NavBar } from './components/NavBar'
 import { SiteFooter } from './components/SiteFooter'
 import { Testimonials } from './components/Testimonials'
+import { Backdrop } from './components/Backdrop'
 import { sampleSignatures } from './content/demo'
 import { useSignatures } from './hooks/useSignatures'
 import { uniqueSigners } from './lib/hcs'
@@ -32,25 +33,29 @@ export function App() {
   const sample = typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo')
 
   return (
-    <div className="min-h-dvh bg-page">
-      <NavBar wallet={wallet} onConnect={openConnect} />
-      <Hero signatureCount={signatureCount} />
-      <main>
-        <LetterSheet
-          letterHash={letterHash}
-          wallet={wallet}
-          signatureCount={signatureCount}
-          signatures={signers}
-          onConnect={openConnect}
-          onSigned={signatures.refresh}
-        />
-        <Testimonials
-          signatures={sample ? [...sampleSignatures(subject, letterHash), ...signers] : signers}
-          sample={sample}
-        />
-        <DevStatus state={signatures} />
-      </main>
-      <SiteFooter />
+    <div className="relative min-h-dvh bg-page">
+      {/* the signers' ids, written behind everything the page does not paint over */}
+      <Backdrop accounts={(sample ? sampleSignatures(subject, letterHash) : signers).map((s) => s.accountId)} />
+      <div className="relative z-10">
+        <NavBar wallet={wallet} onConnect={openConnect} />
+        <Hero signatureCount={signatureCount} />
+        <main>
+          <LetterSheet
+            letterHash={letterHash}
+            wallet={wallet}
+            signatureCount={signatureCount}
+            signatures={signers}
+            onConnect={openConnect}
+            onSigned={signatures.refresh}
+          />
+          <Testimonials
+            signatures={sample ? [...sampleSignatures(subject, letterHash), ...signers] : signers}
+            sample={sample}
+          />
+          <DevStatus state={signatures} />
+        </main>
+        <SiteFooter />
+      </div>
       <ConnectDialog open={connectOpen} onClose={() => setConnectOpen(false)} wallet={wallet} />
       {/* fixed, in two layers around the letter: flap behind it, body in front */}
       <EnvelopeOverlay />

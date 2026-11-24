@@ -1,5 +1,21 @@
 @import 'tailwindcss';
 
+/*
+ * One handwritten face, self-hosted. Caveat (SIL OFL 1.1, see src/assets/fonts/OFL-Caveat.txt)
+ * — bundled rather than fetched from a font CDN: this page asks people to sign a letter about
+ * being treated carelessly with their data, and it will not hand their IP to Google to look
+ * like a signature. The system hands after it in the stack are a fallback, not the design.
+ */
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./assets/fonts/caveat-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 @theme {
   /* The page is dark on purpose: the letter is the light. */
   --color-page: #14110e;
@@ -21,6 +37,7 @@
   --font-serif: ui-serif, Georgia, 'Iowan Old Style', 'Times New Roman', serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-hand: 'Caveat', 'Bradley Hand', 'Snell Roundhand', 'Segoe Script', 'Apple Chancery', cursive;
 }
 
 html {
@@ -53,6 +70,28 @@ select {
 button:disabled,
 [role='button'][aria-disabled='true'] {
   cursor: not-allowed;
+}
+
+/*
+ * The signature wall behind the page. A system hand — no webfont, because a letter about
+ * broken promises should not hand every visitor's IP to a font CDN — and a hover that
+ * lifts one id out of the texture without putting it in front of the text.
+ */
+@utility bg-id {
+  font-family: var(--font-hand);
+  color: var(--color-ink);
+  transition:
+    transform 220ms ease-out,
+    opacity 220ms ease-out,
+    color 220ms ease-out;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-id {
+    transition: none;
+  }
 }
 
 ::selection {

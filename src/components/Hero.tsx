@@ -9,7 +9,7 @@ import { page } from '../content/page'
  */
 export function Hero({ signatureCount }: { signatureCount: number | null }) {
   return (
-    <header className="hero-height border-b border-rule bg-hero">
+    <header className="hero-height border-b border-rule bg-hero/80">
       <div className="mx-auto w-full max-w-5xl px-6 pt-10 pb-24 text-center sm:pt-20 sm:pb-32">
         <p className="eyebrow-mark">{page.eyebrow}</p>
 

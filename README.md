@@ -401,6 +401,18 @@ exactly one set it is rewound by that much, which is invisible because the next 
 reader lets go; with `prefers-reduced-motion` it does not drift at all, and scrolling still works.
 Long comments are cut at six lines with an ellipsis — a band is a strip, not a page.
 
+### The wall behind the page
+
+`components/Backdrop.tsx` writes the account ids of every signer across the background in Caveat, on a
+jittered 7 × 10 grid at very low opacity, tilted a few degrees each way — texture, not a list. A
+pointer lifts the id under it: 1.9×, 60% opacity, in the accent. That hover is driven from a
+`pointermove` listener rather than `:hover`, because the ids paint behind the page and every section
+would otherwise swallow the pointer first; the wall hit-tests itself and measures again once the hand
+has loaded (`document.fonts.ready`), since the boxes move when the font arrives.
+
+The letter sheet is opaque, so the wall stops where the paper starts. With no signatures there is no
+wall. `?demo=1` uses the sample ids so the effect can be looked at before anyone has signed.
+
 ### One signature per account
 
 The page refuses a second one. The connected account is looked up in what the mirror returned, and —
