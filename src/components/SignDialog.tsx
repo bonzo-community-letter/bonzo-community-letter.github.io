@@ -357,10 +357,14 @@ export function SignDialog({
           </div>
         ) : (
           <>
-            <p className="mt-4 border-l-2 border-accent pl-3 text-[0.8125rem] leading-relaxed text-ink-soft">
-              Your comment is public and permanent forever. It is written to the Hedera Consensus Service,
-              cannot be edited or deleted, and stays visible to everyone as long as the network exists.
-              Insults and abuse are not helpful – you may be critical, but please remain respectful!
+            <p className="mt-4 text-sm leading-relaxed text-ink-soft">
+              Your signature and your (optional) comment are recorded on the Hashgraph as a public and
+              permanent record of support.
+            </p>
+
+            <p className="mt-3 border-l-2 border-accent pl-3 text-[0.8125rem] leading-relaxed text-ink-soft">
+              This cannot be edited or deleted, and stays permanently visible to everyone. Insults and abuse
+              are not helpful – please use respectful language and don’t disclose personal information!
             </p>
 
             <label
