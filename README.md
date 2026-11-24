@@ -384,21 +384,32 @@ With no topic configured, the dialog says signing opens at launch and the button
 
 ### What a signature costs
 
-The network charges the fee, not this page, and the schedule is fixed in **tinybar**, not in dollars.
-Two mainnet signatures, read back from the mirror node's transaction records:
+Hedera's fees are dollar-denominated, and the chain proves it. Reading three transaction types back
+from the mirror, at the network's own rate of **$0.050831/HBAR** on 24 November 2026:
 
-| message | charged | in HBAR | in USD at the network's rate |
-|---|---|---|---|
-| 213 bytes | 469,539 tinybar | 0.0046954 | $0.00024 |
-| 232 bytes | 494,115 tinybar | 0.0049412 | $0.00025 |
+| transaction | charged | in USD | published | ratio |
+|---|---|---|---|---|
+| `CryptoTransfer` | 194,037 tinybar | $0.000099 | $0.0001 | 0.99 |
+| `CryptoCreateAccount` | 97,269,954 tinybar | $0.0494 | $0.05 | 0.99 |
+| `ConsensusSubmitMessage`, 213 B | 469,539 tinybar | $0.000239 | — | — |
+| `ConsensusSubmitMessage`, 232 B | 494,115 tinybar | $0.000251 | — | — |
 
-Those two points give the shape: roughly 194,000 tinybar of base plus ~1,300 tinybar per byte, so a
-longer comment costs slightly more.
+The first two land on the published price to within a percent, so the peg holds: the schedule is
+written in tinybar, but it is kept in step with the dollar.
 
-Hedera's published list says `ConsensusSubmitMessage $0.0008` — a **USD** figure at the exchange rate
-the schedule was priced at, when HBAR was near $0.17. The schedule itself holds tinybar, so the dollar
-cost follows the market: at the network's rate of $0.0508 on 24 November 2026, the same transaction
-cost $0.00024, a third of the published number.
+**Why a message costs a fifth of the listed price.** `ConsensusSubmitMessage` is listed at $0.0008,
+which is the price of a message at the **1 KB maximum**, not a flat charge. The fee is a base plus a
+per-byte component, and the two measured messages pin both down:
+
+```
+slope  1,293.5 tinybar/byte   →  $0.000000657 per byte
+base     194,029 tinybar      →  $0.000099        (the same $0.0001 base CryptoTransfer charges)
+at 1024 bytes: 194,029 + 1024 × 1,293.5 = 1,518,546 tinybar = $0.00077  ≈ the listed $0.0008
+```
+
+So a 213-byte signature costs $0.00024 because it is a fifth of a full message, and a longer comment
+costs proportionally more. The dialogs quote the HBAR figure (~0.005 HBAR) because that is what the
+wallet shows; the dollar figure follows the exchange rate the network publishes.
 
 ### The hash is computed at build time
 
