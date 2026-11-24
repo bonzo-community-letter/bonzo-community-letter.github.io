@@ -316,7 +316,7 @@ export function SignDialog({
           ) : null}
         </div>
         <h2 id="sign-dialog-title" className="mt-2 font-serif text-2xl leading-tight text-ink">
-          Add your signature
+          {alreadySigned ? 'You have signed' : 'Add your signature'}
         </h2>
 
         {!signingOpen ? (
@@ -375,7 +375,7 @@ export function SignDialog({
                 </p>
               </div>
             </div>
-            <dl className="mt-4 grid gap-x-8 gap-y-2 border-t border-rule/60 pt-4 text-xs sm:grid-cols-2">
+            <dl className="mt-4 grid gap-y-2 border-t border-rule/60 pt-4 text-xs">
               <Fact label="Account">{wallet.accountId ?? attemptAccount ?? '—'}</Fact>
               <Fact label="Topic">{config.topicId}</Fact>
               {state.transactionId ? <Fact label="Transaction">{state.transactionId}</Fact> : null}
@@ -395,10 +395,10 @@ export function SignDialog({
         ) : alreadySigned ? (
           <>
             <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-              This account has already signed this letter. One signature per account — a topic has no
-              delete, so a second message could not replace the first, only stand beside it.
+              The connected account has already signed this letter. Multiple signatures are ignored, only
+              the first counts.
             </p>
-            <dl className="mt-4 grid gap-x-8 gap-y-2 text-xs sm:grid-cols-2">
+            <dl className="mt-4 grid gap-y-2 text-xs">
               <Fact label="Account">{wallet.accountId ?? '—'}</Fact>
               {already?.signedAt ? <Fact label="Signed">{signedWhen(already.signedAt)}</Fact> : null}
             </dl>
@@ -577,7 +577,7 @@ function Confirmation({ outcome, accountId }: { outcome: SubmitOutcome; accountI
         </div>
       </div>
 
-      <dl className="grid gap-x-8 gap-y-2 border-t border-rule/60 px-4 py-4 text-xs sm:grid-cols-2">
+      <dl className="grid gap-y-2 border-t border-rule/60 px-4 py-4 text-xs">
         {accountId ? <Fact label="Account">{accountId}</Fact> : null}
         <Fact label="Topic">
           <a
@@ -607,11 +607,20 @@ function Confirmation({ outcome, accountId }: { outcome: SubmitOutcome; accountI
   )
 }
 
+/**
+ * A label and its value, on one line if they fit.
+ *
+ * The value never breaks mid-string: a date that ends with "UTC" on a line of its own
+ * reads as two facts, and a transaction id cut in half cannot be copied. When the row
+ * is too narrow the value drops to its own line — whole.
+ */
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-rule/40 pb-1.5 last:border-b-0">
+    <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-rule/40 pb-1.5 last:border-b-0">
       <dt className="shrink-0 text-[0.5625rem] uppercase tracking-[0.16em] text-ink-faint">{label}</dt>
-      <dd className="min-w-0 break-all text-right font-mono text-[0.6875rem] text-ink-soft">{children}</dd>
+      <dd className="min-w-0 text-right font-mono text-[0.6875rem] whitespace-nowrap text-ink-soft">
+        {children}
+      </dd>
     </div>
   )
 }
