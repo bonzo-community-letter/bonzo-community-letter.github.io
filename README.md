@@ -416,9 +416,11 @@ very low opacity, tilted a few degrees each way — texture, not a list.
 Two separate draws decide what is on screen. **Where** a mark sits, how big and how tilted comes from a
 generator seeded by the accounts, so the wall does not move while someone reads. **Which** account is
 written there is reshuffled on every load, so a reload is a different slice of the signatures and every
-signer turns up eventually. Positions come from a grid measured against the window (`layoutSlots`): one
-mark per cell, jitter inside the cell, and the type size derived from the cell width, so ids rarely land
-on each other — 80 marks at 1280 with no overlap, 30 at 390. A
+signer turns up eventually. Positions come from a grid measured against the window (`layoutSlots`), then broken up: one cell in
+eight is left empty, each row sits a little off from the last, every mark is jittered by up to a third
+of a cell and tilted up to 16°, and the type size is derived from the cell width. The grid keeps ids
+from landing on each other — 44 marks at 1280 with no overlap, 22 at 390 — and the disorder keeps it
+from reading as a table. A
 pointer lifts the id under it: 1.9×, 60% opacity, in the accent. That hover is driven from a
 `pointermove` listener rather than `:hover`, because the ids paint behind the page and every section
 would otherwise swallow the pointer first; the wall hit-tests itself and measures again once the hand

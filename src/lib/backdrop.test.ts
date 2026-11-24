@@ -12,9 +12,10 @@ function seeded(seed: number): () => number {
 }
 
 describe('layoutSlots', () => {
-  it('gives every cell exactly one mark', () => {
+  it('fills most cells and leaves some empty, so it does not read as a table', () => {
     const slots = layoutSlots(1280, 900, seeded(1))
-    expect(slots).toHaveLength(80)
+    expect(slots.length).toBeGreaterThan(30)
+    expect(slots.length).toBeLessThan(6 * 9)
   })
 
   it('keeps every mark inside the viewport', () => {
@@ -48,7 +49,7 @@ describe('layoutSlots', () => {
     expect(layoutSlots(1280, 900, seeded(11))).not.toEqual(layoutSlots(1280, 900, seeded(12)))
   })
 
-  it('keeps the tilt gentle', () => {
-    for (const slot of layoutSlots(1280, 900, seeded(13))) expect(Math.abs(slot.rotate)).toBeLessThan(5)
+  it('tilts, but never so far that an id lies on its side', () => {
+    for (const slot of layoutSlots(1280, 900, seeded(13))) expect(Math.abs(slot.rotate)).toBeLessThan(16)
   })
 })

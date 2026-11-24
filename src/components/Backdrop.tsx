@@ -66,11 +66,15 @@ interface Slot {
   opacity: number
 }
 
+function clamp(value: number, low: number, high: number): number {
+  return Math.min(high, Math.max(low, value))
+}
+
 const MIN_COLUMNS = 3
 const MAX_COLUMNS = 9
 /** Roughly the width a cell needs for a 12-character id to sit inside it. */
-const COLUMN_WIDTH = 165
-const ROW_HEIGHT = 86
+const COLUMN_WIDTH = 205
+const ROW_HEIGHT = 108
 
 /**
  * Where the marks go, in percentages, for a viewport of this size.
@@ -83,23 +87,32 @@ export function layoutSlots(width: number, height: number, random: () => number)
   const columns = Math.min(MAX_COLUMNS, Math.max(MIN_COLUMNS, Math.round(width / COLUMN_WIDTH)))
   const rows = Math.max(3, Math.round(height / ROW_HEIGHT))
   const cellWidth = width / columns
+  const padX = (0.42 / columns) * 100
+  const padY = (0.42 / rows) * 100
   // A twelve-character id in this hand is about five times its font size wide; keep it
   // inside 70% of the cell and nothing has to overlap to fit.
   const baseSize = Math.min(1.55, Math.max(0.6, (cellWidth * 0.14) / 16))
 
   const slots: Slot[] = []
   for (let row = 0; row < rows; row += 1) {
+    // each row sits a little off from its neighbours, so the marks stop reading as bands
+    const rowShift = (random() - 0.5) * 0.36
     for (let column = 0; column < columns; column += 1) {
+      // A hand does not fill every place it could: one cell in eight is left empty, which
+      // is what keeps the wall from reading as a table.
+      if (random() < 0.13) continue
       // one in six is written larger and darker, as a hand would not keep one weight
       const loud = random() < 0.16
-      const jitterX = (random() - 0.5) * 0.34
-      const jitterY = (random() - 0.5) * 0.3
+      const jitterX = (random() - 0.5) * 0.62
+      const jitterY = (random() - 0.5) * 0.6
       slots.push({
-        left: ((column + 0.5 + jitterX) / columns) * 100,
-        top: ((row + 0.5 + jitterY) / rows) * 100,
+        // kept off the edges by a fraction of a cell: an id half outside the window is
+        // an id nobody reads, and on a phone a cell is narrow enough for that to happen
+        left: clamp(((column + 0.5 + jitterX) / columns) * 100, padX, 100 - padX),
+        top: clamp(((row + 0.5 + rowShift + jitterY) / rows) * 100, padY, 100 - padY),
         // the loud ones are bigger, but never beyond what the cell holds
-        size: Math.min(1.7, baseSize * (loud ? 1.22 : 0.82 + random() * 0.18)),
-        rotate: (random() - 0.5) * 9,
+        size: Math.min(1.7, baseSize * (loud ? 1.3 : 0.78 + random() * 0.26)),
+        rotate: (random() - 0.5) * 32,
         opacity: loud ? 0.2 + random() * 0.05 : 0.09 + random() * 0.04,
       })
     }
