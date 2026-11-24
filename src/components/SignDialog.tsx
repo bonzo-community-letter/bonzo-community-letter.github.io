@@ -358,13 +358,14 @@ export function SignDialog({
         ) : (
           <>
             <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-              Your signature and your (optional) comment are recorded on the Hashgraph as a public and
-              permanent record of support.
+              Your signature and your (optional) comment are recorded on the hashgraph as a public and
+              permanent record of support for this open letter.
             </p>
 
             <p className="mt-3 border-l-2 border-accent pl-3 text-[0.8125rem] leading-relaxed text-ink-soft">
-              This cannot be edited or deleted, and stays permanently visible to everyone. Insults and abuse
-              are not helpful – please use respectful language and don’t disclose personal information!
+              Neither the signature nor the comment can be edited or deleted. It will stay permanently and
+              visible to everyone on the hashgraph. Insults and abuse are not helpful – please use respectful
+              language and don’t disclose any personal information!
             </p>
 
             <label
