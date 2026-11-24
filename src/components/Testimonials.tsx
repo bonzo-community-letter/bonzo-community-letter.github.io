@@ -102,18 +102,12 @@ export function Testimonials({
     resumeAt.current = performance.now() + RESUME_AFTER
   }
 
-  const count = entries.length
-
   return (
     <section className="pb-16 pt-16">
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-        <p className="eyebrow">Personal Messages from the Signees</p>
+        <p className="eyebrow">Comments</p>
         <h2 className="mt-2 font-serif text-2xl leading-tight text-ink">
-          {sample
-            ? 'Sample comments — not signatures'
-            : count === 1
-              ? 'One signer wrote to the addressees'
-              : `${count} signers wrote to the addressees`}
+          {sample ? 'Sample comments — not signatures' : 'Personal Messages from the Signees'}
         </h2>
       </div>
 
