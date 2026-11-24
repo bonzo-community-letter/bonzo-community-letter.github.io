@@ -103,7 +103,9 @@ export function Testimonials({
   }
 
   return (
-    <section className="pb-16 pt-16">
+    // The wall runs behind the whole page; behind a wall of text it has to step back,
+    // the same way the hero's own tint does.
+    <section className="border-y border-rule/40 bg-page/88 pb-16 pt-16 backdrop-blur-sm">
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
         <p className="eyebrow">Comments</p>
         <h2 className="mt-2 font-serif text-2xl leading-tight text-ink">

@@ -368,21 +368,37 @@ export interface FetchOptions {
   letterHash: string
   /** safety cap on pages of 100 messages */
   maxPages?: number
+  /** Only messages with a sequence number greater than this. */
+  sinceSequence?: number
   signal?: AbortSignal
   fetchImpl?: typeof fetch
 }
 
+/** The mirror answers at most 100 messages per page; there is no "everything" call. */
+export const PAGE_SIZE = 100
+/**
+ * How far back the page is willing to read. 20 pages is 2 000 messages — a letter with
+ * more signatures than that is a different problem, but the page must not stop at a few
+ * hundred without saying so, which is what a 5-page bound did.
+ */
+export const MAX_PAGES = 20
+
 /**
  * Read the topic from the public mirror node (no key, no backend).
- * Newest first, bounded number of pages.
+ *
+ * Newest first, following the cursor until the topic is exhausted or MAX_PAGES is hit.
+ * `sinceSequence` reads only what is newer than a message already held, which is what a
+ * refresh does: the first load may walk twenty pages, the minute-by-minute one asks for
+ * what has been written since and usually gets an empty answer.
  */
 export async function fetchSignatures(opts: FetchOptions): Promise<Signature[]> {
-  const { network, topicId, subject, letterHash, maxPages = 5, signal } = opts
+  const { network, topicId, subject, letterHash, maxPages = MAX_PAGES, sinceSequence, signal } = opts
   const doFetch = opts.fetchImpl ?? fetch
   if (!topicId) return []
 
+  const after = sinceSequence !== undefined ? `&sequenceNumber=gt:${sinceSequence}` : ''
   let url: string | null =
-    `${MIRROR_BASE[network]}/topics/${encodeURIComponent(topicId)}/messages?limit=100&order=desc`
+    `${MIRROR_BASE[network]}/topics/${encodeURIComponent(topicId)}/messages?limit=${PAGE_SIZE}&order=desc${after}`
   const collected: Signature[] = []
   let pages = 0
 

@@ -395,6 +395,13 @@ itself and can be scrolled, dragged or stopped on. The rule is the same one the 
 (`testimonials` → `uniqueSigners`), so an account that signed twice appears once, and an account that
 wrote nothing does not appear at all.
 
+The topic is read from the mirror in pages of 100 (the API's maximum — there is no "everything"
+call), following the cursor until it is exhausted or `MAX_PAGES` (20 pages, 2 000 messages) is
+reached. The first load walks the topic; every later load asks only for `sequenceNumber=gt:<highest
+held>` and merges by sequence, so watching a topic with a thousand signatures costs one request a
+minute that is usually empty. If a read ever stops at the bound, `DevStatus` says so rather than
+showing a quietly short list.
+
 The band never shows an edge: the set of comments is laid out twice, and once the strip has travelled
 exactly one set it is rewound by that much, which is invisible because the next copy is identical
 (`lib/band.ts`, `nextOffset`). It holds still while hovered or focused and resumes ~2.6 s after the

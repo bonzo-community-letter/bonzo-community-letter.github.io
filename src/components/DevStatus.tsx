@@ -48,6 +48,9 @@ export function DevStatus({ state }: { state: SignatureState }) {
           <Row label="topic · mainnet" value={NETWORKS.mainnet.topicId || 'not set'} />
           <Row label="WalletConnect id" value={config.walletConnectProjectId ? 'set' : 'not set'} />
           <Row label="signatures read" value={signatureValue} />
+          {state.truncated ? (
+            <Row label="older messages" value="unread — the read stopped at its page bound" />
+          ) : null}
         </dl>
 
         <p className="mt-4 text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint">
