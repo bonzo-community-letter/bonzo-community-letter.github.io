@@ -22,7 +22,7 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
 
         <div className="mt-10">
           <p className="eyebrow" style={{ fontSize: '0.875rem' }}>To</p>
-          <ul className="mt-3 flex flex-wrap items-baseline justify-center gap-x-6 gap-y-2">
+          <ul className="mt-3 flex flex-col items-center gap-y-1.5 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2">
             {addressees.map((addressee) => (
               <li key={addressee.name} className="flex items-center gap-2.5">
                 {addressee.logoSrc ? (

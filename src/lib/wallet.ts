@@ -294,7 +294,7 @@ async function createConnector(): Promise<DAppConnector> {
   const metadata = {
     name: 'Open letter — Bonzo Lend recovery',
     description:
-      'An open letter to Hedera, the HBAR Foundation, Supra Labs and the Bonzo Finance Foundation.',
+      'An open letter to Hedera Foundation, Hedera Hashgraph, Hashgraph Foundry, Supra and Bonzo Finance Foundation.',
     url: pageUrl,
     icons: [new URL('icon-256.png', pageUrl).toString()],
     redirect: { universal: returnUrl.toString() },

@@ -22,7 +22,7 @@ export const page = {
 
   letterhead: {
     date: '15 November 2026',
-    to: 'Hedera, the HBAR Foundation, Supra Labs and the Bonzo Finance Foundation',
+    to: 'Hedera Foundation, Hedera Hashgraph, Hashgraph Foundry, Supra and Bonzo Finance Foundation',
     subject: 'On the Bonzo Lend recovery — the commitment, the distribution, and what remains unanswered',
     salutation: 'To the addressees above,',
   },
