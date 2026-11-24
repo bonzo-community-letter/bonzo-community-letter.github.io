@@ -4,7 +4,7 @@
  * this file is free to change without invalidating anything.
  */
 export const page = {
-  eyebrow: 'Bonzo Lend & Supra Labs Exploit',
+  eyebrow: 'Bonzo Lend & Supra Exploit',
 
   /** Working title — still to be decided. */
   title: 'Open Letter',
@@ -14,7 +14,7 @@ export const page = {
    * `from.note` replaces the old standfirst — same words, better placed.
    */
   from: {
-    name: 'Affected users of the Bonzo Lend and Supra Labs exploit',
+    name: 'Affected users of the Bonzo Lend and Supra exploit',
     note: 'What happened, what was promised, what was delivered, and what questions remain unanswered.',
   },
 
