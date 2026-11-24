@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { addressees } from '../content/addressees'
 import { page } from '../content/page'
 
@@ -23,17 +24,24 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
         <div className="mt-10">
           <p className="eyebrow" style={{ fontSize: '0.875rem' }}>To</p>
           <ul className="mt-3 flex flex-col items-center gap-y-1.5 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2">
-            {addressees.map((addressee) => (
-              <li key={addressee.name} className="flex items-center gap-2.5">
-                {addressee.logoSrc ? (
-                  <img
-                    src={addressee.logoSrc}
-                    alt=""
-                    className="h-4 w-auto shrink-0 opacity-80 grayscale"
-                  />
-                ) : null}
-                <span className="font-serif text-lg leading-snug text-ink">{addressee.name}</span>
-              </li>
+            {addressees.map((addressee, i) => (
+              <Fragment key={addressee.name}>
+                {/* Six names never share a line inside max-w-5xl, and letting the
+                    last one wrap alone reads as an accident. Break after the Hedera
+                    side instead: three above, three below, and the stack on a phone
+                    is unaffected. */}
+                {i === 3 ? <li aria-hidden="true" className="hidden basis-full sm:block" /> : null}
+                <li className="flex items-center gap-2.5">
+                  {addressee.logoSrc ? (
+                    <img
+                      src={addressee.logoSrc}
+                      alt=""
+                      className="h-4 w-auto shrink-0 opacity-80 grayscale"
+                    />
+                  ) : null}
+                  <span className="font-serif text-lg leading-snug text-ink">{addressee.name}</span>
+                </li>
+              </Fragment>
             ))}
           </ul>
         </div>

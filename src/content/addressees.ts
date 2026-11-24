@@ -22,4 +22,5 @@ export const addressees: Addressee[] = [
   { name: 'Hashgraph Foundry' },
   { name: 'Supra' },
   { name: 'Bonzo Finance Foundation' },
+  { name: 'Bonzo Finance Labs' },
 ]
