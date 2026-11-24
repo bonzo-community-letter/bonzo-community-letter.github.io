@@ -1,6 +1,6 @@
 import { NETWORKS, config, signingOpen } from '../config'
 import type { SignatureState } from '../hooks/useSignatures'
-import { MAX_COMMENT_BYTES, buildSignature, prettyPayload, topicMemo } from '../lib/hcs'
+import { MAX_COMMENT_BYTES, buildSignature, prettyPayload } from '../lib/hcs'
 import { isDraft, letterBytes, letterHash, letterText, subject } from 'virtual:letter'
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -43,7 +43,6 @@ export function DevStatus({ state }: { state: SignatureState }) {
           <Row label="text" value={letterText.length > 0 ? `${letterBytes} bytes` : 'not written yet'} />
           <Row label="draft" value={isDraft ? 'yes' : 'no'} />
           <Row label="sha-256" value={letterHash} />
-          <Row label="topic memo" value={topicMemo(subject, letterHash)} />
           <Row label="HCS topic" value={config.topicId || 'not set'} />
           <Row label="topic · testnet" value={NETWORKS.testnet.topicId || 'not set'} />
           <Row label="topic · mainnet" value={NETWORKS.mainnet.topicId || 'not set'} />

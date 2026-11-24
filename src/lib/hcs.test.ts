@@ -8,7 +8,6 @@ import {
   parseMessages,
   payloadByteLength,
   sha256Hex,
-  topicMemo,
   type MirrorMessage,
   type SignaturePayload,
 } from './hcs'
@@ -48,12 +47,6 @@ describe('encodePayload', () => {
 
   it('produces identical bytes for identical values', () => {
     expect(encodePayload(payloadOf())).toBe(encodePayload(payloadOf()))
-  })
-})
-
-describe('topicMemo', () => {
-  it('is the letter slug, the schema version and the hash', () => {
-    expect(topicMemo(LETTER, HASH)).toBe(`${LETTER}:v1:${HASH}`)
   })
 })
 

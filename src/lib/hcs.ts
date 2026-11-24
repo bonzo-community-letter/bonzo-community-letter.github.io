@@ -111,11 +111,6 @@ export function commentByteLength(comment: string): number {
   return byteLength(comment)
 }
 
-/** Topic memo convention: `<subject>:v<version>:<hash>`. */
-export function topicMemo(subject: string, letterHash: string): string {
-  return `${subject}:v${PAYLOAD_VERSION}:${letterHash}`
-}
-
 /**
  * Build the exact message a signer will submit, or explain why it cannot be
  * submitted. Everything that can be checked before a wallet is involved is

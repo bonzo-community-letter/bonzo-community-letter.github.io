@@ -335,17 +335,14 @@ drops the parts that do not (`app`, `agreement`, a date-versioned letter id):
 - **Reader filters** on `version`, `subject` and `letterHash`, so older drafts and foreign messages on
   the same topic are ignored.
 
-Topic memo convention: `<subject>:v<version>:<letterHash>`, e.g.
-
-```
-bonzo-exploit-open-letter:v1:<letterHash>
-```
-
 Each **transaction** carries its own memo, `bonzo-open-letter:v1:signature-<sha256 of the message>`
-(95 of the 100 bytes the network allows). The topic memo says which letter a signature belongs to;
-the transaction memo says which message it submitted, so a signature can be matched from the
-transaction alone — the wallet's confirmation screen and HashScan both show it. It is computed from
-the exact bytes written to the topic, not from a re-serialisation of them.
+(95 of the 100 bytes the network allows). It names the message the transaction submitted, so a
+signature can be matched from the transaction alone — the wallet's confirmation screen and HashScan
+both show it. It is computed from the exact bytes written to the topic, not from a re-serialisation
+of them.
+
+The **topic's** own memo is set once, when the topic is created, and is not this page's to
+document: it was written by whoever created it, and the page never writes to it.
 
 ### How a signature is made
 

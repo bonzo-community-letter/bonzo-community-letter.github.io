@@ -1,9 +1,9 @@
 /**
  * Content entry point.
  *
- * `LETTER_SLUG` names the campaign: it goes into every signature and into the
- * HCS topic memo. `letterText` is what gets hashed at build time — its SHA-256
- * is what a signature commits to, so it must be the exact text that is signed.
+ * `SUBJECT` names the campaign: it goes into every signature. `letterText` is what
+ * gets hashed at build time — its SHA-256 is what a signature commits to, so it must
+ * be the exact text that is signed.
  *
  * Editing `letterText` after signatures exist invalidates them by design.
  */
