@@ -350,7 +350,7 @@ where the reader went on purpose, not in the middle of the text they came to rea
 1. The reader connects a wallet — from the top bar or from the dialog itself. It is **one session**,
    held in `App`, so the bar and the dialog can never disagree about who is connected.
 2. Above the comment field the dialog says what the comment is: public, permanent, impossible to edit or
-   delete, and no place for insults. The field itself stays a field, capped at 512 UTF-8 bytes, with the
+   delete — and asks for criticism that stays respectful. The field itself stays a field, capped at 512 UTF-8 bytes, with the
    counter turning red past it.
 3. `What will be published` shows the exact message, with the timestamp left as a placeholder — it is
    stamped at submission.

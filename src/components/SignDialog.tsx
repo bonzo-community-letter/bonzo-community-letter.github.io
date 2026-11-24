@@ -7,6 +7,7 @@ import {
   PAYLOAD_VERSION,
   buildSignature,
   commentByteLength,
+  hashscanTopicUrl,
   hashscanTransactionUrl,
   prettyPayload,
 } from '../lib/hcs'
@@ -141,10 +142,23 @@ export function SignDialog({
         aria-labelledby="sign-dialog-title"
         className="relative m-3 w-full max-w-md border border-rule bg-hero p-6 shadow-2xl shadow-black/60 sm:m-0"
       >
-        <p className="eyebrow">
-          {count === null ? 'Signature' : `${count} ${count === 1 ? 'signature' : 'signatures'}`} ·{' '}
-          {config.network}
-        </p>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className="eyebrow">
+            {count === null ? 'Signature' : `${count} ${count === 1 ? 'signature' : 'signatures'}`} ·{' '}
+            {config.network}
+          </p>
+          {/* the topic a signature lands on: the one fact a signer can check afterwards */}
+          {config.topicId ? (
+            <a
+              href={hashscanTopicUrl(config.network, config.topicId)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-[0.6875rem] text-ink-faint underline decoration-rule underline-offset-4 hover:text-ink-soft"
+            >
+              topic {config.topicId} ↗
+            </a>
+          ) : null}
+        </div>
         <h2 id="sign-dialog-title" className="mt-2 font-serif text-2xl leading-tight text-ink">
           {signed ? 'Signature submitted' : 'Add your signature'}
         </h2>
@@ -191,7 +205,8 @@ export function SignDialog({
           <>
             <p className="mt-4 border-l-2 border-accent pl-3 text-[0.8125rem] leading-relaxed text-ink-soft">
               Your comment is public and permanent. It is written to the Hedera Consensus Service, cannot be
-              edited or deleted, and stays visible forever. Insults and abuse are not tolerated.
+              edited or deleted, and stays visible forever. Insults and abuse are not helpful – please stay
+              critical, but respectful!
             </p>
 
             <label
