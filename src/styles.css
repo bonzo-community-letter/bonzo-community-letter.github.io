@@ -51,6 +51,25 @@ body {
   color: var(--color-ink-faint);
 }
 
+/*
+ * The eyebrow as a mark: exactly what the browser paints when the text is
+ * selected — accent behind, page colour on top — kept permanently, with 5px of
+ * air on either side. line-height 1.2 makes the block as tall as the selection
+ * band rather than as tall as a text line.
+ */
+@utility eyebrow-mark {
+  display: inline-block;
+  padding-inline: 5px;
+  /* same type as .eyebrow — only the selection's paint is added */
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: var(--color-accent);
+  color: var(--color-page);
+}
+
 /* The letter itself: a real page, not a card */
 @utility letter-body {
   font-family: var(--font-serif);

@@ -10,7 +10,7 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
   return (
     <header className="hero-height border-b border-rule bg-hero">
       <div className="mx-auto w-full max-w-5xl px-6 pt-14 pb-24 text-center sm:pt-20 sm:pb-32">
-        <p className="eyebrow">{page.eyebrow}</p>
+        <p className="eyebrow-mark">{page.eyebrow}</p>
 
         <h1 className="mx-auto mt-4 max-w-[18ch] font-serif text-[2.75rem] leading-[1.04] tracking-tight text-ink sm:text-6xl">
           {page.title}
