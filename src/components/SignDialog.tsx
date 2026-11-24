@@ -438,9 +438,8 @@ export function SignDialog({
               </button>
             </div>
             <p className="mt-3 text-[0.75rem] leading-relaxed text-ink-faint">
-              {connected
-                ? `Signing as ${wallet.accountId}. Your wallet pays the network fee (~0.005 HBAR).`
-                : 'HashPack, Kabila or WalletConnect. Your wallet pays the network fee (~0.005 HBAR).'}
+              {connected ? `Signing as ${wallet.accountId}. ` : ''}
+              Your wallet pays the network fee — about 0.005 HBAR for a short comment, more for a long one.
             </p>
           </>
         )}
