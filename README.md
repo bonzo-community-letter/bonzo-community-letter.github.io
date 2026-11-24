@@ -13,7 +13,8 @@ GitHub Pages serves static files only — no server, no runtime, no secrets. Eve
 from that:
 
 - **Signing has no backend.** Each signer submits their own HCS message from their own wallet and pays
-  their own fee (~0.0001 HBAR). There is no sponsor wallet and no key on the page.
+  their own fee (~0.005 HBAR, measured on chain — see "What a signature costs"). There is no sponsor
+  wallet and no key on the page.
 - **Reading signatures has no backend.** The page reads the topic from Hedera's public mirror node over
   REST: one `GET`, no key, CORS-enabled.
 - **Verification needs nothing from us.** A signature is canonical JSON containing the SHA-256 of the
@@ -217,7 +218,7 @@ protocol underneath.
   implementation of WalletConnect v2. Not HashConnect: HashPack shut legacy HashConnect down and moved
   to WalletConnect, and the library's `HashConnect`-era API is gone.
 - The page never holds a key, never sees a seed phrase and never asks for one. The wallet signs and
-  pays the network fee (~0.0001 HBAR per message).
+  pays the network fee (~0.005 HBAR per message; the network charges it, this page only estimates it).
 - **There is no separate "HashPack API" any more.** HashConnect — the injected handshake dApps used until
   2024 — was removed in HashPack 14.3.0, and HashPack's own developer docs point at WalletConnect. Bonzo's
   shipped bundle has the same shape: `DAppConnector` from `@hashgraph/hedera-wallet-connect`, the same three
@@ -380,6 +381,24 @@ wallet" — and why the dialog owns its own progress state instead of reading `w
 being restored is not a missing session.
 
 With no topic configured, the dialog says signing opens at launch and the button signs nothing.
+
+### What a signature costs
+
+The network charges the fee, not this page, and the schedule is fixed in **tinybar**, not in dollars.
+Two mainnet signatures, read back from the mirror node's transaction records:
+
+| message | charged | in HBAR | in USD at the network's rate |
+|---|---|---|---|
+| 213 bytes | 469,539 tinybar | 0.0046954 | $0.00024 |
+| 232 bytes | 494,115 tinybar | 0.0049412 | $0.00025 |
+
+Those two points give the shape: roughly 194,000 tinybar of base plus ~1,300 tinybar per byte, so a
+longer comment costs slightly more.
+
+Hedera's published list says `ConsensusSubmitMessage $0.0008` — a **USD** figure at the exchange rate
+the schedule was priced at, when HBAR was near $0.17. The schedule itself holds tinybar, so the dollar
+cost follows the market: at the network's rate of $0.0508 on 24 November 2026, the same transaction
+cost $0.00024, a third of the published number.
 
 ### The hash is computed at build time
 

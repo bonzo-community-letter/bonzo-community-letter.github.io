@@ -160,7 +160,7 @@ export function ConnectDialog({ open, onClose, wallet }: Props) {
         ) : (
           <>
             <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-              Your wallet submits and pays for your signature (~0.0001 HBAR). This page never sees a
+              Your wallet submits and pays for your signature (~0.005 HBAR). This page never sees a
               private key.
             </p>
 
