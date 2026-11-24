@@ -15,7 +15,8 @@ export const page = {
    */
   from: {
     name: 'Affected users of the Bonzo Lend and Supra exploit',
-    note: 'What happened, what was promised, what was delivered, and what questions remain unanswered.',
+    note:
+      'On the aftermath of Hedera’s multi-million dollar oracle and lending platform exploit: A community-led criticism on broken promises and unfulfilled responsibilities.',
   },
 
   status: 'Draft — not yet published',
