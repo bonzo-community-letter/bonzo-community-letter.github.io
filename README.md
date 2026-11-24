@@ -1,6 +1,6 @@
 # Open letter — project skeleton
 
-Structure and plumbing for the open letter to Hedera Foundation, Hedera Hashgraph, Hashgraph Foundry, Supra, Bonzo
+Structure and plumbing for the open letter to Hedera Foundation, Hedera Hashgraph, Hashgraph Foundry, Supra Labs, Entropy Foundation, Bonzo
 Finance Foundation and Bonzo Finance Labs, with signatures collected on the **Hedera Consensus Service (HCS)**.
 
 **Status: scaffold.** The letter text, the page layout and the visual design are deliberately not

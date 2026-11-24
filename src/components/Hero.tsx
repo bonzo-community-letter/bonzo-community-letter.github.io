@@ -26,10 +26,10 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
           <ul className="mt-3 flex flex-col items-center gap-y-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2">
             {addressees.map((addressee, i) => (
               <Fragment key={addressee.name}>
-                {/* Six names never share a line inside max-w-5xl, and letting the
+                {/* Seven names never share a line inside max-w-5xl, and letting the
                     last one wrap alone reads as an accident. Break after the Hedera
-                    side instead: three above, three below, and the stack on a phone
-                    is unaffected. */}
+                    side instead: the three Hedera entities above, the four that follow
+                    below, and the stack on a phone is unaffected. */}
                 {i === 3 ? <li aria-hidden="true" className="hidden basis-full sm:block" /> : null}
                 <li className="flex items-center gap-2.5">
                   {addressee.logoSrc ? (
