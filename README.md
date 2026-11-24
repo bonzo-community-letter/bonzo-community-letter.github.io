@@ -390,10 +390,16 @@ spread from 77 to 512 bytes (the field's limit) — the section then says "Sampl
 signatures" and the count above the letter still ignores them (`content/demo.ts`).
 
 Under the letter, `components/Testimonials.tsx` shows what each account wrote: the first comment
-that account left, with its account id and the date it signed. The rule is the same one the count
-follows (`testimonials` → `uniqueSigners`), so an account that signed twice appears once, and an
-account that wrote nothing does not appear at all — a testimonial needs words. With no comments the
-section renders nothing, so the letter keeps its shape.
+that account left, with its account id and the date it signed, as one horizontal band that drifts by
+itself and can be scrolled, dragged or stopped on. The rule is the same one the count follows
+(`testimonials` → `uniqueSigners`), so an account that signed twice appears once, and an account that
+wrote nothing does not appear at all.
+
+The band never shows an edge: the set of comments is laid out twice, and once the strip has travelled
+exactly one set it is rewound by that much, which is invisible because the next copy is identical
+(`lib/band.ts`, `nextOffset`). It holds still while hovered or focused and resumes ~2.6 s after the
+reader lets go; with `prefers-reduced-motion` it does not drift at all, and scrolling still works.
+Long comments are cut at six lines with an ellipsis — a band is a strip, not a page.
 
 ### One signature per account
 
