@@ -23,7 +23,20 @@ export const page = {
 
   letterhead: {
     date: '15 November 2026',
-    to: 'Hedera Foundation, Hedera Hashgraph, Hashgraph Foundry, Supra, Bonzo Finance Foundation and Bonzo Finance Labs',
+    // Legal names, one per line — a brand is not an entity, and a letter that drops the
+    // suffix ("SEZC", "LLC", "FZCO") can be answered with "no such entity".
+    // Verified 2026-11-21: Hedera Foundation SEZC (Cayman), Hedera Hashgraph, LLC
+    // (Delaware), Hashgraph Foundry Inc. (Delaware), Bonzo Finance Foundation (Cayman),
+    // Bonzo Finance Labs FZCO (UAE, Dubai Silicon Oasis), Entropy Stiftung operating as
+    // Supra (Switzerland, Zug).
+    to: [
+      'Hedera Foundation SEZC',
+      'Hedera Hashgraph, LLC',
+      'Hashgraph Foundry Inc.',
+      'Bonzo Finance Foundation',
+      'Bonzo Finance Labs FZCO',
+      'Supra (aka “Entropy Stiftung”)',
+    ],
     subject: 'On the Bonzo Lend recovery — the commitment, the distribution, and what remains unanswered',
     salutation: 'To the addressees above,',
   },

@@ -169,9 +169,11 @@ export function LetterSheet({
 
           <div className="mt-6">
             <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-sheet-ink-faint">To</p>
-            <p className="mt-1 font-serif text-[0.9375rem] leading-relaxed text-sheet-ink-soft">
-              {page.letterhead.to}
-            </p>
+            <ul className="mt-1 font-serif text-[0.9375rem] leading-relaxed text-sheet-ink-soft">
+              {page.letterhead.to.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
           </div>
 
           <p className="mt-6 font-serif text-[1.0625rem] font-semibold leading-snug text-sheet-ink">

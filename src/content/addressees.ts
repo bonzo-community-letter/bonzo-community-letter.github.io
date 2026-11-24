@@ -20,7 +20,7 @@ export const addressees: Addressee[] = [
   { name: 'Hedera Foundation' },
   { name: 'Hedera Hashgraph' },
   { name: 'Hashgraph Foundry' },
-  { name: 'Supra' },
   { name: 'Bonzo Finance Foundation' },
   { name: 'Bonzo Finance Labs' },
+  { name: 'Supra' },
 ]
