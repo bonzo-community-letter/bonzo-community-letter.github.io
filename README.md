@@ -341,6 +341,12 @@ Topic memo convention: `<subject>:v<version>:<letterHash>`, e.g.
 bonzo-exploit-open-letter:v1:<letterHash>
 ```
 
+Each **transaction** carries its own memo, `bonzo-open-letter:v1:signature-<sha256 of the message>`
+(95 of the 100 bytes the network allows). The topic memo says which letter a signature belongs to;
+the transaction memo says which message it submitted, so a signature can be matched from the
+transaction alone — the wallet's confirmation screen and HashScan both show it. It is computed from
+the exact bytes written to the topic, not from a re-serialisation of them.
+
 ### How a signature is made
 
 `Add your signature`, at the end of the letter, is the only write path on the page — and the letter keeps

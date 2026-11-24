@@ -21,7 +21,7 @@
  *    dynamic and happens on the first "Connect".
  */
 import { config } from '../config'
-import { waitForTransactionResult, type HederaNetwork } from './hcs'
+import { sha256Hex, waitForTransactionResult, type HederaNetwork } from './hcs'
 
 /**
  * Deep imports, not the package root: the root entry also exports the
@@ -741,8 +741,16 @@ export function describeSubmitError(error: unknown): string {
  */
 const MAX_FEE_TINYBARS = 5_000_000
 
-/** Public, permanent, and the only thing the wallet's memo line can show. */
-const TRANSACTION_MEMO = 'bonzo-open-letter:v1'
+/**
+ * The memo the wallet's confirmation screen and the explorer can show. It names the
+ * campaign, the payload version, and — in `signature-<sha256>` — exactly which message
+ * this transaction carried, so a signature can be matched from the transaction alone
+ * without reading the topic.
+ *
+ * 95 bytes of the 100 the network allows for a memo: `bonzo-open-letter:v1` (20) +
+ * `:signature-` (11) + 64 hex characters.
+ */
+const TRANSACTION_MEMO_PREFIX = 'bonzo-open-letter:v1:signature-'
 
 export type SubmitOutcome =
   | { kind: 'succeeded'; transactionId: string; status: string }
@@ -789,6 +797,10 @@ export async function submitTopicMessage(opts: {
   const session = sessionOf(instance)
   if (!session) throw new WalletError('no_account', 'Connect a wallet first.')
 
+  // The same bytes the topic will carry, hashed for the memo — so the transaction says
+  // which message it submitted, not just that it submitted one.
+  const messageHash = await sha256Hex(opts.message)
+
   const transaction = new sdk.TopicMessageSubmitTransaction()
     .setTopicId(sdk.TopicId.fromString(opts.topicId))
     .setMessage(opts.message)
@@ -798,8 +810,7 @@ export async function submitTopicMessage(opts: {
     // fee as "Infinity HBAR" — true to the bytes, useless to a signer. A 600-byte
     // message costs about 0.013 HBAR; this cap is four times that and still small.
     .setMaxTransactionFee(sdk.Hbar.fromTinybars(MAX_FEE_TINYBARS))
-    // One line the wallet and the explorer can show instead of an empty memo.
-    .setTransactionMemo(TRANSACTION_MEMO)
+    .setTransactionMemo(`${TRANSACTION_MEMO_PREFIX}${messageHash}`)
 
   transaction.freezeWith(sdk.Client.forName(config.network))
 
