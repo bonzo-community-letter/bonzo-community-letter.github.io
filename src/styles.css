@@ -38,18 +38,31 @@ body {
 }
 
 /*
- * Tailwind v4's preflight leaves buttons with the browser's own cursor, so every
- * clickable thing has to ask for the pointer itself. `:where()` keeps the
- * specificity at zero, and the two dialog backdrops opt out with `cursor-default!`
- * — they are click-away surfaces, not buttons.
+ * Anything clickable shows it. Tailwind v4's preflight leaves a button with the
+ * browser's arrow, which makes every control look inert. Same rule as the
+ * treasury page, down to the two opt-outs: the dialog backdrops are click-away
+ * surfaces, and a disabled control says so.
  */
-:where(button, [role='button'], summary):not(:disabled) {
+button:not(:disabled):not(.cursor-default),
+[role='button']:not(:disabled):not(.cursor-default),
+summary,
+select {
   cursor: pointer;
+}
+
+button:disabled,
+[role='button'][aria-disabled='true'] {
+  cursor: not-allowed;
 }
 
 ::selection {
   background: var(--color-accent);
   color: var(--color-page);
+}
+
+/* Money, counts and timestamps line up in columns — the family's rule. */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Small caps label above headings */

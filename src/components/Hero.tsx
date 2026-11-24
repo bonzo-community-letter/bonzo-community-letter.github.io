@@ -38,7 +38,7 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
           </ul>
         </div>
 
-        <p className="mt-10 text-xs text-ink-faint">
+        <p className="mt-10 text-xs text-ink-faint tnum">
           {page.status}
           {signatureCount !== null ? ` · ${signatureCount.toLocaleString('en-US')} signatures` : null}
         </p>

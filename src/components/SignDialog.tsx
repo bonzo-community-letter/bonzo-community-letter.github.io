@@ -131,7 +131,7 @@ export function SignDialog({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 cursor-default! bg-page/80 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default bg-page/80 backdrop-blur-sm"
         tabIndex={-1}
       />
 
@@ -140,7 +140,7 @@ export function SignDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="sign-dialog-title"
-        className="relative m-3 w-full max-w-md border border-rule bg-hero p-6 shadow-2xl shadow-black/60 sm:m-0"
+        className="relative m-3 max-h-[85dvh] w-full max-w-md overflow-y-auto border border-rule bg-hero p-6 shadow-2xl shadow-black/60 sm:m-0"
       >
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <p className="eyebrow">
@@ -153,7 +153,7 @@ export function SignDialog({
               href={hashscanTopicUrl(config.network, config.topicId)}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-[0.6875rem] text-ink-faint underline decoration-rule underline-offset-4 hover:text-ink-soft"
+              className="font-mono text-[0.6875rem] text-ink-faint underline decoration-rule underline-offset-4 transition-colors hover:text-ink-soft hover:decoration-accent"
             >
               topic {config.topicId} ↗
             </a>

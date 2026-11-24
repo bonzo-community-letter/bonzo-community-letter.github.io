@@ -63,7 +63,7 @@ export function ConnectDialog({ open, onClose, wallet }: Props) {
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 cursor-default! bg-page/80 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default bg-page/80 backdrop-blur-sm"
         tabIndex={-1}
       />
 
@@ -72,7 +72,7 @@ export function ConnectDialog({ open, onClose, wallet }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="connect-title"
-        className="relative m-3 w-full max-w-sm border border-rule bg-hero p-6 shadow-2xl shadow-black/60 sm:m-0"
+        className="relative m-3 max-h-[85dvh] w-full max-w-sm overflow-y-auto border border-rule bg-hero p-6 shadow-2xl shadow-black/60 sm:m-0"
       >
         <p className="eyebrow">{config.network} network</p>
         <h2 id="connect-title" className="mt-2 font-serif text-2xl leading-tight text-ink">
