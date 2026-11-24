@@ -37,6 +37,16 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/*
+ * Tailwind v4's preflight leaves buttons with the browser's own cursor, so every
+ * clickable thing has to ask for the pointer itself. `:where()` keeps the
+ * specificity at zero, and the two dialog backdrops opt out with `cursor-default!`
+ * — they are click-away surfaces, not buttons.
+ */
+:where(button, [role='button'], summary):not(:disabled) {
+  cursor: pointer;
+}
+
 ::selection {
   background: var(--color-accent);
   color: var(--color-page);

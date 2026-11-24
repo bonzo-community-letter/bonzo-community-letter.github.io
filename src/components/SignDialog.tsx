@@ -131,7 +131,7 @@ export function SignDialog({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 cursor-default bg-page/80 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default! bg-page/80 backdrop-blur-sm"
         tabIndex={-1}
       />
 
