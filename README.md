@@ -336,8 +336,8 @@ drops the parts that do not (`app`, `agreement`, a date-versioned letter id):
 - **Reader filters** on `version`, `subject` and `letterHash`, so older drafts and foreign messages on
   the same topic are ignored.
 
-Each **transaction** carries its own memo, `bonzo-open-letter:v1:signature-<16 hex of the message's
-SHA-256>` — 47 of the 100 bytes the network allows. It names the message the transaction submitted,
+Each **transaction** carries its own memo, `bonzo-community-letter:v1:signature-<16 hex of the message's
+SHA-256>` — 52 of the 100 bytes the network allows. It names the message the transaction submitted,
 so a signature can be matched from the transaction alone: the wallet's confirmation screen and
 HashScan both show it. The hash is computed from the exact bytes written to the topic, never from a
 re-serialisation, and it is a prefix — 64 bits — because the memo is a label and the message on the

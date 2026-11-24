@@ -749,11 +749,11 @@ const MAX_FEE_TINYBARS = 5_000_000
  *
  * The hash is a **prefix** of the message's SHA-256, not the whole thing: the memo is
  * a label, and the message on the topic is the record. 16 hex characters (64 bits) is
- * far past the point where two signatures could collide, and it keeps the memo at 47
+ * far past the point where two signatures could collide, and it keeps the memo at 52
  * of the 100 bytes the network allows — short enough for a wallet to print in one
  * line, long enough to grep.
  */
-const TRANSACTION_MEMO_PREFIX = 'bonzo-open-letter:v1:signature-'
+const TRANSACTION_MEMO_PREFIX = 'bonzo-community-letter:v1:signature-'
 
 /** Hex characters of the message hash the memo carries. */
 const MEMO_HASH_CHARS = 16
