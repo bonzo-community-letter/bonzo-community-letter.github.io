@@ -6,6 +6,7 @@ import { Hero } from './components/Hero'
 import { LetterSheet } from './components/LetterSheet'
 import { NavBar } from './components/NavBar'
 import { SiteFooter } from './components/SiteFooter'
+import { Testimonials } from './components/Testimonials'
 import { useSignatures } from './hooks/useSignatures'
 import { uniqueSigners } from './lib/hcs'
 import { useWallet } from './hooks/useWallet'
@@ -37,6 +38,7 @@ export function App() {
           onConnect={openConnect}
           onSigned={signatures.refresh}
         />
+        <Testimonials signatures={signers} />
         <DevStatus state={signatures} />
       </main>
       <SiteFooter />

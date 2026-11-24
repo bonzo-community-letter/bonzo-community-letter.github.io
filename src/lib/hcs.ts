@@ -238,6 +238,30 @@ export function uniqueSigners(signatures: readonly Signature[]): Signature[] {
   return kept
 }
 
+export interface Testimonial {
+  accountId: string
+  comment: string
+  signedAt: string
+}
+
+/**
+ * What each account said, once.
+ *
+ * The first signature an account made is the one that counts — the same rule the count
+ * follows — and an account that wrote nothing has nothing to show. Comments are trimmed
+ * by `buildSignature` before they are submitted; trimming again costs nothing and keeps
+ * a hand-edited message from carrying stray whitespace onto the page.
+ */
+export function testimonials(signatures: readonly Signature[]): Testimonial[] {
+  return uniqueSigners(signatures)
+    .filter((signature) => signature.comment.trim().length > 0)
+    .map((signature) => ({
+      accountId: signature.accountId,
+      comment: signature.comment.trim(),
+      signedAt: signature.signedAt,
+    }))
+}
+
 /**
  * The signature this account already made, if it made one.
  *

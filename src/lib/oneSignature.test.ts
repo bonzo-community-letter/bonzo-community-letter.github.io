@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { signatureBy, uniqueSigners, type Signature } from './hcs'
+import { signatureBy, testimonials, uniqueSigners, type Signature } from './hcs'
 import { forgetSignatures, localSignature, rememberSignature } from './signedHere'
 
 const LETTER = 'bonzo-exploit-open-letter'
@@ -58,6 +58,37 @@ describe('uniqueSigners', () => {
 
   it('handles an empty list', () => {
     expect(uniqueSigners([])).toEqual([])
+  })
+})
+
+describe('testimonials', () => {
+  it('takes the first comment each account left', () => {
+    const list = [
+      signature('0.0.1111', { comment: 'the first word', sequence: 1 }),
+      signature('0.0.2222', { comment: 'another voice', sequence: 2 }),
+      signature('0.0.1111', { comment: 'a repeat that must not show', sequence: 3 }),
+    ]
+    expect(testimonials(list).map((entry) => entry.comment)).toEqual(['the first word', 'another voice'])
+  })
+
+  it('leaves out accounts that wrote nothing', () => {
+    const list = [signature('0.0.1111', { comment: '' }), signature('0.0.2222', { comment: '   ' })]
+    expect(testimonials(list)).toEqual([])
+  })
+
+  it('trims what it shows', () => {
+    expect(testimonials([signature('0.0.1111', { comment: '  spoken plainly  ' })])[0]?.comment).toBe(
+      'spoken plainly',
+    )
+  })
+
+  it('keeps the account and the date with the words', () => {
+    const [entry] = testimonials([signature('0.0.1111', { comment: 'hello' })])
+    expect(entry).toEqual({
+      accountId: '0.0.1111',
+      comment: 'hello',
+      signedAt: '2026-11-24T08:38:18.738Z',
+    })
   })
 })
 

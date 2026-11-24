@@ -17,6 +17,7 @@ import {
 } from '../lib/hcs'
 import { clearPending, readPending, savePending } from '../lib/pending'
 import { localSignature, rememberSignature } from '../lib/signedHere'
+import { signedWhen } from '../lib/format'
 import { describeWalletError, submitTopicMessage, type SubmitOutcome } from '../lib/wallet'
 import { Spinner } from './Spinner'
 import { subject } from 'virtual:letter'
@@ -30,21 +31,6 @@ type SigningState =
   /** The network's verdict — the only place a result is claimed. */
   | { status: 'result'; outcome: SubmitOutcome }
   | { status: 'error'; message: string }
-
-/** "24 Nov 2026, 15:49 UTC" — the instant the payload carries, in the reader's words. */
-function signedWhen(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return iso
-  const stamp = date.toLocaleString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'UTC',
-  })
-  return `${stamp} UTC`
-}
 
 /** Turn a mirror answer into the same verdict shape the submit returns. */
 function outcomeOf(transactionId: string, status: string | null): SubmitOutcome {

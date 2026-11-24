@@ -383,6 +383,14 @@ being restored is not a missing session.
 
 With no topic configured, the dialog says signing opens at launch and the button signs nothing.
 
+### Testimonials
+
+Under the letter, `components/Testimonials.tsx` shows what each account wrote: the first comment
+that account left, with its account id and the date it signed. The rule is the same one the count
+follows (`testimonials` → `uniqueSigners`), so an account that signed twice appears once, and an
+account that wrote nothing does not appear at all — a testimonial needs words. With no comments the
+section renders nothing, so the letter keeps its shape.
+
 ### One signature per account
 
 The page refuses a second one. The connected account is looked up in what the mirror returned, and —
