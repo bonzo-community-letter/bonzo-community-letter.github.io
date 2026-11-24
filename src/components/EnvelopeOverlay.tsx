@@ -97,7 +97,13 @@ export function EnvelopeOverlay() {
     // written straight onto the elements: a React render per frame repaints both
     // drawings and their filters, which an iPhone cannot keep up with
     let flapEl: SVGGElement | null = null
-    /** Where the hero's own text ends — the line nothing may be painted over. */
+    /**
+     * Where the hero's own text ends — the line nothing may be painted over.
+     *
+     * In document coordinates, not viewport ones: a viewport reading changes on every
+     * scroll, which would make the offset below a function of the scroll position. The
+     * constraint is a fact about the resting page, so it is measured like one.
+     */
     const heroTextBottom = (): number => {
       const hero = document.querySelector<HTMLElement>('header.hero-height')
       if (!hero) return -1
@@ -105,7 +111,7 @@ export function EnvelopeOverlay() {
         (el) => !el.classList.contains('sr-only') && el.getBoundingClientRect().height > 4,
       )
       return lines.length > 0
-        ? Math.round(Math.max(...lines.map((el) => el.getBoundingClientRect().bottom)))
+        ? Math.round(Math.max(...lines.map((el) => el.getBoundingClientRect().bottom))) + window.scrollY
         : -1
     }
 
@@ -127,13 +133,14 @@ export function EnvelopeOverlay() {
       // already hangs below the viewport, so a little more of the body costs nothing.
       const heroBottom = heroTextBottom()
       const wanted = heroBottom >= 0 ? heroBottom + HERO_CLEARANCE : -Infinity
-      // What the envelope actually paints at its top. With the flap open — a phone, where
+      // What the envelope paints at its top *at rest*. With the flap open — a phone, where
       // it is open from the first paint — that is the box's own top edge, the tip of the
       // standing flap. With the flap closed — a wide screen before any scroll — the box's
-      // upper part is the empty space the flap will stand in, and the first painted edge
-      // is the body's top.
-      const paintedTop =
-        top + shiftPx + (latest.current.lifted ? 0 : ENVELOPE_VIEW.bodyTopShare * boxHeight)
+      // upper part is the empty space the flap will stand in, and the first painted edge is
+      // the body's top. The resting state, not the live one: the flap lifts halfway through
+      // the scroll, and a live reading would drop the envelope 460px in a single frame.
+      const restLifted = !envelopeOpensOnScroll(width)
+      const paintedTop = top + shiftPx + (restLifted ? 0 : ENVELOPE_VIEW.bodyTopShare * boxHeight)
       const push = Math.max(0, Math.ceil(wanted - paintedTop))
 
       placed.current = { width, top, push, heroBottom, boxHeight, shiftPx }
