@@ -48,7 +48,9 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
 
         <p className="mt-6 text-xs text-ink-faint tnum sm:mt-10">
           {page.status}
-          {signatureCount !== null ? ` · ${signatureCount.toLocaleString('en-US')} signatures` : null}
+          {signatureCount !== null
+            ? ` · ${signatureCount.toLocaleString('en-US')} ${signatureCount === 1 ? 'signature' : 'signatures'}`
+            : null}
         </p>
 
         {/* the sender lives on the envelope's flap, which is decorative — keep the
