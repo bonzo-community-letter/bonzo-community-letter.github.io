@@ -743,14 +743,20 @@ const MAX_FEE_TINYBARS = 5_000_000
 
 /**
  * The memo the wallet's confirmation screen and the explorer can show. It names the
- * campaign, the payload version, and — in `signature-<sha256>` — exactly which message
- * this transaction carried, so a signature can be matched from the transaction alone
- * without reading the topic.
+ * campaign, the payload version, and — in `signature-<hash>` — which message this
+ * transaction carried, so a signature can be matched from the transaction alone
+ * without reading the topic first.
  *
- * 95 bytes of the 100 the network allows for a memo: `bonzo-open-letter:v1` (20) +
- * `:signature-` (11) + 64 hex characters.
+ * The hash is a **prefix** of the message's SHA-256, not the whole thing: the memo is
+ * a label, and the message on the topic is the record. 16 hex characters (64 bits) is
+ * far past the point where two signatures could collide, and it keeps the memo at 47
+ * of the 100 bytes the network allows — short enough for a wallet to print in one
+ * line, long enough to grep.
  */
 const TRANSACTION_MEMO_PREFIX = 'bonzo-open-letter:v1:signature-'
+
+/** Hex characters of the message hash the memo carries. */
+const MEMO_HASH_CHARS = 16
 
 export type SubmitOutcome =
   | { kind: 'succeeded'; transactionId: string; status: string }
@@ -810,7 +816,7 @@ export async function submitTopicMessage(opts: {
     // fee as "Infinity HBAR" — true to the bytes, useless to a signer. A 600-byte
     // message costs about 0.013 HBAR; this cap is four times that and still small.
     .setMaxTransactionFee(sdk.Hbar.fromTinybars(MAX_FEE_TINYBARS))
-    .setTransactionMemo(`${TRANSACTION_MEMO_PREFIX}${messageHash}`)
+    .setTransactionMemo(`${TRANSACTION_MEMO_PREFIX}${messageHash.slice(0, MEMO_HASH_CHARS)}`)
 
   transaction.freezeWith(sdk.Client.forName(config.network))
 
