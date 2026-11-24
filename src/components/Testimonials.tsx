@@ -107,7 +107,7 @@ export function Testimonials({
   return (
     <section className="pb-16 pt-16">
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-        <p className="eyebrow">In their words</p>
+        <p className="eyebrow">Personal Messages from the Signees</p>
         <h2 className="mt-2 font-serif text-2xl leading-tight text-ink">
           {sample
             ? 'Sample comments — not signatures'
