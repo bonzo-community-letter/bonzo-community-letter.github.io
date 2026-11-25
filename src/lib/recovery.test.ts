@@ -6,6 +6,7 @@ import {
   recoveryFraction,
   recoveryInkColour,
   recoveryLabel,
+  lossLine,
 } from './recovery'
 
 /** Pull the hue out of an `hsl(…)` string. */
@@ -92,5 +93,22 @@ describe('recoveryInkColour', () => {
 
   it('gives silence a readable brown', () => {
     expect(recoveryInkColour(null)).toBe('hsl(26 30% 64%)')
+  })
+})
+
+describe('lossLine', () => {
+  it('states what is still missing, not what came back', () => {
+    expect(lossLine(8.8)).toBe('91% of net supply lost')
+    expect(lossLine(0)).toBe('100% of net supply lost')
+    expect(lossLine(100)).toBe('0% of net supply lost')
+  })
+
+  it('names silence as silence, not as a total loss', () => {
+    expect(lossLine(null)).toBe('Losses not stated')
+  })
+
+  it('rounds to a whole percent, like the ring', () => {
+    expect(lossLine(8.4)).toBe('92% of net supply lost')
+    expect(lossLine(8.6)).toBe('91% of net supply lost')
   })
 })

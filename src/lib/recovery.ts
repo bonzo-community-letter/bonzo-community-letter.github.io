@@ -75,6 +75,19 @@ export function recoveryLabel(rate: number | null): string {
   return String(Math.round(clampRate(rate)))
 }
 
+/**
+ * What a signer's rate says about what is still missing.
+ *
+ * The ring shows what came back; this line shows what did not, because the addressees
+ * are being asked about the loss, not about the recovery. The two are complements of
+ * the same number, so they cannot drift apart — and silence is named as silence rather
+ * than rendered as a 100 % loss the signer never claimed.
+ */
+export function lossLine(rate: number | null): string {
+  if (rate === null || !Number.isFinite(rate)) return 'Losses not stated'
+  return `${Math.round(100 - clampRate(rate))}% of net supply lost`
+}
+
 /** How much of the circle's circumference the arc covers, 0–1. */
 export function recoveryFraction(rate: number | null): number {
   if (rate === null || !Number.isFinite(rate)) return 0

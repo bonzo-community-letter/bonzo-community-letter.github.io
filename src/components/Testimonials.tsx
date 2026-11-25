@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { testimonials, type Signature } from '../lib/hcs'
 import { signedWhen } from '../lib/format'
 import { copiesFor, nextOffset } from '../lib/band'
+import { lossLine } from '../lib/recovery'
 import { RecoveryRing } from './RecoveryRing'
 
 /** Pixels per second the band drifts on its own. Slow enough to read along. */
@@ -174,8 +175,8 @@ export function Testimonials({
                       <p className="whitespace-nowrap font-mono text-[0.6875rem] text-ink-soft">
                         {entry.accountId}
                       </p>
-                      <p className="whitespace-nowrap font-mono text-[0.625rem] text-ink-faint">
-                        {signedWhen(entry.signedAt, { time: false })}
+                      <p className="whitespace-nowrap text-[0.625rem] leading-snug text-ink-faint">
+                        {lossLine(entry.recoveryRate)}
                       </p>
                     </div>
                   </div>
@@ -189,6 +190,10 @@ export function Testimonials({
                   >
                     {entry.comment}
                   </blockquote>
+                  {/* mt-auto: the dates line up along the bottom, whatever the comment length */}
+                  <p className="mt-auto pt-3 whitespace-nowrap font-mono text-[0.625rem] text-ink-faint">
+                    {signedWhen(entry.signedAt, { time: false })}
+                  </p>
 
                 </li>
               ))}

@@ -397,7 +397,10 @@ signatures" and the count above the letter still ignores them (`content/demo.ts`
 
 Each entry opens with a recovery ring (`components/RecoveryRing.tsx`): a disc with the rate
 rounded to a whole percent, and an outline whose arc is that same rate, so the number and the
-shape cannot disagree. The colour runs red → amber → green (`lib/recovery.ts`, interpolated in
+shape cannot disagree. Under the account it says what is still missing — `100 − rate`, as
+"91% of net supply lost", or "Losses not stated" when the signer gave no rate. The ring shows
+what came back, the line what did not; they are complements of one number and cannot drift
+apart. The date sits under the comment, at the card's foot. The colour runs red → amber → green (`lib/recovery.ts`, interpolated in
 HSL because a straight RGB blend from red to green passes through grey). No rate at all is
 brown with a dash — silence is not "recovered nothing", and the two must not look alike.
 
