@@ -4,6 +4,7 @@ import { config, signingOpen } from '../config'
 import type { WalletApi } from '../hooks/useWallet'
 import {
   MAX_COMMENT_BYTES,
+  MAX_RECOVERY_RATE,
   PAYLOAD_VERSION,
   buildSignature,
   commentByteLength,
@@ -76,6 +77,7 @@ export function SignDialog({
 }) {
   const panel = useRef<HTMLDivElement>(null)
   const [comment, setComment] = useState('')
+  const [recoveryRate, setRecoveryRate] = useState('')
   const [state, setState] = useState<SigningState>({ status: 'idle' })
   /** Shown above the form after a wait the reader stopped themselves. */
   const [notice, setNotice] = useState<string | null>(null)
@@ -149,6 +151,13 @@ export function SignDialog({
   const trimmed = comment.trim()
   const bytes = commentByteLength(trimmed)
   const tooLong = bytes > MAX_COMMENT_BYTES
+
+  // Empty is an answer — "I would rather not say" — and is stored as null.
+  const rateText = recoveryRate.trim().replace(',', '.')
+  const rateValue = rateText === '' ? null : Number(rateText)
+  const rateValid =
+    rateValue === null ||
+    (Number.isFinite(rateValue) && rateValue >= 0 && rateValue <= MAX_RECOVERY_RATE)
   const connected = wallet.status === 'connected' && wallet.accountId !== null
   const busy = state.status === 'signing' || state.status === 'verifying'
   const settled = state.status === 'result'
@@ -168,10 +177,11 @@ export function SignDialog({
     letterHash,
     signedAt: '<set when you sign>',
     comment: trimmed,
+    recoveryRate: rateValue,
   })
 
   const sign = async (): Promise<void> => {
-    if (!wallet.accountId || alreadySigned) return
+    if (!wallet.accountId || alreadySigned || !rateValid) return
     const current = ++attempt.current
     stopped.current = false
     setNotice(null)
@@ -181,6 +191,7 @@ export function SignDialog({
       subject,
       letterHash,
       comment: trimmed,
+      recoveryRate: rateValue,
     })
     if (!built.ok) {
       setState({ status: 'error', message: built.errors.join('. ') })
@@ -435,6 +446,34 @@ export function SignDialog({
               </span>
             </div>
 
+            <label
+              htmlFor="sign-recovery"
+              className="mt-5 block text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint"
+            >
+              Recovery rate <span className="normal-case tracking-normal">— optional</span>
+            </label>
+            <div className="mt-2 flex items-baseline gap-2">
+              <input
+                id="sign-recovery"
+                type="text"
+                inputMode="decimal"
+                value={recoveryRate}
+                onChange={(event) => setRecoveryRate(event.target.value)}
+                aria-invalid={rateValid ? undefined : true}
+                aria-describedby="sign-recovery-hint"
+                placeholder="e.g. 8.8"
+                className={`w-24 rounded-sm border bg-page/40 px-3 py-2 font-mono text-[0.9375rem] text-ink outline-none placeholder:text-ink-faint ${
+                  rateValid ? 'border-rule focus:border-accent' : 'border-accent'
+                }`}
+              />
+              <span className="font-mono text-[0.8125rem] text-ink-faint">%</span>
+            </div>
+            <p id="sign-recovery-hint" className="mt-1.5 text-[0.75rem] leading-relaxed text-ink-faint">
+              {rateValid
+                ? 'How much of what you lost has been recovered so far? Leave it empty if you would rather not say.'
+                : `A number between 0 and ${MAX_RECOVERY_RATE}, or nothing at all.`}
+            </p>
+
             <details className="mt-4">
               <summary className="cursor-pointer text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint hover:text-ink-soft">
                 What will be published
@@ -461,7 +500,7 @@ export function SignDialog({
                 <button
                   type="button"
                   onClick={() => void sign()}
-                  disabled={tooLong}
+                  disabled={tooLong || !rateValid}
                   className="inline-flex items-center gap-2 rounded-sm border border-accent bg-accent px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-page transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Add signature

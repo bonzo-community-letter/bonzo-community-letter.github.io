@@ -36,12 +36,69 @@ function payloadOf(overrides: Partial<typeof input> = {}): SignaturePayload {
   return result.payload
 }
 
+describe('recoveryRate', () => {
+  it('carries a rate the signer gave', () => {
+    const result = buildSignature({ ...input, recoveryRate: 8.8 })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.payload.recoveryRate).toBe(8.8)
+    expect(encodePayload(result.payload)).toContain('"recoveryRate":8.8')
+  })
+
+  it('rounds to one decimal, because finer is noise', () => {
+    const result = buildSignature({ ...input, recoveryRate: 8.8333 })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.payload.recoveryRate).toBe(8.8)
+  })
+
+  it('accepts the two ends of the scale', () => {
+    for (const rate of [0, 100]) {
+      const result = buildSignature({ ...input, recoveryRate: rate })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.payload.recoveryRate).toBe(rate)
+    }
+  })
+
+  it('refuses a rate outside 0–100, or one that is not a number', () => {
+    for (const rate of [-0.1, 100.1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const result = buildSignature({ ...input, recoveryRate: rate })
+      expect(result.ok).toBe(false)
+    }
+  })
+
+  it('stores silence as null, not as a zero', () => {
+    for (const value of [undefined, null]) {
+      const result = buildSignature({ ...input, recoveryRate: value })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.payload.recoveryRate).toBeNull()
+    }
+  })
+
+  it('still reads a message written before the field existed', () => {
+    const old = JSON.stringify({
+      accountId: '0.0.1234',
+      subject: LETTER,
+      version: 1,
+      letterHash: HASH,
+      signedAt: '2026-11-15T18:00:00.000Z',
+      comment: 'Test',
+    })
+    const decoded = decodeMessage(btoa(old))
+    expect(decoded).not.toBeNull()
+    expect(decoded?.comment).toBe('Test')
+    expect(decoded?.recoveryRate).toBeUndefined()
+  })
+})
+
 describe('encodePayload', () => {
   it('serialises fields in the documented order, compactly', () => {
     const payload = payloadOf()
     expect(encodePayload(payload)).toBe(
       `{"accountId":"0.0.1234","subject":"${LETTER}","version":1,"letterHash":"${HASH}",` +
-        `"signedAt":"2026-11-15T18:00:00.000Z","comment":""}`,
+        `"signedAt":"2026-11-15T18:00:00.000Z","comment":"","recoveryRate":null}`,
     )
   })
 
@@ -63,9 +120,10 @@ describe('buildSignature', () => {
       signedAt: '2026-11-15T18:00:00.000Z',
       version: 1,
       comment: '',
+      recoveryRate: null,
     })
     expect(Object.keys(result.payload).sort()).toEqual(
-      ['accountId', 'subject', 'letterHash', 'signedAt', 'version', 'comment'].sort(),
+      ['accountId', 'subject', 'letterHash', 'signedAt', 'version', 'comment', 'recoveryRate'].sort(),
     )
   })
 

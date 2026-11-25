@@ -319,16 +319,22 @@ drops the parts that do not (`app`, `agreement`, a date-versioned letter id):
 
 ```json
 {"accountId":"0.0.1234","subject":"bonzo-exploit-open-letter","version":1,
- "letterHash":"<sha-256 of the letter>","signedAt":"2026-11-15T18:00:00.000Z","comment":""}
+ "letterHash":"<sha-256 of the letter>","signedAt":"2026-11-15T18:00:00.000Z","comment":"",
+ "recoveryRate":8.8}
 ```
 
 - **The message carries the hash, never the letter.** Same primitive as the portal's `termsHash`, and
   small enough that one message always fits.
 - **`subject`** is the campaign slug, constant for the whole campaign; **`letterHash`** pins the exact
   version of the text. Both come from the build.
-- **Fixed field order** — `accountId`, `subject`, `version`, `letterHash`, `signedAt`, `comment` — and no
+- **Fixed field order** — `accountId`, `subject`, `version`, `letterHash`, `signedAt`, `comment`,
+  `recoveryRate` — and no
   whitespace, so the bytes are reproducible. `FIELD_ORDER` in `src/lib/hcs.ts` is the single definition,
   and a test asserts the exact string.
+- **`recoveryRate` is the share of the signer's loss that has been recovered, in percent** (0–100, one
+  decimal, rounded — finer precision is noise). `null` when the signer does not say; that is stored as a
+  real answer, not as a zero. The field was appended to the order, never inserted, so messages written
+  before it existed still decode and are told apart by its absence.
 - **`comment` is always present**, empty string when the signer writes nothing. Max
   `MAX_COMMENT_BYTES` (512) UTF-8 bytes, trimmed, no control characters other than newlines.
   `buildSignature()` returns the byte count and refuses anything that would exceed HCS's 1 KB cap, so a

@@ -15,6 +15,7 @@ const signature = (accountId: string, overrides: Partial<Signature> = {}): Signa
   sequence: 1,
   consensusTimestamp: '1795509512.357752104',
   payerAccountId: accountId,
+  recoveryRate: null,
   ...overrides,
 })
 

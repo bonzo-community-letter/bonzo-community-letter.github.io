@@ -49,6 +49,8 @@ export function sampleSignatures(subject: string, letterHash: string): Signature
       sequence: 9001 + index,
       consensusTimestamp: `17955${String(10000 + index * 37)}.${String(100000000 + index * 1234567)}`,
       payerAccountId: accountId,
+      // the samples carry a spread of rates, as the real topic will
+      recoveryRate: [null, 0, 4.2, 8.8, 12.5, 0, 21, 8.8, 3.1, 100][index % 10] ?? null,
     }
   })
 }

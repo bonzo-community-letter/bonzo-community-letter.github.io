@@ -30,6 +30,12 @@ export interface SignaturePayload {
   version: number
   /** signer-authored, permanent and public; empty string when the signer wrote none */
   comment: string
+  /**
+   * Share of the signer's loss that has been recovered, in percent (0–100, one decimal),
+   * or null when the signer did not say. Part of the message, so it is on the record with
+   * the signature and cannot be corrected afterwards — which is the point.
+   */
+  recoveryRate: number | null
 }
 
 export interface Signature extends SignaturePayload {
@@ -50,6 +56,8 @@ export interface SignatureInput {
   subject: string
   letterHash: string
   comment?: string
+  /** percent recovered, 0–100; absent or null when the signer did not say */
+  recoveryRate?: number | null
   /** injectable for tests; defaults to now */
   signedAt?: string
 }
@@ -69,6 +77,7 @@ export const HASHSCAN_BASE: Record<HederaNetwork, string> = {
   testnet: 'https://hashscan.io/testnet',
 }
 
+export const MAX_RECOVERY_RATE = 100
 const ACCOUNT_ID = /^\d+\.\d+\.\d+$/
 const SHA256_HEX = /^[a-f0-9]{64}$/
 const SLUG = /^[a-z0-9][a-z0-9-]*$/
@@ -89,6 +98,9 @@ export const FIELD_ORDER = [
   'letterHash',
   'signedAt',
   'comment',
+  // appended, never inserted: messages written before this field existed must still
+  // decode, and a reader can tell them apart by its absence
+  'recoveryRate',
 ] as const
 
 export function encodePayload(payload: SignaturePayload): string {
@@ -102,7 +114,7 @@ export function payloadByteLength(payload: SignaturePayload): number {
 
 /** The same message as `encodePayload`, laid out for reading on a page. */
 export function prettyPayload(payload: SignaturePayload): string {
-  const ordered: Record<string, string | number> = {}
+  const ordered: Record<string, string | number | null> = {}
   for (const key of FIELD_ORDER) ordered[key] = payload[key]
   return JSON.stringify(ordered, null, 2)
 }
@@ -137,6 +149,19 @@ export function buildSignature(input: SignatureInput): BuildResult {
     }
   }
 
+  let recoveryRate: number | null = null
+  if (input.recoveryRate !== undefined && input.recoveryRate !== null) {
+    const rate = input.recoveryRate
+    if (typeof rate !== 'number' || !Number.isFinite(rate)) {
+      errors.push('recoveryRate must be a number between 0 and 100')
+    } else if (rate < 0 || rate > MAX_RECOVERY_RATE) {
+      errors.push(`recoveryRate must be between 0 and ${MAX_RECOVERY_RATE}`)
+    } else {
+      // one decimal is as much precision as anyone has; anything finer is noise
+      recoveryRate = Math.round(rate * 10) / 10
+    }
+  }
+
   if (errors.length > 0) return { ok: false, errors }
 
   const payload: SignaturePayload = {
@@ -146,6 +171,7 @@ export function buildSignature(input: SignatureInput): BuildResult {
     signedAt: input.signedAt ?? new Date().toISOString(),
     version: PAYLOAD_VERSION,
     comment: comment ?? '',
+    recoveryRate,
   }
 
   const encoded = encodePayload(payload)
@@ -169,7 +195,10 @@ function isSignaturePayload(value: unknown): value is SignaturePayload {
     typeof p.subject === 'string' &&
     typeof p.letterHash === 'string' &&
     typeof p.signedAt === 'string' &&
-    (p.comment === undefined || typeof p.comment === 'string')
+    (p.comment === undefined || typeof p.comment === 'string') &&
+    (p.recoveryRate === undefined ||
+      p.recoveryRate === null ||
+      (typeof p.recoveryRate === 'number' && Number.isFinite(p.recoveryRate)))
   )
 }
 
