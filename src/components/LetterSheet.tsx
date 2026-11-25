@@ -198,7 +198,7 @@ export function LetterSheet({
               aria-haspopup="dialog"
               className="rounded-sm border border-sheet-ink bg-sheet-ink px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet transition-opacity hover:opacity-85"
             >
-              {alreadySigned ? 'You have signed' : 'Add signature'}
+              {alreadySigned ? 'You have signed' : 'Sign the Letter'}
             </button>
           </div>
 

@@ -78,6 +78,10 @@ export function SignDialog({
   const panel = useRef<HTMLDivElement>(null)
   const [comment, setComment] = useState('')
   const [recoveryRate, setRecoveryRate] = useState('')
+  // The recovery hint opens on hover or focus. State rather than `group-hover`: the
+  // variant lost to `opacity-0` in the built sheet, and a tooltip that may not open is
+  // worse than no tooltip.
+  const [hintOpen, setHintOpen] = useState(false)
   const [state, setState] = useState<SigningState>({ status: 'idle' })
   /** Shown above the form after a wait the reader stopped themselves. */
   const [notice, setNotice] = useState<string | null>(null)
@@ -429,12 +433,21 @@ export function SignDialog({
               language and don’t disclose any personal information!
             </p>
 
-            <label
-              htmlFor="sign-comment"
-              className="mt-5 block text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint"
-            >
-              Comment <span className="normal-case tracking-normal">— optional</span>
-            </label>
+            {/* The count sits above the field, where it can be seen while typing and
+                where it cannot be mistaken for a second field. */}
+            <div className="mt-5 flex items-baseline justify-between gap-3">
+              <label
+                htmlFor="sign-comment"
+                className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint"
+              >
+                Comment <span className="normal-case tracking-normal">— optional</span>
+              </label>
+              <span
+                className={`whitespace-nowrap font-mono text-[0.6875rem] ${tooLong ? 'text-red-400' : 'text-ink-faint'}`}
+              >
+                {bytes} / {MAX_COMMENT_BYTES} bytes
+              </span>
+            </div>
             <textarea
               id="sign-comment"
               value={comment}
@@ -444,39 +457,75 @@ export function SignDialog({
               className="mt-2 w-full resize-y rounded-sm border border-rule bg-page/40 px-3 py-2 font-serif text-[0.9375rem] leading-relaxed text-ink outline-none placeholder:text-ink-faint focus:border-accent"
               placeholder="Your personal message to the recipients …"
             />
-            <div className="mt-1 flex justify-end">
-              <span className={`font-mono text-[0.6875rem] ${tooLong ? 'text-red-400' : 'text-ink-faint'}`}>
-                {bytes} / {MAX_COMMENT_BYTES} bytes
+
+            {/* One positioning context for the label, the field and the hint: the hint
+                opens below the field, so it never covers the input the reader is about to
+                type in — and `pointer-events-none` lets clicks through to whatever it
+                covers. */}
+            <div className="relative mt-5">
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="sign-recovery"
+                  className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint"
+                >
+                  Recovery rate <span className="normal-case tracking-normal">— optional</span>
+                </label>
+                <button
+                  type="button"
+                  aria-label="What the recovery rate means"
+                  aria-describedby="sign-recovery-hint"
+                  aria-expanded={hintOpen}
+                  onMouseEnter={() => setHintOpen(true)}
+                  onMouseLeave={() => setHintOpen(false)}
+                  onFocus={() => setHintOpen(true)}
+                  onBlur={() => setHintOpen(false)}
+                  onClick={() => setHintOpen((open) => !open)}
+                  className="inline-flex h-[1.0625rem] w-[1.0625rem] items-center justify-center rounded-full border border-accent font-serif text-[0.625rem] italic leading-none text-accent transition-colors hover:bg-accent/15 focus:outline-none focus-visible:bg-accent/15"
+                >
+                  i
+                </button>
+              </div>
+              {/* The unit sits inside the field, right-aligned: the input is then one
+                  box from border to border, and `pr-9` keeps the value clear of it. */}
+              <div className="relative mt-2">
+                <input
+                  id="sign-recovery"
+                  type="text"
+                  inputMode="decimal"
+                  value={recoveryRate}
+                  onChange={(event) => setRecoveryRate(event.target.value)}
+                  aria-invalid={rateValid ? undefined : true}
+                  aria-describedby="sign-recovery-hint"
+                  placeholder="e.g. 8.8"
+                  className={`w-full rounded-sm border bg-page/40 py-2 pl-3 pr-9 font-mono text-[0.9375rem] text-ink outline-none placeholder:text-ink-faint ${
+                    rateValid ? 'border-rule focus:border-accent' : 'border-accent'
+                  }`}
+                />
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[0.8125rem] text-ink-faint"
+                >
+                  %
+                </span>
+              </div>
+              <span
+                id="sign-recovery-hint"
+                role="tooltip"
+                className={`pointer-events-none absolute left-0 top-full z-20 mt-2 w-[15rem] max-w-[70vw] rounded-sm border border-rule bg-page px-3 py-2 text-[0.6875rem] font-normal normal-case leading-relaxed tracking-normal text-ink-soft shadow-xl transition-opacity duration-150 ${
+                  hintOpen ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
+                How much of what you lost has been recovered so far? Leave it empty if you would
+                rather not say.
               </span>
             </div>
 
-            <label
-              htmlFor="sign-recovery"
-              className="mt-5 block text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint"
-            >
-              Recovery rate <span className="normal-case tracking-normal">— optional</span>
-            </label>
-            <div className="mt-2 flex items-baseline gap-2">
-              <input
-                id="sign-recovery"
-                type="text"
-                inputMode="decimal"
-                value={recoveryRate}
-                onChange={(event) => setRecoveryRate(event.target.value)}
-                aria-invalid={rateValid ? undefined : true}
-                aria-describedby="sign-recovery-hint"
-                placeholder="e.g. 8.8"
-                className={`w-24 rounded-sm border bg-page/40 px-3 py-2 font-mono text-[0.9375rem] text-ink outline-none placeholder:text-ink-faint ${
-                  rateValid ? 'border-rule focus:border-accent' : 'border-accent'
-                }`}
-              />
-              <span className="font-mono text-[0.8125rem] text-ink-faint">%</span>
-            </div>
-            <p id="sign-recovery-hint" className="mt-1.5 text-[0.75rem] leading-relaxed text-ink-faint">
-              {rateValid
-                ? 'How much of what you lost has been recovered so far? Leave it empty if you would rather not say.'
-                : `A number between 0 and ${MAX_RECOVERY_RATE}, or nothing at all.`}
-            </p>
+            {/* Only the rule, and only when it is broken: the explanation is in the tooltip. */}
+            {rateValid ? null : (
+              <p className="mt-1.5 text-[0.75rem] leading-relaxed text-red-400">
+                A number between 0 and {MAX_RECOVERY_RATE}, or nothing at all.
+              </p>
+            )}
 
             <details className="mt-4">
               <summary className="cursor-pointer text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint hover:text-ink-soft">
