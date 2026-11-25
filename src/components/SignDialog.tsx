@@ -18,7 +18,7 @@ import {
 } from '../lib/hcs'
 import { clearPending, readPending, savePending } from '../lib/pending'
 import { localSignature, rememberSignature } from '../lib/signedHere'
-import { signedWhen } from '../lib/format'
+import { SignerComment } from './SignerComment'
 import { describeWalletError, submitTopicMessage, type SubmitOutcome } from '../lib/wallet'
 import { Spinner } from './Spinner'
 import { subject } from 'virtual:letter'
@@ -395,14 +395,18 @@ export function SignDialog({
               The connected account has already signed this letter. Multiple signatures are ignored, only
               the first counts.
             </p>
-            <dl className="mt-4 grid gap-y-2 text-xs">
-              <Fact label="Account">{wallet.accountId ?? '—'}</Fact>
-              {already?.signedAt ? <Fact label="Signed">{signedWhen(already.signedAt)}</Fact> : null}
-            </dl>
-            {'comment' in already && already.comment ? (
-              <blockquote className="mt-4 border-l-2 border-rule pl-3 text-[0.8125rem] leading-relaxed text-ink-soft">
-                {already.comment}
-              </blockquote>
+            {/* The same card the comment band uses: this is a signer's own comment, and
+                it should look like one. */}
+            {already ? (
+              <SignerComment
+                accountId={already.accountId}
+                // a local record written before the topic answered carries no comment
+                comment={'comment' in already ? already.comment : ''}
+                signedAt={already.signedAt}
+                recoveryRate={'recoveryRate' in already ? (already.recoveryRate ?? null) : null}
+                withTime
+                className="mt-5 rounded-sm border border-rule/70 bg-page/40 px-4 py-4"
+              />
             ) : null}
             <button
               type="button"

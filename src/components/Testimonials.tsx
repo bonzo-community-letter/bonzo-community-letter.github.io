@@ -1,9 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { testimonials, type Signature } from '../lib/hcs'
-import { signedWhen } from '../lib/format'
 import { copiesFor, nextOffset } from '../lib/band'
-import { lossLine } from '../lib/recovery'
-import { RecoveryRing } from './RecoveryRing'
+import { SignerComment } from './SignerComment'
 
 /** Pixels per second the band drifts on its own. Slow enough to read along. */
 const SPEED = 26
@@ -167,34 +165,14 @@ export function Testimonials({
                   key={`${copy}-${entry.accountId}`}
                   className="flex w-[19rem] shrink-0 flex-col border-l border-rule/70 px-6 py-1 sm:w-[23rem] sm:px-8"
                 >
-                  {/* Ring and account at the top, the way a testimonial carries a face
-                      and a name: who said it, then what they said. */}
-                  <div className="flex items-center gap-3 pb-3">
-                    <RecoveryRing rate={entry.recoveryRate} size={44} />
-                    <div className="min-w-0">
-                      <p className="whitespace-nowrap font-mono text-[0.6875rem] text-ink-soft">
-                        {entry.accountId}
-                      </p>
-                      <p className="whitespace-nowrap text-[0.625rem] leading-snug text-ink-faint">
-                        {lossLine(entry.recoveryRate)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* A band is a strip, not a page: the longest comment is cut at six lines
-                      and says so with an ellipsis. The full text is the topic's, and the
-                      title attribute carries it for a reader who wants the rest. */}
-                  <blockquote
-                    title={entry.comment}
-                    className="line-clamp-6 font-serif text-[1rem] leading-relaxed text-ink"
-                  >
-                    {entry.comment}
-                  </blockquote>
-                  {/* mt-auto: the dates line up along the bottom, whatever the comment length */}
-                  <p className="mt-auto pt-3 whitespace-nowrap font-mono text-[0.625rem] text-ink-faint">
-                    {signedWhen(entry.signedAt, { time: false })}
-                  </p>
-
+                  <SignerComment
+                    accountId={entry.accountId}
+                    comment={entry.comment}
+                    signedAt={entry.signedAt}
+                    recoveryRate={entry.recoveryRate}
+                    clamp
+                    className="flex-1"
+                  />
                 </li>
               ))}
             </ul>

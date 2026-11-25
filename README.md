@@ -395,6 +395,10 @@ Open the page with `?demo=1` to see the section filled with ten sample comments,
 spread from 77 to 512 bytes (the field's limit) — the section then says "Sample comments — not
 signatures" and the count above the letter still ignores them (`content/demo.ts`).
 
+The card itself is `components/SignerComment.tsx`, and the "You have signed" dialog in the sign
+modal renders the same component: a signer's own signature is a comment like any other, and one
+piece of markup is easier to keep right than two that drift.
+
 Each entry opens with a recovery ring (`components/RecoveryRing.tsx`): a disc with the rate
 rounded to a whole percent, and an outline whose arc is that same rate, so the number and the
 shape cannot disagree. Under the account it says what is still missing — `100 − rate`, as
