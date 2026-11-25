@@ -419,17 +419,9 @@ export function SignDialog({
           </>
         ) : (
           <>
-            {/* The warning is a sentence and a half of small print; it sat in the reader's
-                way every time they opened the dialog. Behind the icon it is still one click
-                away, and the dialog opens on the thing the reader came to do. */}
             <p className="mt-4 text-sm leading-relaxed text-ink-soft">
               Your signature and your (optional) comment are recorded on the hashgraph as a public and
-              permanent record of support for this open letter.{' '}
-              <InfoTip id="sign-permanence-hint" label="What cannot be undone" side="below" align="right">
-                Neither the signature nor the comment can be edited or deleted. It will stay permanently
-                and visible to everyone on the hashgraph. Insults are not helpful – please use respectful
-                language and don’t disclose any personal information for your own safety!
-              </InfoTip>
+              permanent record of support for this open letter.
             </p>
 
 
@@ -437,12 +429,22 @@ export function SignDialog({
             {/* The count sits above the field, where it can be seen while typing and
                 where it cannot be mistaken for a second field. */}
             <div className="mt-5 flex items-baseline justify-between gap-3">
-              <label
-                htmlFor="sign-comment"
-                className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint"
-              >
-                Comment <span className="normal-case tracking-normal">— optional</span>
-              </label>
+              <span className="flex items-center gap-2">
+                <label
+                  htmlFor="sign-comment"
+                  className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint"
+                >
+                  Comment <span className="normal-case tracking-normal">— optional</span>
+                </label>
+                {/* The warning belongs to the comment: it is the comment that cannot be
+                    edited, deleted, and should not carry anything private. */}
+                <InfoTip id="sign-permanence-hint" label="What cannot be undone" side="below">
+                  Neither the signature nor the comment can be edited or deleted. It will stay
+                  permanently and visible to everyone on the hashgraph. Insults are not helpful –
+                  please use respectful language and don’t disclose any personal information for your
+                  own safety!
+                </InfoTip>
+              </span>
               <span
                 className={`whitespace-nowrap font-mono text-[0.6875rem] ${tooLong ? 'text-red-400' : 'text-ink-faint'}`}
               >
