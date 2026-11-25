@@ -395,6 +395,12 @@ Open the page with `?demo=1` to see the section filled with ten sample comments,
 spread from 77 to 512 bytes (the field's limit) — the section then says "Sample comments — not
 signatures" and the count above the letter still ignores them (`content/demo.ts`).
 
+Each entry opens with a recovery ring (`components/RecoveryRing.tsx`): a disc with the rate
+rounded to a whole percent, and an outline whose arc is that same rate, so the number and the
+shape cannot disagree. The colour runs red → amber → green (`lib/recovery.ts`, interpolated in
+HSL because a straight RGB blend from red to green passes through grey). No rate at all is
+brown with a dash — silence is not "recovered nothing", and the two must not look alike.
+
 Under the letter, `components/Testimonials.tsx` shows what each account wrote: the first comment
 that account left, with its account id and the date it signed, as one horizontal band that drifts by
 itself and can be scrolled, dragged or stopped on. The rule is the same one the count follows

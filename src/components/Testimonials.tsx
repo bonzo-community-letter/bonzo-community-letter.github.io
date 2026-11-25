@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { testimonials, type Signature } from '../lib/hcs'
 import { signedWhen } from '../lib/format'
 import { copiesFor, nextOffset } from '../lib/band'
+import { RecoveryRing } from './RecoveryRing'
 
 /** Pixels per second the band drifts on its own. Slow enough to read along. */
 const SPEED = 26
@@ -165,6 +166,20 @@ export function Testimonials({
                   key={`${copy}-${entry.accountId}`}
                   className="flex w-[19rem] shrink-0 flex-col border-l border-rule/70 px-6 py-1 sm:w-[23rem] sm:px-8"
                 >
+                  {/* Ring and account at the top, the way a testimonial carries a face
+                      and a name: who said it, then what they said. */}
+                  <div className="flex items-center gap-3 pb-3">
+                    <RecoveryRing rate={entry.recoveryRate} size={44} />
+                    <div className="min-w-0">
+                      <p className="whitespace-nowrap font-mono text-[0.6875rem] text-ink-soft">
+                        {entry.accountId}
+                      </p>
+                      <p className="whitespace-nowrap font-mono text-[0.625rem] text-ink-faint">
+                        {signedWhen(entry.signedAt, { time: false })}
+                      </p>
+                    </div>
+                  </div>
+
                   {/* A band is a strip, not a page: the longest comment is cut at six lines
                       and says so with an ellipsis. The full text is the topic's, and the
                       title attribute carries it for a reader who wants the rest. */}
@@ -174,11 +189,7 @@ export function Testimonials({
                   >
                     {entry.comment}
                   </blockquote>
-                  <p className="mt-auto flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-3 font-mono text-[0.625rem] text-ink-faint">
-                    <span className="whitespace-nowrap">{entry.accountId}</span>
-                    <span aria-hidden="true">·</span>
-                    <span className="whitespace-nowrap">{signedWhen(entry.signedAt, { time: false })}</span>
-                  </p>
+
                 </li>
               ))}
             </ul>

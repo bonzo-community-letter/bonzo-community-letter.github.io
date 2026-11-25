@@ -271,6 +271,8 @@ export interface Testimonial {
   accountId: string
   comment: string
   signedAt: string
+  /** percent recovered, or null when the signer did not say */
+  recoveryRate: number | null
 }
 
 /**
@@ -288,6 +290,7 @@ export function testimonials(signatures: readonly Signature[]): Testimonial[] {
       accountId: signature.accountId,
       comment: signature.comment.trim(),
       signedAt: signature.signedAt,
+      recoveryRate: signature.recoveryRate ?? null,
     }))
 }
 

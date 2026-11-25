@@ -88,6 +88,7 @@ describe('testimonials', () => {
     expect(entry).toEqual({
       accountId: '0.0.1111',
       comment: 'hello',
+      recoveryRate: null,
       signedAt: '2026-11-24T08:38:18.738Z',
     })
   })
