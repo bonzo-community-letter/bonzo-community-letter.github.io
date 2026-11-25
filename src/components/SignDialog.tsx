@@ -19,6 +19,7 @@ import {
 import { clearPending, readPending, savePending } from '../lib/pending'
 import { localSignature, rememberSignature } from '../lib/signedHere'
 import { SignerComment } from './SignerComment'
+import { InfoTip } from './InfoTip'
 import { describeWalletError, submitTopicMessage, type SubmitOutcome } from '../lib/wallet'
 import { Spinner } from './Spinner'
 import { subject } from 'virtual:letter'
@@ -78,10 +79,6 @@ export function SignDialog({
   const panel = useRef<HTMLDivElement>(null)
   const [comment, setComment] = useState('')
   const [recoveryRate, setRecoveryRate] = useState('')
-  // The recovery hint opens on hover or focus. State rather than `group-hover`: the
-  // variant lost to `opacity-0` in the built sheet, and a tooltip that may not open is
-  // worse than no tooltip.
-  const [hintOpen, setHintOpen] = useState(false)
   const [state, setState] = useState<SigningState>({ status: 'idle' })
   /** Shown above the form after a wait the reader stopped themselves. */
   const [notice, setNotice] = useState<string | null>(null)
@@ -422,16 +419,20 @@ export function SignDialog({
           </>
         ) : (
           <>
+            {/* The warning is a sentence and a half of small print; it sat in the reader's
+                way every time they opened the dialog. Behind the icon it is still one click
+                away, and the dialog opens on the thing the reader came to do. */}
             <p className="mt-4 text-sm leading-relaxed text-ink-soft">
               Your signature and your (optional) comment are recorded on the hashgraph as a public and
-              permanent record of support for this open letter.
+              permanent record of support for this open letter.{' '}
+              <InfoTip id="sign-permanence-hint" label="What cannot be undone" side="below" align="right">
+                Neither the signature nor the comment can be edited or deleted. It will stay permanently
+                and visible to everyone on the hashgraph. Insults are not helpful – please use respectful
+                language and don’t disclose any personal information for your own safety!
+              </InfoTip>
             </p>
 
-            <p className="mt-3 border-l-2 border-accent pl-3 text-[0.8125rem] leading-relaxed text-ink-soft">
-              Neither the signature nor the comment can be edited or deleted. It will stay permanently and
-              visible to everyone on the hashgraph. Insults and abuse are not helpful – please use respectful
-              language and don’t disclose any personal information!
-            </p>
+
 
             {/* The count sits above the field, where it can be seen while typing and
                 where it cannot be mistaken for a second field. */}
@@ -458,11 +459,7 @@ export function SignDialog({
               placeholder="Your personal message to the recipients …"
             />
 
-            {/* One positioning context for the label, the field and the hint: the hint
-                opens below the field, so it never covers the input the reader is about to
-                type in — and `pointer-events-none` lets clicks through to whatever it
-                covers. */}
-            <div className="relative mt-5">
+            <div className="mt-5">
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="sign-recovery"
@@ -470,20 +467,11 @@ export function SignDialog({
                 >
                   Recovery rate <span className="normal-case tracking-normal">— optional</span>
                 </label>
-                <button
-                  type="button"
-                  aria-label="What the recovery rate means"
-                  aria-describedby="sign-recovery-hint"
-                  aria-expanded={hintOpen}
-                  onMouseEnter={() => setHintOpen(true)}
-                  onMouseLeave={() => setHintOpen(false)}
-                  onFocus={() => setHintOpen(true)}
-                  onBlur={() => setHintOpen(false)}
-                  onClick={() => setHintOpen((open) => !open)}
-                  className="inline-flex h-[1.0625rem] w-[1.0625rem] items-center justify-center rounded-full border border-accent font-serif text-[0.625rem] italic leading-none text-accent transition-colors hover:bg-accent/15 focus:outline-none focus-visible:bg-accent/15"
-                >
-                  i
-                </button>
+                {/* opens upward, so it never covers the field the reader is about to fill */}
+                <InfoTip id="sign-recovery-hint" label="What the recovery rate means" side="above">
+                  How much of what you lost has been recovered so far? Leave it empty if you would
+                  rather not say.
+                </InfoTip>
               </div>
               {/* The unit sits inside the field, right-aligned: the input is then one
                   box from border to border, and `pr-9` keeps the value clear of it. */}
@@ -508,16 +496,6 @@ export function SignDialog({
                   %
                 </span>
               </div>
-              <span
-                id="sign-recovery-hint"
-                role="tooltip"
-                className={`pointer-events-none absolute left-0 top-full z-20 mt-2 w-[15rem] max-w-[70vw] rounded-sm border border-rule bg-page px-3 py-2 text-[0.6875rem] font-normal normal-case leading-relaxed tracking-normal text-ink-soft shadow-xl transition-opacity duration-150 ${
-                  hintOpen ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                How much of what you lost has been recovered so far? Leave it empty if you would
-                rather not say.
-              </span>
             </div>
 
             {/* Only the rule, and only when it is broken: the explanation is in the tooltip. */}

@@ -360,7 +360,11 @@ where the reader went on purpose, not in the middle of the text they came to rea
 
 1. The reader connects a wallet — from the top bar or from the dialog itself. It is **one session**,
    held in `App`, so the bar and the dialog can never disagree about who is connected.
-2. Above the comment field the dialog says what the reader is about to make: a public, permanent record of
+2. The permanence warning — nothing can be edited or deleted, mind the language and your own
+   privacy — sits behind a circled i at the end of the intro, in `components/InfoTip.tsx`. The
+   same component carries the recovery-rate hint; the panel opens on hover, focus and tap, and
+   passes clicks through.
+3. Above the comment field the dialog says what the reader is about to make: a public, permanent record of
    support — signature and optional comment together — and, in the accent stripe, that it cannot be edited
    or deleted, with a line about respectful language and personal information. The field itself stays a
    field, capped at 512 UTF-8 bytes, with the counter turning red past it.
