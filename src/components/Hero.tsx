@@ -17,7 +17,8 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
           {page.title}
         </h1>
 
-        <p className="mx-auto mt-5 max-w-[52ch] text-[0.9375rem] leading-relaxed text-ink-soft sm:mt-6 sm:text-base">
+        {/* `text-balance`: a standfirst that ends on a single word reads as an accident. */}
+        <p className="mx-auto mt-5 max-w-[52ch] text-balance text-[0.9375rem] leading-relaxed text-ink-soft sm:mt-6 sm:text-base">
           {page.from.note}
         </p>
 
