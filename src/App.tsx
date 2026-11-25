@@ -36,7 +36,13 @@ export function App() {
     <div className="relative min-h-dvh bg-page">
       {/* the signers' ids, written behind everything the page does not paint over */}
       <Backdrop accounts={(sample ? sampleSignatures(subject, letterHash) : signers).map((s) => s.accountId)} />
-      <div className="relative z-10">
+      {/*
+        No z-index here on purpose. The envelope is drawn in two fixed layers — flap at
+        z-10, body at z-30 — with the sheet between them at z-20. A z-index on this
+        wrapper would flatten the page into one layer and put the flap in front of the
+        letter, so the letter stopped coming out of the envelope.
+      */}
+      <div className="relative">
         <NavBar wallet={wallet} onConnect={openConnect} />
         <Hero signatureCount={signatureCount} />
         <main>
