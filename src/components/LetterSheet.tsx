@@ -208,10 +208,13 @@ export function LetterSheet({
                 actions — mr-auto holds it at the left edge and lets it wrap on its own above
                 them on a phone, where the two buttons already take the width. */}
             {signatureCount !== null && signatureCount > 0 ? (
-              <p className="mr-auto font-script text-[1.125rem] leading-[1.2] text-accent sm:text-[1.375rem] lg:text-[1.5rem]">
+              <a
+                href="#personal-messages"
+                className="mr-auto font-script text-[1.5rem] leading-[1.2] text-ink-blue transition-colors hover:text-accent sm:text-[1.75rem] lg:text-[2rem]"
+              >
                 Signed by {signatureCount.toLocaleString('en-US')} Hedera{' '}
                 {signatureCount === 1 ? 'account' : 'accounts'}
-              </p>
+              </a>
             ) : null}
             {config.treasuryAccountId ? (
               <Tip

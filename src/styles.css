@@ -49,6 +49,8 @@
   --color-sheet-ink-soft: #4b433c;
   --color-sheet-ink-faint: #6f6258;
   --color-sheet-rule: #e6ded3;
+  /* Ink blue: the one cool colour on the paper, for the line that links to the messages. */
+  --color-ink-blue: #1b2a4a;
 
   --font-serif: ui-serif, Georgia, 'Iowan Old Style', 'Times New Roman', serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

@@ -54,10 +54,15 @@ export function App() {
             onConnect={openConnect}
             onSigned={signatures.refresh}
           />
-          <Testimonials
-            signatures={sample ? [...sampleSignatures(subject, letterHash), ...signers] : signers}
-            sample={sample}
-          />
+          {/* The anchor lives here, not on the section: the band returns nothing when no
+              signer wrote a comment, and a link to a section that does not exist is a dead
+              link — the count can be above zero while nobody has said anything. */}
+          <div id="personal-messages" className="scroll-mt-20">
+            <Testimonials
+              signatures={sample ? [...sampleSignatures(subject, letterHash), ...signers] : signers}
+              sample={sample}
+            />
+          </div>
           {/* The status box is a build-time instrument, not part of the letter: it exists
               while the text is a draft and leaves with it. */}
           {isDraft ? <DevStatus state={signatures} /> : null}
