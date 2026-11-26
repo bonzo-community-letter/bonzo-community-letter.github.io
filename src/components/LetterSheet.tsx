@@ -17,18 +17,6 @@ const CROSSING = 0.62
 const OPEN_DEPTH = -0.5
 
 /**
- * On a phone the paper also starts 100px further back than that.
- *
- * The envelope cannot be the thing that moves: on a narrow screen its flap tip is already
- * pinned just below the hero's last line (the overlay pushes it down by exactly that much
- * whenever it would rise), so asking it to sit higher just moves the paper with it and
- * changes nothing. What changes the picture is the gap between the two: with the paper
- * further back, the flap reads as an open envelope holding a letter instead of a cream tip
- * poking out from behind the page.
- */
-const MOBILE_PAPER_BACK = 100
-
-/**
  * The sheet starts inside the envelope, not at its opening: the gap above it is the
  * distance it travels to come out, and the envelope covers it until the page scrolls.
  *
@@ -69,7 +57,7 @@ function useStartDepth(
       const foldPerScroll = (envelopeTravel() / ENVELOPE.exit) * bodyHeight
       const depth = envelopeOpensOnScroll(width)
         ? CROSSING * ENVELOPE.reveal * (1 + foldPerScroll)
-        : OPEN_DEPTH * bodyHeight + MOBILE_PAPER_BACK
+        : OPEN_DEPTH * bodyHeight
       let target = anchor.current.fold + depth
 
       // The envelope says where the paper *may* be; the hero says where it may not

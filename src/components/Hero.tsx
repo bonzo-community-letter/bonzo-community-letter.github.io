@@ -24,7 +24,10 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
 
         <div className="mt-7 sm:mt-10">
           <p className="eyebrow" style={{ fontSize: '0.875rem' }}>To</p>
-          <ul className="mt-3 flex flex-col items-center gap-y-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2">
+          {/* Two columns on a phone: seven names stacked read as a wall, and the block
+              is short enough that the envelope stays in view. `w-fit` keeps the columns
+              as narrow as their longest name instead of stretching to the page. */}
+          <ul className="mx-auto mt-3 grid w-fit max-w-full grid-cols-2 gap-x-6 gap-y-1.5 text-left sm:flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2 sm:text-center">
             {addressees.map((addressee, i) => (
               <Fragment key={addressee.name}>
                 {/* Seven names never share a line inside max-w-5xl, and letting the
@@ -32,15 +35,19 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
                     side instead: the three Hedera entities above, the four that follow
                     below, and the stack on a phone is unaffected. */}
                 {i === 3 ? <li aria-hidden="true" className="hidden basis-full sm:block" /> : null}
-                <li className="flex items-center gap-2.5">
+                <li className="flex items-start gap-2.5">
+                  {/* the marks come back on a wider screen: in a two-column block on a
+                      phone they cost the width the longer names need */}
                   {addressee.logoSrc ? (
                     <img
                       src={addressee.logoSrc}
                       alt=""
-                      className="h-4 w-auto shrink-0 opacity-80 grayscale"
+                      className="hidden h-4 w-auto shrink-0 opacity-80 grayscale sm:block"
                     />
                   ) : null}
-                  <span className="font-serif text-base leading-snug text-ink min-[360px]:text-lg">{addressee.name}</span>
+                  <span className="font-serif text-[0.875rem] leading-snug text-ink min-[360px]:text-[0.9375rem] sm:text-lg">
+                    {addressee.name}
+                  </span>
                 </li>
               </Fragment>
             ))}
