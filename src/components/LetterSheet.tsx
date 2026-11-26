@@ -203,7 +203,16 @@ export function LetterSheet({
               phone, which is the one place it is needed. */}
           {/* Both actions sit at the right edge, the quiet one first: the letter's own
               action is the last thing the eye reaches, and Donate is an offer, not a step. */}
-          <div className="mt-10 flex flex-wrap items-center justify-end gap-3">
+          <div className="mt-10 flex flex-wrap items-center justify-end gap-x-4 gap-y-3">
+            {/* The count, in the one hand the page reserves for it, on the same line as the
+                actions — mr-auto holds it at the left edge and lets it wrap on its own above
+                them on a phone, where the two buttons already take the width. */}
+            {signatureCount !== null && signatureCount > 0 ? (
+              <p className="mr-auto font-script text-[1.125rem] leading-[1.2] text-accent sm:text-[1.375rem] lg:text-[1.5rem]">
+                Signed by {signatureCount.toLocaleString('en-US')} Hedera{' '}
+                {signatureCount === 1 ? 'account' : 'accounts'}
+              </p>
+            ) : null}
             {config.treasuryAccountId ? (
               <Tip
                 id="donate-hint"

@@ -26,12 +26,9 @@ const RESUME_AFTER = 2600
  */
 export function Testimonials({
   signatures,
-  count,
   sample = false,
 }: {
   signatures: readonly Signature[]
-  /** Signing accounts, as the page counts them — the number this band is the proof of. */
-  count: number | null
   /** `?demo=1`: the entries include invented comments, and the section says so. */
   sample?: boolean
 }) {
@@ -111,13 +108,6 @@ export function Testimonials({
     // the same way the hero's own tint does.
     <section className="border-y border-rule/40 bg-hero/80 pb-16 pt-16">
       <div className="mx-auto w-full max-w-5xl px-4 text-center sm:px-6">
-        {/* The count, in the one hand the page reserves for it. It is the claim the band
-            below makes good on: every line of it is a different account. */}
-        {count !== null && count > 0 ? (
-          <p className="font-script text-[1.75rem] leading-[1.15] text-ink sm:text-[2.5rem] lg:text-[3rem]">
-            Signed by {count.toLocaleString('en-US')} Hedera {count === 1 ? 'account' : 'accounts'}
-          </p>
-        ) : null}
         <p className="eyebrow">From the signees</p>
         <h2 className="mt-2 font-serif text-2xl leading-tight text-ink">Personal Messages</h2>
         {/* The heading says what the section is, whatever mode the page is in; the
