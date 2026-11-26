@@ -230,6 +230,18 @@ button:disabled,
   }
 }
 
+/*
+ * On a phone the envelope is open from the first paint and scrolling only carries it away,
+ * so the flap must not turn at all: a turning flap swings down behind the letter, which is
+ * the layer it is drawn in there. The breakpoint is `envelopeOpensOnScroll` in
+ * EnvelopeOverlay — 640px, the same one the script uses.
+ */
+@media (max-width: 639px) {
+  .envelope-flap {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .envelope-drift,
   .envelope-flap {
