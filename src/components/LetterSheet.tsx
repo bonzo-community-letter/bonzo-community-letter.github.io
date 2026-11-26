@@ -5,6 +5,7 @@ import { ENVELOPE, HERO_CLEARANCE, envelopeOpensOnScroll, envelopeRestingGeometr
 import { signatureBy, type Signature } from '../lib/hcs'
 import { localSignature } from '../lib/signedHere'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
+import { Tip } from './Tip'
 import { SignDialog } from './SignDialog'
 import type { WalletApi } from '../hooks/useWallet'
 import { letterText, subject } from 'virtual:letter'
@@ -193,32 +194,34 @@ export function LetterSheet({
           </div>
 
           {/* The letter keeps one action, nothing else: the rest lives in the dialog.
-              Signing needs a wallet, so without one the button is disabled rather than
-              opening a dialog that can only ask for the same thing — and says why, since a
-              dead button with no reason is a dead end. */}
+              Signing needs a wallet. Without one the button says so on itself — a tooltip
+              over it — rather than printing a line of explanation under the letter, where it
+              read as part of the text. `aria-disabled` rather than `disabled`: a disabled
+              button takes no focus and no tap, and then the tooltip could never open on a
+              phone, which is the one place it is needed. */}
           <div className="mt-10">
-            <button
-              type="button"
-              onClick={() => setSignOpen(true)}
-              disabled={!connected}
-              aria-haspopup="dialog"
-              aria-describedby={connected ? undefined : 'sign-needs-wallet'}
-              className={`rounded-sm border px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-opacity ${
-                connected
-                  ? 'border-sheet-ink bg-sheet-ink text-sheet hover:opacity-85'
-                  : 'cursor-not-allowed border-sheet-rule bg-transparent text-sheet-ink-faint'
-              }`}
+            <Tip
+              id="sign-needs-wallet"
+              side="above"
+              panel="Connect a wallet to sign."
             >
-              {alreadySigned ? 'You have signed' : 'Sign the Letter'}
-            </button>
-            {connected ? null : (
-              <p
-                id="sign-needs-wallet"
-                className="mt-2 text-[0.6875rem] uppercase tracking-[0.14em] text-sheet-ink-faint"
+              <button
+                type="button"
+                onClick={() => {
+                  if (connected) setSignOpen(true)
+                }}
+                aria-disabled={!connected}
+                aria-haspopup="dialog"
+                aria-describedby={connected ? undefined : 'sign-needs-wallet'}
+                className={`rounded-sm border px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-opacity ${
+                  connected
+                    ? 'border-sheet-ink bg-sheet-ink text-sheet hover:opacity-85'
+                    : 'cursor-not-allowed border-sheet-rule bg-transparent text-sheet-ink-faint'
+                }`}
               >
-                Connect a wallet to sign
-              </p>
-            )}
+                {alreadySigned ? 'You have signed' : 'Sign the Letter'}
+              </button>
+            </Tip>
           </div>
 
           <div className="mt-8 border-t border-sheet-rule pt-4">

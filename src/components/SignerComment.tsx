@@ -1,3 +1,5 @@
+import { useId } from 'react'
+import { Tip } from './Tip'
 import { RecoveryRing } from './RecoveryRing'
 import { lossLine } from '../lib/recovery'
 import { signedWhen } from '../lib/format'
@@ -12,15 +14,33 @@ import { standingOf, type SignerStanding } from '../lib/affected'
  * account id, not a mood.
  */
 function StandingBadge({ standing }: { standing: SignerStanding }) {
+  // one id per badge: the band draws one of these per signature, and an id shared by all of
+  // them would point every description at the first panel
+  const tipId = useId()
   const affected = standing === 'affected'
+  // The badge makes a claim about an account, so it says where the claim comes from: nobody
+  // declares this, it is read off the chain. Tab-focusable, because a tooltip that only
+  // answers a mouse leaves the keyboard with a word it cannot question.
   return (
-    <span
-      className={`shrink-0 rounded-full border px-2 py-[0.125rem] text-[0.5625rem] font-semibold uppercase tracking-[0.1em] ${
-        affected ? 'border-accent/50 text-accent' : 'border-rule text-ink-faint'
-      }`}
+    <Tip
+      id={tipId}
+      side="above"
+      panel={
+        affected
+          ? 'Recognised automatically from on-chain data: the account held a position in the 11 July snapshot and is on Bonzo\'s own recovery list. Nobody declares this.'
+          : 'Not on Bonzo\'s recovery list for the 11 July snapshot, so this signer speaks as a supporter. Recognised from on-chain data, not declared.'
+      }
     >
-      {affected ? 'Affected User' : 'Supporter'}
-    </span>
+      <span
+        tabIndex={0}
+        aria-describedby={tipId}
+        className={`shrink-0 rounded-full border px-2 py-[0.125rem] text-[0.5625rem] font-semibold uppercase tracking-[0.1em] focus:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
+          affected ? 'border-accent/50 text-accent' : 'border-rule text-ink-faint'
+        }`}
+      >
+        {affected ? 'Affected User' : 'Supporter'}
+      </span>
+    </Tip>
   )
 }
 
