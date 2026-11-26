@@ -27,13 +27,16 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
           Open letter
         </span>
 
-        <div className="flex items-center gap-3">
-          <span className="hidden text-[0.625rem] uppercase tracking-[0.16em] text-ink-faint sm:inline">
+        {/* items-stretch, not items-center: the badge takes its height from the button it
+            sits beside, at every breakpoint, instead of guessing the same padding and
+            landing nine pixels short. */}
+        <div className="flex items-stretch gap-3">
+          <span className="hidden self-center text-[0.625rem] uppercase tracking-[0.16em] text-ink-faint sm:inline">
             {config.network}
           </span>
           {standing ? (
             <span
-              className={`rounded-full border px-2 py-[0.1875rem] text-[0.5625rem] font-semibold uppercase tracking-[0.1em] ${
+              className={`inline-flex items-center rounded-full border px-2 text-[0.5625rem] font-semibold uppercase tracking-[0.1em] ${
                 standing === 'affected'
                   ? 'border-accent/60 bg-accent/10 text-accent'
                   : 'border-accent/35 text-accent/75'

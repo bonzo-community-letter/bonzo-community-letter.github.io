@@ -104,7 +104,10 @@ export function SignerComment({
           comment's length. The number before it is the signer's place in the order —
           the one fact that ties a comment to a position in the count. The badge shares
           that line, at the far edge, where it labels the whole card rather than the id. */}
-      <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+      {/* items-center, not items-end: the badge's own box is taller than the line of type
+          beside it, so aligning the two bottoms lifted its middle a couple of pixels above
+          the text it labels. */}
+      <div className="mt-auto flex items-center justify-between gap-2 pt-3">
         <p className="whitespace-nowrap font-mono text-[0.625rem] text-ink-faint">
           {signeeNumber ? <>Signee #{signeeNumber} · </> : null}
           {signedWhen(signedAt, { time: withTime })}
