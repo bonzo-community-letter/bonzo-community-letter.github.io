@@ -310,7 +310,7 @@ Modelled on what Bonzo actually submitted for the recovery portal's terms — ve
 [their topic](https://hashscan.io/mainnet/topic/0.0.10955904/messages) through the mirror node:
 
 ```
-{"app":"Bonzo Finance","accountId":"0.0.6754749","agreement":"redemption-waiver",
+{"app":"Bonzo Finance","accountId":"0.0.xxxxxxxxx","agreement":"redemption-waiver",
  "version":1,"termsHash":"4ad02fc0…ab85","signedAt":"2026-11-12T15:29:24.484Z"}     210 bytes
 ```
 
