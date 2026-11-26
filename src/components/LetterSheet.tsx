@@ -203,19 +203,23 @@ export function LetterSheet({
               phone, which is the one place it is needed. */}
           {/* Both actions sit at the right edge, the quiet one first: the letter's own
               action is the last thing the eye reaches, and Donate is an offer, not a step. */}
-          <div className="mt-10 flex flex-wrap items-center justify-end gap-x-4 gap-y-3">
+          {/* A phone stacks it: the count centred on its own line, the two actions on the next,
+              side by side and centred under it. From sm the old row returns — count at the left
+              edge, actions at the right. */}
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-4">
             {/* The count, in the one hand the page reserves for it, on the same line as the
                 actions — mr-auto holds it at the left edge and lets it wrap on its own above
                 them on a phone, where the two buttons already take the width. */}
             {signatureCount !== null && signatureCount > 0 ? (
               <a
                 href="#personal-messages"
-                className="mr-auto font-script text-[1.5rem] leading-[1.2] text-ink-blue transition-colors hover:text-accent sm:text-[1.75rem] lg:text-[2rem]"
+                className="text-center font-script text-[1.5rem] leading-[1.2] text-ink-blue transition-colors hover:text-accent sm:mr-auto sm:text-left sm:text-[1.75rem] lg:text-[2rem]"
               >
                 Signed by {signatureCount.toLocaleString('en-US')} Hedera{' '}
                 {signatureCount === 1 ? 'account' : 'accounts'}
               </a>
             ) : null}
+            <div className="flex items-center justify-center gap-3">
             {config.treasuryAccountId ? (
               <Tip
                 id="donate-hint"
@@ -227,7 +231,7 @@ export function LetterSheet({
                   onClick={() => setDonateOpen(true)}
                   aria-haspopup="dialog"
                   aria-describedby="donate-hint"
-                  className="rounded-sm border border-sheet-rule px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet-ink transition-colors hover:border-accent hover:text-accent"
+                  className="whitespace-nowrap rounded-sm border border-sheet-rule px-3 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-sheet-ink transition-colors hover:border-accent hover:text-accent sm:px-5 sm:text-[0.6875rem] sm:tracking-[0.14em]"
                 >
                   Donate
                 </button>
@@ -252,7 +256,7 @@ export function LetterSheet({
                 aria-disabled={!connected}
                 aria-haspopup="dialog"
                 aria-describedby="sign-needs-wallet"
-                className={`rounded-sm border px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-colors ${
+                className={`whitespace-nowrap rounded-sm border px-3 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] transition-colors sm:px-5 sm:text-[0.6875rem] sm:tracking-[0.14em] ${
                   connected
                     ? 'border-sheet-ink bg-sheet-ink text-sheet hover:border-accent hover:bg-accent'
                     : 'cursor-not-allowed border-sheet-rule bg-transparent text-sheet-ink-faint'
@@ -261,6 +265,7 @@ export function LetterSheet({
                 {alreadySigned ? 'You have signed' : 'Sign the Letter'}
               </button>
             </Tip>
+            </div>
           </div>
 
           <div className="mt-8 border-t border-sheet-rule pt-4">
