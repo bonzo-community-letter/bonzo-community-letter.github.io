@@ -35,7 +35,7 @@ export const page = {
       'Supra Labs, Inc.',
       'Entropy Foundation',
     ],
-    subject: 'On the Bonzo Lend recovery — the commitment, the distribution, and what remains unanswered',
+    subject: 'Supra Oracle & Bonzo Lend Exploit',
     salutation: 'To the addressees above,',
   },
 
