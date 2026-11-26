@@ -47,7 +47,9 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
           </ul>
         </div>
 
-        <p className="mt-6 text-xs text-ink-faint tnum sm:mt-10">
+        {/* On a phone this line sat under the envelope's fold, cost a line of the hero
+            and told the reader what the footer already says. */}
+        <p className="mt-6 hidden text-xs text-ink-faint tnum sm:mt-10 sm:block">
           {page.status}
           {signatureCount !== null
             ? ` · ${signatureCount.toLocaleString('en-US')} ${signatureCount === 1 ? 'signature' : 'signatures'}`

@@ -152,7 +152,15 @@ button:disabled,
   --envelope-width: calc(100vw - 24px);
   --envelope-body: calc(var(--envelope-width) * 0.61735);
   --envelope-hidden: 0.32;
-  min-height: calc(100lvh - (1 - var(--envelope-hidden)) * var(--envelope-body) + 4rem);
+  /* 2rem of air on a phone, 4 from `sm` up: the phone has no status line under the
+     address list any more, and the letter is what the reader came for. */
+  min-height: calc(100lvh - (1 - var(--envelope-hidden)) * var(--envelope-body) + 2rem);
+}
+
+@media (min-width: 40rem) {
+  .hero-height {
+    min-height: calc(100lvh - (1 - var(--envelope-hidden)) * var(--envelope-body) + 4rem);
+  }
 }
 
 @media (min-width: 40rem) {
