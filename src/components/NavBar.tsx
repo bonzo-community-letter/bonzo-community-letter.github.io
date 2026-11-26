@@ -37,12 +37,12 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
           <span className="hidden self-center text-[0.625rem] uppercase tracking-[0.16em] text-ink-faint sm:inline">
             {config.network}
           </span>
+          {/* A word in the accent colour, not a pill: the bar already carries one bordered
+              control, and a second outline beside it read as two buttons. */}
           {standing ? (
             <span
-              className={`hidden items-center rounded-full border px-2 text-[0.5625rem] font-semibold uppercase tracking-[0.1em] sm:inline-flex ${
-                standing === 'affected'
-                  ? 'border-accent/60 bg-accent/10 text-accent'
-                  : 'border-accent/35 text-accent/75'
+              className={`hidden self-center text-[0.5625rem] font-semibold uppercase tracking-[0.1em] sm:inline ${
+                standing === 'affected' ? 'text-accent' : 'text-accent/75'
               }`}
             >
               {standing === 'affected' ? 'Affected User' : 'Supporter'}
