@@ -93,13 +93,14 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
       >
         <p className="eyebrow">{config.network} network</p>
         <h2 id="donate-title" className="mt-2 font-serif text-2xl leading-tight text-ink">
-          Support the campaign
+          Support this campaign
         </h2>
 
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          Donations pay for the transactions that carry this letter into other people's feeds:
-          on-chain activity is what makes a campaign visible on Hedera, and visibility is what
-          makes an unanswered letter awkward to ignore.
+          Donations pay for the transactions that carry this letter into other people's feeds: We
+          will try to boost Hedera's TPS from ~3 to 6 TPS to around 100 TPS. This will cost $864 for
+          24h – the longer we can increase it the better. On-chain activity is what makes a campaign
+          visible on Hedera, and visibility is what makes this letter harder to ignore.
         </p>
 
         <div className="mt-5 flex justify-center">
@@ -109,10 +110,10 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
               alt={`QR code for the treasury account ${account}`}
               width={240}
               height={240}
-              className="h-[240px] w-[240px] rounded-sm border border-rule"
+              className="h-[200px] w-[200px] rounded-sm border border-rule sm:h-[240px] sm:w-[240px]"
             />
           ) : (
-            <div className="flex h-[240px] w-[240px] items-center justify-center rounded-sm border border-rule text-xs text-ink-faint">
+            <div className="flex h-[200px] w-[200px] items-center justify-center rounded-sm border border-rule text-xs text-ink-faint sm:h-[240px] sm:w-[240px]">
               QR code unavailable
             </div>
           )}
