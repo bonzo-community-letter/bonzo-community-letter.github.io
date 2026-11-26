@@ -57,9 +57,6 @@ const CSS_DRIVEN =
  */
 const PHONE_LIFT = 100
 
-/** How much of the screen the envelope always keeps, however tall the hero turns out to be. */
-const PEEK_SHARE = 0.2
-
 /** On a phone there is no room to watch an envelope open: the hero fills the screen
  *  and the body is only ~230px tall. There it starts open — the flap stands up into
  *  the hero — and scrolling only carries it away. */
@@ -168,13 +165,7 @@ export function EnvelopeOverlay() {
       // The fix is one constant offset, applied with the drift: the envelope's bottom edge
       // already hangs below the viewport, so a little more of the body costs nothing.
       const heroBottom = heroTextBottom()
-      // The clearance is a promise the page can only keep when the hero's own text ends
-      // inside the screen. A phone on its side is short enough that the hero runs past the
-      // bottom edge, and then *any* push that clears it buries the envelope completely —
-      // which is exactly what happened in landscape. There the envelope wins and the hero
-      // is scrolled to; nothing is ever painted over text that is still on screen.
-      const clearanceFits = heroBottom >= 0 && heroBottom + HERO_CLEARANCE <= window.innerHeight * 0.8
-      const wanted = clearanceFits ? heroBottom + HERO_CLEARANCE : -Infinity
+      const wanted = heroBottom >= 0 ? heroBottom + HERO_CLEARANCE : -Infinity
       // What the envelope paints at its top *at rest*. With the flap open — a phone, where
       // it is open from the first paint — that is the box's own top edge, the tip of the
       // standing flap. With the flap closed — a wide screen before any scroll — the box's
@@ -188,12 +179,7 @@ export function EnvelopeOverlay() {
       const clearance = Math.max(0, Math.ceil(wanted - paintedTop))
       const slack = Math.max(0, Math.ceil(paintedTop - wanted))
       const lift = restLifted ? Math.min(PHONE_LIFT, slack) : 0
-      // ...but never so far down that nothing of it is left on screen. On a phone held
-      // sideways the hero is taller than the viewport, so clearing it would bury the
-      // envelope; there it keeps a fifth of the screen instead, and the hero's last line
-      // is scrolled to rather than protected.
-      const peeks = Math.max(0, Math.round(window.innerHeight * (1 - PEEK_SHARE)) - paintedTop)
-      const push = Math.min(clearance - lift, peeks)
+      const push = clearance - lift
 
       placed.current = { width, top, push, heroBottom, boxHeight, shiftPx }
       // The resting fold, in viewport coordinates: box top, the drift the envelope carries
