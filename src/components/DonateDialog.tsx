@@ -144,8 +144,8 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
         </div>
 
         <p className="mt-3 text-xs leading-relaxed text-ink-faint">
-          Send from your own wallet — this page never touches your keys and cannot move anything
-          for you. The code above holds the account id itself, not a payment link.
+          Make an HBAR transfer to the campaign's treasury account. Any amount helps to give this
+          campaign visibility. Thank you!
         </p>
 
         <button
