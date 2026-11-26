@@ -6,7 +6,7 @@
 export const page = {
   eyebrow: 'Bonzo Lend & Supra Exploit',
 
-  title: 'A Open Letter',
+  title: 'An Open Letter',
 
   /**
    * The hero is a letter's address block: who writes, and to whom.
