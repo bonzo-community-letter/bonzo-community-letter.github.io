@@ -183,6 +183,60 @@ button:disabled,
   height: 100lvh;
 }
 
+/*
+ * The envelope's motion, evaluated by the compositor.
+ *
+ * Driving it from JavaScript means the envelope follows `scrollY` — and on iOS a momentum
+ * scroll runs on the compositor while `scrollY` arrives late and coalesced, so the envelope
+ * visibly lags and steps behind the page instead of moving with it. A scroll-driven
+ * animation is evaluated against the scroll position itself, on the scrolling thread, so it
+ * cannot lag. The two ends of each travel are still measured in JS (`place()`), because they
+ * depend on the viewport; only the interpolation moved into CSS.
+ */
+@keyframes envelope-drift {
+  from {
+    transform: translateY(var(--envelope-from, 0px));
+  }
+  to {
+    transform: translateY(var(--envelope-to, 0px));
+  }
+}
+
+@keyframes envelope-flap-turn {
+  from {
+    transform: translateY(0px) scaleY(1);
+  }
+  to {
+    transform: translateY(512px) scaleY(-1);
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .envelope-drift {
+    animation: envelope-drift linear both;
+    animation-timeline: scroll(root block);
+    /* the drift runs over the same 700px the script used to count */
+    animation-range: 0px 700px;
+  }
+
+  .envelope-flap {
+    animation: envelope-flap-turn linear both;
+    animation-timeline: scroll(root block);
+    /* the flap is open after 240px; the range is the reveal distance */
+    animation-range: 0px 240px;
+    transform-box: view-box;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .envelope-drift,
+  .envelope-flap {
+    animation: none;
+  }
+}
+
 /* The strip that tints the iOS toolbar with the page's colour: only a touch device has
    a bar down there, so elsewhere it is not drawn at all. */
 .toolbar-tint {

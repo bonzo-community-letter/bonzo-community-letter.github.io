@@ -114,6 +114,7 @@ export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', 
   const flap = (
     <g
       data-flap={part}
+      className="envelope-flap"
       style={{
         transform: `translateY(${(2 * HINGE * p).toFixed(2)}px) scaleY(${(1 - 2 * p).toFixed(4)})`,
         transformBox: 'view-box',

@@ -37,6 +37,17 @@ export const HERO_CLEARANCE = 28
 
 export const envelopeHidden = (): number => BODY_HIDDEN
 
+/** Whether the browser can run the envelope's motion as a scroll-driven animation.
+ *
+ *  If it can, the interpolation belongs to the compositor: it is evaluated against the
+ *  scroll position itself, on the scrolling thread, so the envelope cannot lag behind the
+ *  page. The script then only measures (once per layout) and reports the flap's side. If it
+ *  cannot, the old frame loop drives it — same numbers, worse timing. */
+const CSS_DRIVEN =
+  typeof CSS !== 'undefined' &&
+  typeof CSS.supports === 'function' &&
+  CSS.supports('animation-timeline: scroll()')
+
 /** How much the envelope may rise on a phone, in pixels.
  *
  *  The addressees sit in two columns there now, which freed about 130px under the hero —
@@ -182,6 +193,17 @@ export function EnvelopeOverlay() {
       }
       box.style.marginTop = `${top}px`
       if (back.current) back.current.style.marginTop = `${top}px`
+      // Both ends of the drift, for the scroll-driven animation: the same numbers the
+      // frame loop would have interpolated, just handed over once per layout instead.
+      const driftFrom = (BODY_HIDDEN * ENVELOPE_VIEW.bodyShare * boxHeight + push).toFixed(2)
+      const driftTo = (
+        (BODY_HIDDEN + envelopeTravel()) * ENVELOPE_VIEW.bodyShare * boxHeight + push
+      ).toFixed(2)
+      for (const el of [box, back.current]) {
+        if (!el) continue
+        el.style.setProperty('--envelope-from', `${driftFrom}px`)
+        el.style.setProperty('--envelope-to', `${driftTo}px`)
+      }
       // the body's shadow on the page: a box shadow, not an SVG filter, which iOS
       // re-rasterises while the layer moves. It sits on the body's own rectangle behind
       // the letter — on the box it would outline the empty space the flap opens into,
@@ -195,6 +217,10 @@ export function EnvelopeOverlay() {
 
     /** What was last written to the DOM, so a frame that changes nothing writes nothing. */
     const painted = { layer: '', flap: '' }
+    /** Set once, on the first frame: the compositor drives the transforms unless the
+     *  scroll-driven animation turned out not to be there. */
+    const driven = { current: CSS_DRIVEN }
+    const checked = { current: false }
 
     const apply = (): void => {
       const { progress, exit } = latest.current
@@ -211,7 +237,16 @@ export function EnvelopeOverlay() {
         (BODY_HIDDEN + exit * envelopeTravel()) * ENVELOPE_VIEW.bodyShare * placed.current.boxHeight
       const transform = `translateY(${(shiftPx + placed.current.push).toFixed(2)}px)`
 
-      if (transform !== painted.layer) {
+      // A browser can claim `animation-timeline` and still not run the animation on this
+      // element. The transform is written by the compositor or by this loop, never both:
+      // the first frame checks that the animation actually exists, and falls back if not.
+      if (!driven.current && !checked.current) {
+        checked.current = true
+        const anims = typeof front.current?.getAnimations === 'function' ? front.current.getAnimations() : []
+        driven.current = CSS_DRIVEN && anims.length > 0
+      }
+
+      if (!driven.current && transform !== painted.layer) {
         painted.layer = transform
         if (front.current) front.current.style.transform = transform
         if (back.current) back.current.style.transform = transform
@@ -221,7 +256,7 @@ export function EnvelopeOverlay() {
       // `style.transform`, not the SVG attribute: the attribute re-rasterises the drawing
       // on every frame, the CSS transform is composited.
       if (!flapEl || !flapEl.isConnected) flapEl = document.querySelector<SVGGElement>('[data-flap]')
-      if (flapEl) {
+      if (flapEl && !driven.current) {
         const flapTransform = `translateY(${(2 * 256 * progress).toFixed(2)}px) scaleY(${(1 - 2 * progress).toFixed(4)})`
         if (flapTransform !== painted.flap) {
           painted.flap = flapTransform
@@ -347,7 +382,7 @@ export function EnvelopeOverlay() {
         <div
           ref={part === 'front' ? front : back}
           data-envelope={part}
-          className="relative"
+          className={`relative${CSS_DRIVEN ? ' envelope-drift' : ''}`}
           style={{
             aspectRatio: `${ENVELOPE_VIEW.width} / ${ENVELOPE_VIEW.height}`,
             marginBottom: '0',
