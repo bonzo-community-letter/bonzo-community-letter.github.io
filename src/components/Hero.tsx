@@ -47,7 +47,11 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
               is short enough that the envelope stays in view. The order in the content is
               the desktop order; a phone needs a different arrangement, so each name is
               placed explicitly rather than left to row-wise flow. */}
-          <ul className="mx-auto mt-3 grid w-fit max-w-full grid-cols-2 gap-x-6 gap-y-1.5 text-left sm:flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2 sm:text-center">
+          {/* The block borrows the page's own gutter on a phone: two centred columns of long
+              organisation names need those 24px more than the surrounding paragraph does, and
+              they are what lets the type stay at 16px instead of dropping to 15. */}
+          <div className="-mx-3 sm:mx-0">
+          <ul className="mt-3 grid grid-cols-2 justify-items-center gap-x-6 gap-y-1.5 text-center sm:flex sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2">
             {addressees.map((addressee, i) => (
               <Fragment key={addressee.name}>
                 {/* Seven names never share a line inside max-w-5xl, and letting the
@@ -55,7 +59,7 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
                     side instead: the three Hedera entities above, the four that follow
                     below, and the stack on a phone is unaffected. */}
                 {i === 3 ? <li aria-hidden="true" className="hidden basis-full sm:block" /> : null}
-                <li className={`flex items-start gap-2.5 ${PHONE_GRID[addressee.name] ?? ''} sm:col-auto sm:row-auto`}>
+                <li className={`flex items-start justify-center gap-2.5 text-center ${PHONE_GRID[addressee.name] ?? ''} sm:col-auto sm:row-auto`}>
                   {/* the marks come back on a wider screen: in a two-column block on a
                       phone they cost the width the longer names need */}
                   {addressee.logoSrc ? (
@@ -65,17 +69,18 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
                       className="hidden h-4 w-auto shrink-0 opacity-80 grayscale sm:block"
                     />
                   ) : null}
-                  {/* The largest size that fits the column without breaking a name, measured:
-                      16px wraps three names at 390px, 15px fits; below 380px the column is
-                      ~10px narrower, and 14px is what fits there. The spanning name gets the
-                      full width, so it is never the constraint. */}
-                  <span className="font-serif text-[0.875rem] leading-snug text-ink min-[380px]:text-[0.9375rem] sm:text-lg">
+                  {/* The largest size that keeps every name on one line, measured at each
+                      width: with content-sized columns the two tracks plus the gap have to fit
+                      the page, so 16px is the ceiling at 380px and up, 15px below that, 13px
+                      on a 320px screen. The spanning name is never the constraint. */}
+                  <span className="font-serif text-[0.8125rem] leading-snug text-ink min-[360px]:text-[0.9375rem] min-[380px]:text-base sm:text-lg">
                     {addressee.name}
                   </span>
                 </li>
               </Fragment>
             ))}
           </ul>
+          </div>
         </div>
 
         {/* On a phone this line sat under the envelope's fold, cost a line of the hero
