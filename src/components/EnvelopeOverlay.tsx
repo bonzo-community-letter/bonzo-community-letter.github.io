@@ -52,6 +52,19 @@ export const envelopeGutter = (): number => GUTTER
  *  envelope is not out of the frame until that much more has passed the bottom edge. */
 const FLAP_UP = 223 / 363
 
+/**
+ * The envelope's *resting* geometry, in viewport coordinates, as `place()` last computed
+ * it: where the fold sits when nothing has been scrolled, how tall the box is, how wide.
+ *
+ * The letter needs this to know where it starts, and it must not measure the live element:
+ * the box carries a transform that grows with the scroll position, so a reading taken while
+ * the page is scrolled describes a fold that is already on its way out — which is why the
+ * paper moved when the page was reloaded mid-scroll.
+ */
+let restingGeometry: { fold: number; boxHeight: number; boxWidth: number } | null = null
+
+export const envelopeRestingGeometry = (): typeof restingGeometry => restingGeometry
+
 /** The whole way out, in body heights: the part still in view, then the flap above it.
  *  It depends on how much of the body hangs below the edge to begin with. */
 export const envelopeTravel = (): number => 1 - BODY_HIDDEN + FLAP_UP + 0.04
@@ -144,6 +157,15 @@ export function EnvelopeOverlay() {
       const push = Math.max(0, Math.ceil(wanted - paintedTop))
 
       placed.current = { width, top, push, heroBottom, boxHeight, shiftPx }
+      // The resting fold, in viewport coordinates: box top, the drift the envelope carries
+      // even at rest, the clearance the hero forced on it, and the body's own offset inside
+      // the box. No scroll term — this is a fact about the resting page, which is what makes
+      // it safe to read from anywhere, including while the reader is scrolled halfway down.
+      restingGeometry = {
+        fold: top + shiftPx + push + ENVELOPE_VIEW.bodyTopShare * boxHeight,
+        boxHeight,
+        boxWidth: box.offsetWidth,
+      }
       box.style.marginTop = `${top}px`
       if (back.current) back.current.style.marginTop = `${top}px`
       // the body's shadow on the page: a box shadow, not an SVG filter, which iOS
@@ -268,20 +290,21 @@ export function EnvelopeOverlay() {
     // The hero's box is min-height-driven: its *text* can settle later (fonts, a wrapped
     // title) without the box resizing, so the observer above may never fire. Re-place on
     // the same schedule the paper uses, then leave it alone.
+    //
+    // `update`, not `apply`: a reload or a back-navigation restores the scroll position
+    // after this effect has run and fires no scroll event for it, so the envelope would
+    // otherwise paint as if the page were still at the top — closed, and in the wrong place.
     const timers = [
-      setTimeout(() => {
-        place()
-        apply()
-      }, 120),
-      setTimeout(() => {
-        place()
-        apply()
-      }, 600),
+      setTimeout(update, 120),
+      setTimeout(update, 600),
     ]
+    const onPageShow = (): void => update()
+    window.addEventListener('pageshow', onPageShow)
 
     return () => {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onResize)
+      window.removeEventListener('pageshow', onPageShow)
       observer.disconnect()
       timers.forEach(clearTimeout)
       cancelAnimationFrame(frame)

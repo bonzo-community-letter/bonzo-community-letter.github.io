@@ -39,9 +39,10 @@ First layout, in `src/components/`:
   flap at `z-10`, the sheet at `z-20`, the body and its flaps at `z-30`. So the letter rises in front of
   the flap and behind the pocket — it is never drawn as SVG. Everything is scroll-driven, not
   time-driven: the reveal takes 240 px, the drift out 700 px, and both start together. Where the letter
-  starts is measured against the envelope in the DOM rather than derived from the viewport, so it lands
-  correctly whichever height the browser reports. Below `sm` there is no room to watch an envelope open,
-  so it starts open and scrolling only carries it away. With `prefers-reduced-motion: reduce` it is
+  starts comes from the overlay's *resting* geometry — the fold as it is with nothing scrolled, never a
+  live reading of the transformed box — so it lands correctly whichever height the browser reports and
+  does not move when the page is reloaded halfway down. Below `sm` there is no room to watch an envelope
+  open, so it starts open and scrolling only carries it away. With `prefers-reduced-motion: reduce` it is
   drawn open, without scroll coupling.
 - The envelope's layers are `100lvh` tall, not `100vh`: iOS Safari resolves `100vh` to the *visible*
   height, so with the address bar showing the envelope ended at the bar and the letter showed through

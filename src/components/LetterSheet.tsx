@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { config } from '../config'
 import { page } from '../content/page'
-import { ENVELOPE, HERO_CLEARANCE, envelopeOpensOnScroll, envelopeTravel } from './EnvelopeOverlay'
+import { ENVELOPE, HERO_CLEARANCE, envelopeOpensOnScroll, envelopeRestingGeometry, envelopeTravel } from './EnvelopeOverlay'
 import { signatureBy, type Signature } from '../lib/hcs'
 import { localSignature } from '../lib/signedHere'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
@@ -38,24 +38,18 @@ function useStartDepth(
     const place = (): void => {
       const box = wrapper.current
       const paper = sheet.current
-      // measured, not derived: iOS Safari anchors a fixed element differently from what
-      // `innerHeight` reports, and the paper has to sit where the envelope actually is
-      const envelope = document.querySelector<HTMLElement>('[data-envelope="front"]')
-      if (!box || !paper || !envelope) return
-      // the overlay positions the envelope in its own effect; measuring before that reads
-      // a fold at the top of the page
-      if (!envelope.style.marginTop) return
+      // The fold comes from the overlay's own arithmetic, not from the element: the box
+      // carries a transform that grows with the scroll position, so measuring it while the
+      // reader is scrolled describes a fold already on its way out of the viewport. That is
+      // what moved the letter when the page was reloaded halfway down.
+      const geometry = envelopeRestingGeometry()
+      if (!box || !paper || !geometry) return
 
-      const rect = envelope.getBoundingClientRect()
-      // the box carries the space the open flap stands in above the body, so the body's
-      // top edge is a share of the box's height below its top
-      const bodyTop = rect.top + ENVELOPE_VIEW.bodyTopShare * rect.height
-      const bodyHeight = ENVELOPE_VIEW.bodyHeightFor(rect.width)
+      const { fold, boxWidth } = geometry
+      const bodyHeight = ENVELOPE_VIEW.bodyHeightFor(boxWidth)
       const width = window.innerWidth
       if (!anchor.current || anchor.current.width !== width) {
-        // the fold has already descended by however far the page is scrolled
-        const exit = Math.min(1, Math.max(0, window.scrollY / ENVELOPE.exit))
-        const fold = bodyTop + window.scrollY - exit * envelopeTravel() * bodyHeight
+        // a fact about the resting page: no scroll term, so it survives a reload
         anchor.current = { width, fold }
       }
 
@@ -99,6 +93,8 @@ function useStartDepth(
     const timers = [setTimeout(place, 120), setTimeout(place, 600)]
     window.addEventListener('resize', place)
     window.addEventListener('orientationchange', place)
+    // a restored scroll position arrives after this effect ran, and fires no resize
+    window.addEventListener('pageshow', place)
     void document.fonts?.ready.then(place)
 
     return () => {
@@ -107,6 +103,7 @@ function useStartDepth(
       observer.disconnect()
       window.removeEventListener('resize', place)
       window.removeEventListener('orientationchange', place)
+      window.removeEventListener('pageshow', place)
     }
   }, [wrapper, sheet])
 }
