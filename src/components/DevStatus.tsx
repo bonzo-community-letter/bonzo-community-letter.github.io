@@ -1,6 +1,7 @@
 import { NETWORKS, config, signingOpen } from '../config'
 import type { SignatureState } from '../hooks/useSignatures'
 import { MAX_COMMENT_BYTES, buildSignature, prettyPayload } from '../lib/hcs'
+import { AFFECTED_COUNT, CLAIM_LIST_COUNT, ROOT, ROOT_FROM_CONFIG } from '../lib/affected'
 import { isDraft, letterBytes, letterHash, letterText, subject } from 'virtual:letter'
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -46,6 +47,10 @@ export function DevStatus({ state }: { state: SignatureState }) {
           <Row label="HCS topic" value={config.topicId || 'not set'} />
           <Row label="topic · testnet" value={NETWORKS.testnet.topicId || 'not set'} />
           <Row label="topic · mainnet" value={NETWORKS.mainnet.topicId || 'not set'} />
+          {/* The commitment behind every badge: the list ships, the root is what a reader
+              checks it against. Shown here so it can be copied without dev tools. */}
+          <Row label="affected set" value={`${AFFECTED_COUNT} accounts (${CLAIM_LIST_COUNT} on the claim list)`} />
+          <Row label="affected root" value={`${ROOT}${ROOT_FROM_CONFIG ? '' : ' (generated)'}`} />
           <Row label="WalletConnect id" value={config.walletConnectProjectId ? 'set' : 'not set'} />
           <Row label="signatures read" value={signatureValue} />
           {state.truncated ? (

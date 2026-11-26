@@ -73,6 +73,14 @@ export const config = {
   /** WalletConnect Cloud project id; without it the wallet handshake cannot start. */
   walletConnectProjectId: read('VITE_WALLETCONNECT_PROJECT_ID'),
   contactUrl: read('VITE_CONTACT_URL'),
+  /**
+   * The Merkle root the affected set is committed to, from a GitHub repository variable.
+   * It is public by design — a root is a commitment, not a secret — and it is the one
+   * value that pins the shipped list: if the variable and the list disagree, the build
+   * fails (`scripts/check-affected-root.mjs`) rather than shipping a badge nobody can
+   * verify. Empty in a local checkout, where the generated constant stands in.
+   */
+  affectedRoot: read('VITE_AFFECTED_ROOT'),
 }
 
 export const signingOpen = config.topicId.length > 0 && config.walletConnectProjectId.length > 0

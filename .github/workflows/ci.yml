@@ -33,6 +33,13 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Verify the affected root
+        run: npm run check:affected
+        env:
+          # Repository variable, interpolated through env: (never inline in `run:`).
+          # A root is a commitment, not a secret — but it must name the list that ships.
+          VITE_AFFECTED_ROOT: ${{ vars.VITE_AFFECTED_ROOT }}
+
       - name: Build
         run: npm run build
 

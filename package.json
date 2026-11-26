@@ -11,7 +11,8 @@
     "preview": "vite preview --port 4173",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:affected": "node scripts/check-affected-root.mjs"
   },
   "dependencies": {
     "@hashgraph/hedera-wallet-connect": "^2.1.3",

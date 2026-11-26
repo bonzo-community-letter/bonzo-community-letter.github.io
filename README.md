@@ -182,6 +182,7 @@ All public. Never a Hedera private key or account secret — the page has no way
 | `VITE_HCS_TOPIC_ID_MAINNET` | signature topic on mainnet. Empty ⇒ signing closed, no messages read |
 | `VITE_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project id for the wallet handshake |
 | `VITE_CONTACT_URL` | optional footer link |
+| `VITE_AFFECTED_ROOT` | the Merkle root the affected set is committed to. `npm run check:affected` fails the build when the shipped leaves do not hash to it |
 
 Deployed builds read these from **repository variables** (Settings → Secrets and variables → Actions →
 Variables), wired in `deploy.yml`. GitHub's UI refuses an empty value, so a variable that means "nothing"
@@ -473,6 +474,28 @@ The chain cannot enforce this, and the README should not pretend otherwise: a to
 the payload carries no nonce, so a second message from the same wallet is possible from any other
 client. What the page can do, it does — and the reader dedupes by account (`uniqueSigners`), so a
 repeat is visible on the topic without being counted twice.
+
+### Affected users and supporters
+
+Every comment carries a badge: **Affected User** or **Supporter**. It is not a claim anyone
+makes about themselves and not a guess about who lost money — it is a fact about an account
+id, fixed before the first signature was collected.
+
+The page does not ship account ids. `content/affected.ts` holds **salted leaf hashes**
+— `SHA-256(salt ‖ "bonzo-affected-user:v1\n" ‖ accountId)` — so the repository carries no
+readable roster of who used Bonzo and a diff shows hashes, not account numbers. Membership
+is one hash of the connected account and a set lookup: no network, no proof, no flicker.
+
+What makes the set checkable is the root. It lives in the repository variable
+`VITE_AFFECTED_ROOT`; `scripts/affected-set.mjs` regenerates the file and the root from a
+list, and `npm run check:affected` recomputes the root from the shipped leaves and fails the
+build when the two disagree. A test pins the same thing, so a truncated set cannot pass as
+the set.
+
+A supporter is not asked for a recovery rate: the field is not rendered, and the payload
+carries `recoveryRate: null` whatever was typed before the wallet connected. The card shows
+the rate as absent and reads "Not in the recovery list" where an affected user's card shows
+what is still missing.
 
 ### What a signature costs
 

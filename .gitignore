@@ -16,3 +16,11 @@ coverage/
 # editors
 .vscode/
 .idea/
+
+# Collected claim list and the collector's output — the collector itself is local too
+affected.json
+
+# Local derivation inputs — deliberately not published: they make it easy to
+# enumerate which accounts were affected. The generated leaves + root are what ships.
+affected-additions.json
+scripts/affected-salt.txt

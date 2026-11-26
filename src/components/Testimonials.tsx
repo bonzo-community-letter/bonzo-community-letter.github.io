@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { testimonials, type Signature } from '../lib/hcs'
 import { copiesFor, nextOffset } from '../lib/band'
+import { standingOf } from '../lib/affected'
 import { SignerComment } from './SignerComment'
 
 /** Pixels per second the band drifts on its own. Slow enough to read along. */
@@ -165,7 +166,7 @@ export function Testimonials({
               aria-hidden={copy > 0 ? true : undefined}
               className="flex shrink-0 select-none"
             >
-              {entries.map((entry) => (
+              {entries.map((entry, index) => (
                 <li
                   key={`${copy}-${entry.accountId}`}
                   className="flex w-[19rem] shrink-0 flex-col border-l border-rule/70 px-6 py-1 sm:w-[23rem] sm:px-8"
@@ -175,6 +176,10 @@ export function Testimonials({
                     comment={entry.comment}
                     signedAt={entry.signedAt}
                     recoveryRate={entry.recoveryRate}
+                    // Sample ids are invented, so they cannot be looked up. The band
+                    // still has to show both badges, or the section would demonstrate
+                    // only half of what it is for.
+                    standing={sample ? (index % 3 === 1 ? 'supporter' : 'affected') : standingOf(entry.accountId)}
                     signeeNumber={entry.signeeNumber}
                     className="flex-1"
                   />

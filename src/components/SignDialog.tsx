@@ -19,6 +19,7 @@ import {
 } from '../lib/hcs'
 import { clearPending, readPending, savePending } from '../lib/pending'
 import { localSignature, rememberSignature } from '../lib/signedHere'
+import { isAffected } from '../lib/affected'
 import { SignerComment } from './SignerComment'
 import { InfoTip } from './InfoTip'
 import { describeWalletError, submitTopicMessage, type SubmitOutcome } from '../lib/wallet'
@@ -155,8 +156,12 @@ export function SignDialog({
   const tooLong = bytes > MAX_COMMENT_BYTES
 
   // Empty is an answer — "I would rather not say" — and is stored as null.
+  // A supporter has no loss to report at all: Bonzo's dataset has no position for the
+  // account, so the rate is not asked for and is written as null whatever was typed
+  // before the wallet connected.
+  const supporter = wallet.accountId !== null && !isAffected(wallet.accountId)
   const rateText = recoveryRate.trim().replace(',', '.')
-  const rateValue = rateText === '' ? null : Number(rateText)
+  const rateValue = supporter || rateText === '' ? null : Number(rateText)
   const rateValid =
     rateValue === null ||
     (Number.isFinite(rateValue) && rateValue >= 0 && rateValue <= MAX_RECOVERY_RATE)
@@ -463,6 +468,13 @@ export function SignDialog({
               placeholder="Your personal message to the recipients …"
             />
 
+            {supporter ? (
+              <p className="mt-5 text-[0.75rem] leading-relaxed text-ink-faint">
+                This account is not on Bonzo’s redemption list, so there is no recovery rate to
+                report. The signature is recorded as a supporter’s, with the rate left empty.
+              </p>
+            ) : (
+            <>
             <div className="mt-5">
               <div className="flex items-center gap-2">
                 <label
@@ -507,6 +519,8 @@ export function SignDialog({
               <p className="mt-1.5 text-[0.75rem] leading-relaxed text-red-400">
                 A number between 0 and {MAX_RECOVERY_RATE}, or nothing at all.
               </p>
+            )}
+            </>
             )}
 
             <details className="mt-4">
