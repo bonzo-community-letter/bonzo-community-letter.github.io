@@ -8,11 +8,13 @@
  * Editing `letterText` after signatures exist invalidates them by design.
  */
 
+import { LETTER_BODY } from './letter-body'
+
 /** Identifies this letter on the topic. Stable for the life of the campaign. */
 export const SUBJECT = 'bonzo-exploit-open-letter'
 
-/** Not written yet — keep empty until the text is signed off. */
-export const letterText = ''
+/** The letter, as signed. Its SHA-256 is what every signature commits to. */
+export const letterText = LETTER_BODY
 
 /** True while the text is a draft. False: the letter is published. */
 export const letterIsDraft = false

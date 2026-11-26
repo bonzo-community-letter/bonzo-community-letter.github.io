@@ -1,10 +1,12 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { config } from '../config'
 import { page } from '../content/page'
 import { ENVELOPE, HERO_CLEARANCE, envelopeOpensOnScroll, envelopeRestingGeometry, envelopeTravel } from './EnvelopeOverlay'
 import { signatureBy, type Signature } from '../lib/hcs'
 import { localSignature } from '../lib/signedHere'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
+import { LetterBlocks } from './LetterBlocks'
+import { paginate, parseLetter } from '../lib/letterBlocks'
 import { Tip } from './Tip'
 import { DonateDialog } from './DonateDialog'
 import { SignDialog } from './SignDialog'
@@ -117,6 +119,9 @@ function useStartDepth(
  * It sits at z-20: above the envelope's standing flap and below its body, so it can
  * emerge from the envelope as the page scrolls.
  */
+/** Characters of letter per sheet — measured: about 1300px of page at this type size. */
+const PAGE_BUDGET = 2300
+
 export function LetterSheet({
   letterHash,
   wallet,
@@ -145,21 +150,12 @@ export function LetterSheet({
     localSignature(wallet.accountId, subject, letterHash, config.network) !== null
   useStartDepth(wrapper, sheet)
 
-  const paragraphs = letterText
-    .split('\n\n')
-    .map((paragraph) => paragraph.trim())
-    .filter((paragraph) => paragraph.length > 0)
+  const blocks = useMemo(() => (letterText.trim().length > 0 ? parseLetter(letterText) : []), [])
+  const pages = useMemo(() => (blocks.length > 0 ? paginate(blocks, PAGE_BUDGET) : []), [])
 
-  return (
-    <div ref={wrapper} className="relative z-20 mx-auto -mt-28 flow-root w-full max-w-5xl px-7 sm:-mt-36 sm:px-6">
-      <div ref={sheet} className="relative">
-        {/* the sheet underneath, so it reads as paper rather than a card */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 translate-x-1.5 translate-y-2 rounded-[3px] border border-sheet-rule bg-sheet-back"
-        />
-
-        <article className="relative rounded-[3px] border border-sheet-rule bg-sheet px-7 py-10 shadow-[0_2px_4px_rgba(0,0,0,0.5),0_60px_100px_-60px_rgba(0,0,0,0.95)] sm:min-h-[900px] sm:px-20 sm:py-16 lg:px-24">
+  /** Who it is from and to, the subject, the salutation: page one, where a letter opens. */
+  const letterhead = (
+    <>
           {/* Stacked on a phone: side by side, the date took the room the sender needed
               and the line broke after "the", leaving "Exploit" alone. */}
           <div className="flex flex-col items-start gap-y-1 border-b border-sheet-rule pb-4 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-x-6">
@@ -186,16 +182,13 @@ export function LetterSheet({
           </p>
 
           <p className="letter-body mt-7">{page.letterhead.salutation}</p>
+    </>
+  )
 
-          <div className="letter-body mt-5 space-y-5">
-            {paragraphs.length > 0 ? (
-              paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)
-            ) : (
-              <p className="italic text-sheet-ink-faint">{page.emptyLetterNotice}</p>
-            )}
-          </div>
-
-          {/* The letter keeps one action, nothing else: the rest lives in the dialog.
+  /** The one action, the count of signers and the hash — after the last page. */
+  const actions = (
+    <>
+{/* The letter keeps one action, nothing else: the rest lives in the dialog.
               Signing needs a wallet. Without one the button says so on itself — a tooltip
               over it — rather than printing a line of explanation under the letter, where it
               read as part of the text. `aria-disabled` rather than `disabled`: a disabled
@@ -276,8 +269,54 @@ export function LetterSheet({
               <span className="font-mono text-[0.6875rem] text-sheet-ink-faint">{letterHash.slice(0, 16)}…</span>
             </div>
           </div>
-        </article>
-      </div>
+    </>
+  )
+
+  const sheetClass =
+    'relative rounded-[3px] border border-sheet-rule bg-sheet px-7 py-10 shadow-[0_2px_4px_rgba(0,0,0,0.5),0_60px_100px_-60px_rgba(0,0,0,0.95)] sm:min-h-[900px] sm:px-20 sm:py-16 lg:px-24'
+
+  return (
+    <div ref={wrapper} className="relative z-20 mx-auto -mt-28 flow-root w-full max-w-5xl px-7 sm:-mt-36 sm:px-6">
+      {pages.length === 0 ? (
+        <div ref={sheet} className="relative">
+          {/* the sheet underneath, so it reads as paper rather than a card */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 translate-x-1.5 translate-y-2 rounded-[3px] border border-sheet-rule bg-sheet-back"
+          />
+          <article className={sheetClass}>
+            {letterhead}
+            <p className="letter-body mt-5 italic text-sheet-ink-faint">{page.emptyLetterNotice}</p>
+          </article>
+        </div>
+      ) : (
+        pages.map((pageBlocks, index) => {
+          const first = index === 0
+          const last = index === pages.length - 1
+          return (
+            <div key={index} ref={first ? sheet : undefined} className={first ? 'relative' : 'relative mt-5'}>
+              {first ? (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 translate-x-1.5 translate-y-2 rounded-[3px] border border-sheet-rule bg-sheet-back"
+                />
+              ) : null}
+              <article className={sheetClass}>
+                {first ? letterhead : null}
+                <div className="letter-body mt-5 space-y-5">
+                  <LetterBlocks blocks={pageBlocks} />
+                </div>
+                {last ? actions : null}
+                {pages.length > 1 ? (
+                  <p className="!mt-10 text-right text-[0.625rem] uppercase tracking-[0.14em] text-sheet-ink-faint">
+                    Page {index + 1} of {pages.length}
+                  </p>
+                ) : null}
+              </article>
+            </div>
+          )
+        })
+      )}
 
       <DonateDialog open={donateOpen} onClose={() => setDonateOpen(false)} />
 

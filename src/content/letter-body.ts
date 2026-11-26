@@ -1,0 +1,93 @@
+/**
+ * The letter itself.
+ *
+ * A light markup, because the sheet renders it: `##` and `###` for headings, `**bold**`,
+ * `1.` and `-` for lists, `---` for a rule. Nothing else — the text is the letter, and the
+ * only thing that may happen to it is being displayed.
+ *
+ * This is the string a signature commits to: `letter.ts` exports it as `letterText`, and the
+ * build hashes it. Changing one character invalidates every signature that came before.
+ */
+export const LETTER_BODY = `This open letter was written, coordinated, and signed by users affected by the exploit of the Supra Labs oracle on Hedera, which led to the theft of over $9,061,019[1][2] worth of assets from Hedera's only lending and borrowing platform, Bonzo Lend. This letter is directed at the companies and institutions that are responsible for what led to the exploit, that publicly promised full recovery right after it, that endorsed those promises, and those that stayed silent.
+
+We are grateful for the **partial** recovery that happened thanks to four months of effort by Bonzo Labs employees and we are aware that many DeFi exploits in the past resulted in no recovery for users at all. But we are also aware of DeFi exploits in which users were made whole — restoring trust and keeping the affected chain's DeFi infrastructure intact.
+
+**This letter is about broken promises and destroyed trust on Hedera — the "trust layer of the digital economy".[3]**
+
+## What happened?
+
+**Between 29 June and 3 July 2026**, Supra patched a security flaw in its pull-oracle verifier on at least eleven blockchains. Hedera and Fuse were not among them. Supra published no advisory describing that rollout to its users, and the sequence was visible on-chain to any person or AI monitoring on-chain updates.[4] This uncoordinated patching, stretched over two weeks, was technically equivalent to announcing on-chain — to any bad actor — that an unpatched bug existed on Hedera's oracle.[4]
+
+**On 11 July 2026**, that security flaw in Supra's pull-oracle verifier let an attacker write a fabricated price for a single pair, **SAUCE/wHBAR (pair 425)**.[5] Every protocol reading that feed received the fabricated price. Bonzo Lend was one of those protocols and **blindly trusted** Supra's price feed. Bonzo valued the attacker's 250 SAUCE — a few dollars of real collateral — far above its real worth, and allowed the attacker to "borrow" 6,634,528.202695 USDC and 34,518,389.36109841 HBAR, worth **$9,061,019.76** against this fake collateral.[1][2]
+
+**On 13 July 2026**, Supra's CEO Josh Tobkin offered the hacker $100,000, all charges dropped, and a guaranteed job if the assets were returned within 72 hours; if not, he announced a $100,000 bounty on the hacker's head, growing 10% a year on top of inflation – forever.[6] While probably offered in good intention, it resulted in a publicity stunt without effect.
+
+**On 16 July 2026**, Bonzo published a commitment that affected users would receive "**advances covering the full value of the losses to their affected positions** [...] backed by a recovery facility committed by Hedera Foundation".[7] The announcement was endorsed by Hedera's official X account,[8] and Bonzo representatives have since stated that the post was "edited and approved by the Hedera Foundation and Hedera".[9]
+
+**On 6 August 2026**, a white hat — "Wallet B" — returned 90% of the $1,032,262 in assets he had borrowed to protect user funds. Bonzo Foundation and Bonzo Labs granted a bounty, letting him keep 10% of the rescued assets.[10][11] That bounty was not paid by Bonzo, Supra or Hedera; it came out of the recovered pool, and therefore from the users' funds. The release he signed also waived his own claim on Bonzo Lend, reducing his net bounty to **8.1%** — below the 10% of returned funds that Bonzo had described as an industry standard.[10][11]
+
+**On 12 November 2026**, the recovery portal opened. It nets each account's borrowing against its supplied assets at fixed 11 July prices and pays out in fixed token amounts, so every user carries whatever the market has done since — including those whose collateral was seized by liquidation bots during the exploit window.[2] After that netting, accounts that supplied only HBAR or USDC received **56.1%** of their net entitlement, against a published range of 56.1% to 100%.[12] The aggregate was **81.39%**. The Hedera Foundation's contribution was **795,431 USDC** — **42.8% of the $1,860,686.68 shortfall** borne by non-institutional users.[12][11]
+
+**This left 658 of the 2,466 eligible accounts (26.7%) short of their net entitlement, with $1,065,255.68 outstanding.[12] The damage is concentrated: of the 829 accounts that held $25 or more in pre-exploit net value in net supply, 622 are still short — 75%.[10] Because roughly half of all accounts held only HBAR or USDC, 50% of the active user base was capped at 56.1%.**
+
+## What do we ask for?
+
+1. **Hedera Foundation** promised **_advances covering the full value of the losses_ to the affected positions of all users[7]** while the crypto press was watching. But it stepped away from that promise once the press moved on, leaving a shortfall of over $1,000,000 for affected users.
+
+   **We ask Hedera Foundation to keep its promise and to cover the full value of losses to all affected positions!**
+
+2. **Supra Labs** and **Entropy Foundation** never took any public responsibility for user recovery. It was Supra's technology, their uncoordinated security patch on multiple public chains, and the patch that never reached Hedera, that exposed Bonzo Lend to this risk in the first place. Instead, Supra's founder, Joshua D. Tobkin, offered the hacker $100,000 and a job if they returned the stolen assets. A clever publicity stunt, with no effect, while the press was watching. But we — the affected users — never heard anything from Supra again.
+
+   **We ask Supra Labs and Entropy Foundation to take responsibility in supporting user recovery. Don't offer money to a hacker who will never respond – donate this money to make users whole instead!**
+
+3. Provide the white hat — Wallet B — who rescued over $1,000,000 worth of assets in this exploit, with the same recovery rights as all other users. He was promised a 10% bounty for returning the assets. But since he had to waive his recovery claims, the bounty was effectively reduced to 8.1%. And those 8.1% were paid from the assets of users instead of by the protocol owners.
+
+   **We ask the Bonzo Foundation and Bonzo Labs to fulfill the 10% bounty promise – and don't use customer money!**
+
+4. **Hashgraph Foundry**, **Hedera Hashgraph**, and **Hedera Foundation** should support a relaunch of a security-hardened Bonzo v2 as the only lending and borrowing protocol on Hedera. If the trust of users is restored, many of us will return. Otherwise, many of us will leave the Hedera ecosystem forever.
+
+   **We ask Hashgraph Foundry, Hedera Hashgraph, and Hedera Foundation to commit funding to, and to support, a re-launch of a security-hardened Bonzo v2. You asked for a plan and Bonzo provided you with one – now act.**
+
+## Where could the recovery funding come from?
+
+There are multiple options; we only list them to show that the recipients of this letter have the funds to re-establish trust with the affected users of Bonzo Lend. For example:
+
+1. From the up to 7,000,000,000 HBAR (~$492,065,000 at pre-exploit prices) that the Hedera Council's non-binding term sheet granted to Hedera Foundation for ecosystem development,[13] of which
+   - the first 50% (3,500,000,000 HBAR) were released to the Hedera Foundation on 14 February 2025 and around 68% have not yet been spent;[13][11]
+   - the second 50% (3,500,000,000 HBAR) were re-allocated to the Hedera Council's general Ecosystem & Open Source Development fund on 29 October 2025.[13]
+
+2. From Supra Labs and Entropy Foundation, whose oracle technology and uncoordinated security patches[4] **publicly exposed** the Hedera ecosystem's lending protocol to extreme risk, eventually leading to the exploit. The $100,000 offered to the hacker by Joshua D. Tobkin should be re-allocated to affected users as the minimum support.
+
+We — the holders of the 2,466 accounts that used Bonzo Lend — are, to a large part, Hedera's DeFi layer. We put our trust in the DeFi and oracle technology endorsed, advertised, and supported by Hedera Hashgraph and Hedera Foundation.
+
+### Hedera claims to be the trust layer of the digital economy. Broken promises do not build trust. This is your final chance to do better. Keep your promises!
+
+---
+
+### Sources
+
+**1** — Bonzo Finance Labs, "Bonzo Lend Incident Report: Oracle Provider Exploit", 11 Jul 2026 — "00:51:47: Wallet A borrows 6,634,528.202695 USDC from Bonzo Lend. 00:51:57: Wallet A borrows 34,518,389.36109841 WHBAR from Bonzo Lend." The report states the headline impact as "approximately $9.05 million". https://bonzo.finance/blog/bonzo-lend-incident-report-oracle-provider-exploit
+
+**2** — Bonzo Finance Labs, "Bonzo Recovery Update: Claims Mechanism and Opening Timeline", 30 Oct 2026 — inventory captured at block 101,581,825 (26 Oct 2026); **prices fixed to 11 Jul 2026 observations**; USDC = $1.00. Valuing the incident report's HBAR amount at the HBAR price fixed here gives 34,518,389.36109841 × $0.0702956 = $2,426,491.56, and $9,061,019.76 in total. https://bonzo.finance/blog/bonzo-recovery-update-claims-mechanism-and-opening-timeline
+
+**3** — Hedera Foundation, "Ecosystem": "Hedera is the trust layer of the digital economy, delivering fast, secure, and energy-efficient distributed ledger technology (DLT) powered by its unique hashgraph consensus." https://hedera.foundation/ecosystem — the same sentence appears at https://hederacouncil.org/ecosystem
+
+**4** — Tomachi Anura, "A signature made of zeros: reconstructing the Bonzo Lend / Supra verifier exploit on-chain", 14 Jul 2026, 12:30 UTC. https://x.com/TomachiAnura/article/2077007819912405116 — corroboration: BlockchainSecurity.rs, "Oracle attack on Bonzo Finance: patch existed for eight days, just not on Hedera", 22 Aug 2026, https://blockchainsecurity.rs/en/oracle-attack-on-bonzo-finance-patch-existed-for-eight-days-just-not-on-hedera/ ; Protos, "Supra patched oracle on 11 other chains before $9M Hedera exploit", 15 Jul 2026, https://protos.com/supra-patched-oracle-on-11-other-chains-before-9m-hedera-exploit/
+
+**5** — Supra, "Security Incident Report: Hedera Pull-Oracle Verifier", 11 Jul 2026, 13:55 UTC. https://supra.com/news/security-incident-report-hedera-pull-oracle-verifier
+
+**6** — Josh Tobkin (@JoshuaTobkin), Supra, on X, 13 Jul 2026, 11:32 UTC — offer of $100,000 to keep, charges dropped and a job within 72 hours; otherwise a $100,000 bounty growing 10% a year. https://x.com/JoshuaTobkin/status/2076630890017587515
+
+**7** — Bonzo Finance Labs, "Hedera Foundation Issues Compensation for Bonzo Finance Impacted Users", 16 Jul 2026 — "advances covering the full value of the losses to their affected positions [...] backed by a recovery facility committed by Hedera Foundation". https://bonzo.finance/blog/hedera-foundation-issues-compensation-for-bonzo-finance-impacted-users
+
+**8** — Hedera (@hedera) on X, 16 Jul 2026, 15:24 UTC — endorsement of the commitment. https://x.com/hedera/status/2077776401801847195
+
+**9** — Brady Gentile (bmgentile), Bonzo Finance Labs, Discord #general-chat, 3 Nov 2026, 20:14 (message ID 1567270668498637001) — post "edited and approved by the Hedera Foundation and Hedera"; no loss calculations provided before publication. No public URL; export on file.
+
+**10** — Bonzo Finance Discord #announcements: "Bonzo Lend Recovery: aToken Upgrade and Sweep Log", 2 Nov 2026; "Surplus Withdrawals, Conversions and Sales Log", 9 Nov 2026 — "an industry standard 10% of only those funds which were returned". Account-size breakdown, 1 Nov 2026, 21:30: "Under $25: 1,668 of 1,706 accounts fully covered. $25 - $1000: 106 of 461 fully covered. $1000 - $10,000: 69 of 261 fully covered. $10,000 and above: 32 of 107 fully covered." That breakdown was published when the shortfall stood at 660 accounts and 2,535 eligible, against 658 and 2,466 in the final portal figures. No public URL; export on file.
+
+**11** — On-chain verification, Hedera mirror node (mainnet.mirrornode.hedera.com) and Ethereum mainnet, 21–25 Nov 2026. Wallet B: https://hashscan.io/mainnet/account/0.0.683607 · USDC payer: https://hashscan.io/mainnet/account/0.0.439415 · recovery contract: https://hashscan.io/mainnet/account/0.0.10940273
+
+**12** — Bonzo Finance Labs, "Bonzo Lend: Recovery Portal Launch", 12 Nov 2026 — 2,466 eligible; 81.39% aggregate; 56.1%–100% range; 1,808 fully covered, 658 short; $1,065,255.68 outstanding. https://bonzo.finance/blog/bonzo-lend-recovery-portal-launch
+
+**13** — Hedera Council, "Frequently Asked Questions": non-binding term sheet for a grant of "up to 7 billion hbars"; "a distribution of 50% of the total allocation (3.5 billion hbars) to Hedera Foundation on February 14, 2025"; and "On October 29, 2025, Hedera Council voted to re-allocate the remaining balance to the general Ecosystem & Open Source Development fund, with the planned grant to Hedera Foundation considered fully satisfied." https://www.hederacouncil.org/faq`
