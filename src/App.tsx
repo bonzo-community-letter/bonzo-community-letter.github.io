@@ -56,6 +56,7 @@ export function App() {
           />
           <Testimonials
             signatures={sample ? [...sampleSignatures(subject, letterHash), ...signers] : signers}
+            count={signatureCount}
             sample={sample}
           />
           {/* The status box is a build-time instrument, not part of the letter: it exists
