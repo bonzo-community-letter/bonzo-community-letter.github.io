@@ -18,8 +18,8 @@ const RESUME_AFTER = 2600
  *
  * The band is a plain horizontally scrollable strip. It drifts by itself; the reader can
  * scroll it with a trackpad or a wheel, drag it with a mouse, or stop on a comment and
- * read — it holds still while hovered or focused, and starts again a moment after they
- * let go. It never shows an edge: the same set is laid out more than once, and when the
+ * read — it holds still once they have moved it themselves, and starts again a moment
+ * after they let go. Hovering alone does not stop it. It never shows an edge: the same set is laid out more than once, and when the
  * strip has moved by exactly one set it is rewound by that much, which is invisible
  * because the next copy is identical. With `prefers-reduced-motion` it does not drift at
  * all; scrolling still works.
@@ -38,7 +38,6 @@ export function Testimonials({
   const firstCopy = useRef<HTMLUListElement | null>(null)
   const dragging = useRef<{ x: number; left: number } | null>(null)
   const resumeAt = useRef(0)
-  const holding = useRef(false)
   // The drift is kept as a float here, not read back from the element: a browser may
   // round `scrollLeft` to whole pixels, and 26 px/s in 16 ms steps is less than one.
   const offset = useRef(0)
@@ -58,7 +57,9 @@ export function Testimonials({
       const elapsed = Math.min(now - last, 64) // a backgrounded tab must not jump
       last = now
       const width = firstCopy.current?.offsetWidth ?? 0
-      const paused = holding.current || dragging.current !== null || now < resumeAt.current
+      // Only a hand on it stops it: a wheel, a drag, a touch, an arrow key. Not a pointer
+      // that happens to rest over it — the band is meant to be read on the way past.
+      const paused = dragging.current !== null || now < resumeAt.current
       if (paused) {
         // the reader moved it; start from where they left it
         offset.current = el.scrollLeft
@@ -131,21 +132,8 @@ export function Testimonials({
         role="group"
         aria-label="Comments from signers — scrolls on its own, and can be scrolled"
         tabIndex={0}
-        onMouseEnter={() => {
-          holding.current = true
-        }}
-        onMouseLeave={() => {
-          holding.current = false
-          hold()
-        }}
         onWheel={hold}
         onTouchStart={hold}
-        onFocus={() => {
-          holding.current = true
-        }}
-        onBlur={() => {
-          holding.current = false
-        }}
         onKeyDown={(event) => {
           hold()
           if (event.key === 'ArrowRight') strip.current?.scrollBy({ left: 320 })
