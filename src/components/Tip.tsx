@@ -62,11 +62,24 @@ export function Tip({
     // the sheet scrolls and the window can resize while the panel is open; either would
     // leave it pointing at where the anchor used to be
     const follow = () => place()
+    // A tap opens the panel; a tap anywhere else closes it. Toggling on the trigger itself
+    // does not work on a phone: the tap first fires `mouseenter`, which opens the panel,
+    // and the click that follows would close it again in the same gesture.
+    const away = (event: PointerEvent) => {
+      if (!anchor.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
     window.addEventListener('scroll', follow, true)
     window.addEventListener('resize', follow)
+    document.addEventListener('pointerdown', away)
+    document.addEventListener('keydown', escape)
     return () => {
       window.removeEventListener('scroll', follow, true)
       window.removeEventListener('resize', follow)
+      document.removeEventListener('pointerdown', away)
+      document.removeEventListener('keydown', escape)
     }
   }, [open])
 
@@ -79,7 +92,7 @@ export function Tip({
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        onClick={() => setOpen((was) => !was)}
+        onClick={() => setOpen(true)}
       >
         {children}
       </span>
