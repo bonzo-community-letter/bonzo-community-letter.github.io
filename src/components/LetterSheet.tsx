@@ -17,6 +17,18 @@ const CROSSING = 0.62
 const OPEN_DEPTH = -0.5
 
 /**
+ * On a phone the paper also starts 100px further back than that.
+ *
+ * The envelope cannot be the thing that moves: on a narrow screen its flap tip is already
+ * pinned just below the hero's last line (the overlay pushes it down by exactly that much
+ * whenever it would rise), so asking it to sit higher just moves the paper with it and
+ * changes nothing. What changes the picture is the gap between the two: with the paper
+ * further back, the flap reads as an open envelope holding a letter instead of a cream tip
+ * poking out from behind the page.
+ */
+const MOBILE_PAPER_BACK = 100
+
+/**
  * The sheet starts inside the envelope, not at its opening: the gap above it is the
  * distance it travels to come out, and the envelope covers it until the page scrolls.
  *
@@ -57,7 +69,7 @@ function useStartDepth(
       const foldPerScroll = (envelopeTravel() / ENVELOPE.exit) * bodyHeight
       const depth = envelopeOpensOnScroll(width)
         ? CROSSING * ENVELOPE.reveal * (1 + foldPerScroll)
-        : OPEN_DEPTH * bodyHeight
+        : OPEN_DEPTH * bodyHeight + MOBILE_PAPER_BACK
       let target = anchor.current.fold + depth
 
       // The envelope says where the paper *may* be; the hero says where it may not
@@ -133,6 +145,9 @@ export function LetterSheet({
   const wrapper = useRef<HTMLDivElement | null>(null)
   const sheet = useRef<HTMLDivElement | null>(null)
   const [signOpen, setSignOpen] = useState(false)
+  // Signing is the one thing on this page that needs a wallet; without one the button is
+  // disabled instead of opening a dialog that can only ask for the same thing.
+  const connected = wallet.status === 'connected' && wallet.accountId !== null
   // One signature per account: the button says so before the dialog has to.
   const alreadySigned =
     signatureBy(signatures, wallet.accountId) !== null ||
@@ -189,16 +204,33 @@ export function LetterSheet({
             )}
           </div>
 
-          {/* The letter keeps one action, nothing else: the rest lives in the dialog. */}
+          {/* The letter keeps one action, nothing else: the rest lives in the dialog.
+              Signing needs a wallet, so without one the button is disabled rather than
+              opening a dialog that can only ask for the same thing — and says why, since a
+              dead button with no reason is a dead end. */}
           <div className="mt-10">
             <button
               type="button"
               onClick={() => setSignOpen(true)}
+              disabled={!connected}
               aria-haspopup="dialog"
-              className="rounded-sm border border-sheet-ink bg-sheet-ink px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet transition-opacity hover:opacity-85"
+              aria-describedby={connected ? undefined : 'sign-needs-wallet'}
+              className={`rounded-sm border px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-opacity ${
+                connected
+                  ? 'border-sheet-ink bg-sheet-ink text-sheet hover:opacity-85'
+                  : 'cursor-not-allowed border-sheet-rule bg-transparent text-sheet-ink-faint'
+              }`}
             >
               {alreadySigned ? 'You have signed' : 'Sign the Letter'}
             </button>
+            {connected ? null : (
+              <p
+                id="sign-needs-wallet"
+                className="mt-2 text-[0.6875rem] uppercase tracking-[0.14em] text-sheet-ink-faint"
+              >
+                Connect a wallet to sign
+              </p>
+            )}
           </div>
 
           <div className="mt-8 border-t border-sheet-rule pt-4">
