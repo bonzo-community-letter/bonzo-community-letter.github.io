@@ -206,14 +206,14 @@ export function LetterSheet({
           {/* A phone stacks it: the count centred on its own line, the two actions on the next,
               side by side and centred under it. From sm the old row returns — count at the left
               edge, actions at the right. */}
-          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-4">
+          <div className="mt-10 flex flex-col items-center gap-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-4 sm:gap-y-3">
             {/* The count, in the one hand the page reserves for it, on the same line as the
                 actions — mr-auto holds it at the left edge and lets it wrap on its own above
                 them on a phone, where the two buttons already take the width. */}
             {signatureCount !== null && signatureCount > 0 ? (
               <a
                 href="#personal-messages"
-                className="text-center font-script text-[1.5rem] leading-[1.2] text-ink-blue transition-colors hover:text-accent sm:mr-auto sm:text-left sm:text-[1.75rem] lg:text-[2rem]"
+                className="text-center font-script text-[1.3125rem] leading-[1.2] text-ink-blue transition-colors hover:text-accent min-[340px]:text-[1.5625rem] min-[380px]:text-[1.75rem] sm:mr-auto sm:text-left sm:text-[1.75rem] lg:text-[2rem]"
               >
                 Signed by {signatureCount.toLocaleString('en-US')} Hedera{' '}
                 {signatureCount === 1 ? 'account' : 'accounts'}
