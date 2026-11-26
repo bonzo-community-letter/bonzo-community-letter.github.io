@@ -107,10 +107,15 @@ export function Testimonials({
     // the same way the hero's own tint does.
     <section className="border-y border-rule/40 bg-hero/80 pb-16 pt-16">
       <div className="mx-auto w-full max-w-5xl px-4 text-center sm:px-6">
-        <p className="eyebrow">Comments</p>
-        <h2 className="mt-2 font-serif text-2xl leading-tight text-ink">
-          {sample ? 'Sample comments — not signatures' : 'Personal Messages from the Signees'}
-        </h2>
+        <p className="eyebrow">From the signees</p>
+        <h2 className="mt-2 font-serif text-2xl leading-tight text-ink">Personal Messages</h2>
+        {/* The heading says what the section is, whatever mode the page is in; the
+            disclosure sits under it, where it cannot be mistaken for the title. */}
+        {sample ? (
+          <p className="mt-2 text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint">
+            Sample comments — not signatures
+          </p>
+        ) : null}
       </div>
 
       <div
