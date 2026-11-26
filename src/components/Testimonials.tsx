@@ -171,7 +171,6 @@ export function Testimonials({
                     signedAt={entry.signedAt}
                     recoveryRate={entry.recoveryRate}
                     signeeNumber={entry.signeeNumber}
-                    clamp
                     className="flex-1"
                   />
                 </li>

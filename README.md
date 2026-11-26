@@ -400,6 +400,10 @@ Open the page with `?demo=1` to see the section filled with ten sample comments,
 spread from 77 to 512 bytes (the field's limit) — the section then says "Sample comments — not
 signatures" and the count above the letter still ignores them (`content/demo.ts`).
 
+A comment is never cut. The longest a signer can write is 512 bytes, and the band grows to the
+tallest of them rather than clipping any: what someone wrote to be read is not the page's to
+shorten. The dates stay on one line at the foot of every card.
+
 The card itself is `components/SignerComment.tsx`, and the "You have signed" dialog in the sign
 modal renders the same component: a signer's own signature is a comment like any other, and one
 piece of markup is easier to keep right than two that drift.

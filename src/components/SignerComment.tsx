@@ -18,8 +18,6 @@ export function SignerComment({
   recoveryRate,
   /** Place in the signing order, 1 for the first; omitted where it is not known. */
   signeeNumber,
-  /** Cut the comment at six lines, for the band; the dialog shows all of it. */
-  clamp = false,
   /** The dialog gives the exact moment; the band is a strip and only needs the day. */
   withTime = false,
   className = '',
@@ -29,7 +27,6 @@ export function SignerComment({
   signedAt: string
   recoveryRate: number | null
   signeeNumber?: number
-  clamp?: boolean
   withTime?: boolean
   className?: string
 }) {
@@ -45,13 +42,10 @@ export function SignerComment({
         </div>
       </div>
 
+      {/* Never cut: a signer wrote this to be read, and the page has no business
+          deciding which half of it matters. */}
       {comment ? (
-        <blockquote
-          title={comment}
-          className={`font-serif text-[1rem] leading-relaxed text-ink ${clamp ? 'line-clamp-6' : ''}`}
-        >
-          {comment}
-        </blockquote>
+        <blockquote className="font-serif text-[1rem] leading-relaxed text-ink">{comment}</blockquote>
       ) : null}
 
       {/* mt-auto: the date sits at the card's foot, so dates line up whatever the
