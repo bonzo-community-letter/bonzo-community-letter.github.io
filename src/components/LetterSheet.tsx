@@ -215,7 +215,7 @@ export function LetterSheet({
                   onClick={() => setDonateOpen(true)}
                   aria-haspopup="dialog"
                   aria-describedby="donate-hint"
-                  className="rounded-sm border border-sheet-rule px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet-ink transition-colors hover:border-sheet-ink"
+                  className="rounded-sm border border-sheet-rule px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet-ink transition-colors hover:border-accent hover:text-accent"
                 >
                   Donate
                 </button>
@@ -240,9 +240,9 @@ export function LetterSheet({
                 aria-disabled={!connected}
                 aria-haspopup="dialog"
                 aria-describedby="sign-needs-wallet"
-                className={`rounded-sm border px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-opacity ${
+                className={`rounded-sm border px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-colors ${
                   connected
-                    ? 'border-sheet-ink bg-sheet-ink text-sheet hover:opacity-85'
+                    ? 'border-sheet-ink bg-sheet-ink text-sheet hover:border-accent hover:bg-accent'
                     : 'cursor-not-allowed border-sheet-rule bg-transparent text-sheet-ink-faint'
                 }`}
               >
