@@ -193,34 +193,40 @@ export function EnvelopeOverlay() {
       }
     }
 
+    /** What was last written to the DOM, so a frame that changes nothing writes nothing. */
+    const painted = { layer: '', flap: '' }
+
     const apply = (): void => {
       const { progress, exit } = latest.current
 
-      // The fold's height above the bottom edge is measured once per width and then kept:
-      // re-deriving it whenever the address bar moves is what made the drift stutter. The
-      // hero is measured with it, and re-measured when the fonts land or the hero resizes —
-      // a first reading taken before the stylesheet settles must not stick.
-      const width = window.innerWidth
-      const heroBottom = heroTextBottom()
-      const stale = placed.current.width !== width || Math.abs(heroBottom - placed.current.heroBottom) > 1
-      if (stale || placed.current.boxHeight === 0) place()
+      // The fold's height above the bottom edge is measured once per width and then kept.
+      // The hero is *not* measured here: a getBoundingClientRect on every frame forces a
+      // layout on the main thread, which is half of why the drift stuttered on a phone. It
+      // is re-measured when the layout can actually have changed — resize, fonts, observer.
+      if (placed.current.width !== window.innerWidth || placed.current.boxHeight === 0) place()
 
-      // in body heights, then as a share of the taller box — plus the constant offset that
-      // keeps the flap off the hero's text
+      // in body heights, then as a share of the taller box — plus the offset that keeps the
+      // flap off the hero's text (negative on a phone, where the envelope is lifted)
       const shiftPx =
         (BODY_HIDDEN + exit * envelopeTravel()) * ENVELOPE_VIEW.bodyShare * placed.current.boxHeight
       const transform = `translateY(${(shiftPx + placed.current.push).toFixed(2)}px)`
 
-      if (front.current) front.current.style.transform = transform
-      if (back.current) back.current.style.transform = transform
+      if (transform !== painted.layer) {
+        painted.layer = transform
+        if (front.current) front.current.style.transform = transform
+        if (back.current) back.current.style.transform = transform
+      }
 
-      // the flap element is replaced when it changes layers, so the cache is checked
+      // the flap element is replaced when it changes layers, so the cache is checked.
+      // `style.transform`, not the SVG attribute: the attribute re-rasterises the drawing
+      // on every frame, the CSS transform is composited.
       if (!flapEl || !flapEl.isConnected) flapEl = document.querySelector<SVGGElement>('[data-flap]')
       if (flapEl) {
-        flapEl.setAttribute(
-          'transform',
-          `translate(0 ${(2 * 256 * progress).toFixed(2)}) scale(1 ${(1 - 2 * progress).toFixed(4)})`,
-        )
+        const flapTransform = `translateY(${(2 * 256 * progress).toFixed(2)}px) scaleY(${(1 - 2 * progress).toFixed(4)})`
+        if (flapTransform !== painted.flap) {
+          painted.flap = flapTransform
+          flapEl.style.transform = flapTransform
+        }
       }
 
       // the flap changes sides once, when it passes vertical: that is the only thing
@@ -291,16 +297,15 @@ export function EnvelopeOverlay() {
 
     // The hero's height is an input, so it is watched: a late font, a wrapped title or a
     // seventh addressee must move the envelope with it, not leave a stale placement.
-    const observer = new ResizeObserver(() => {
+    /** Re-measure the hero, then paint: only where the layout can have changed. */
+    const refresh = (): void => {
       place()
       apply()
-    })
+    }
+    const observer = new ResizeObserver(refresh)
     const hero = document.querySelector('header.hero-height')
     if (hero) observer.observe(hero)
-    void document.fonts?.ready.then(() => {
-      place()
-      apply()
-    })
+    void document.fonts?.ready.then(refresh)
     // The hero's box is min-height-driven: its *text* can settle later (fonts, a wrapped
     // title) without the box resizing, so the observer above may never fire. Re-place on
     // the same schedule the paper uses, then leave it alone.
@@ -309,8 +314,14 @@ export function EnvelopeOverlay() {
     // after this effect has run and fires no scroll event for it, so the envelope would
     // otherwise paint as if the page were still at the top — closed, and in the wrong place.
     const timers = [
-      setTimeout(update, 120),
-      setTimeout(update, 600),
+      setTimeout(() => {
+        refresh()
+        update()
+      }, 120),
+      setTimeout(() => {
+        refresh()
+        update()
+      }, 600),
     ]
     const onPageShow = (): void => update()
     window.addEventListener('pageshow', onPageShow)

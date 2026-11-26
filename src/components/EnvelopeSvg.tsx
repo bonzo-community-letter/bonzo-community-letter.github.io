@@ -106,10 +106,20 @@ export function EnvelopeSvg({ progress = 0, lifted: liftedProp, part = 'front', 
   // both parts live in one document, so their ids must not collide
   const id = (name: string): string => `${part}-${name}`
 
+  // A CSS transform on the group, not the SVG `transform` attribute: an attribute change
+  // forces the browser to re-rasterise the whole drawing every frame, which is what made the
+  // envelope stutter on a phone. A CSS transform is composited, so the flap moves on the GPU
+  // while the page scrolls. `view-box` with origin 0 0 keeps the arithmetic identical to the
+  // attribute form it replaces.
   const flap = (
     <g
       data-flap={part}
-      transform={`translate(0 ${(2 * HINGE * p).toFixed(2)}) scale(1 ${(1 - 2 * p).toFixed(3)})`}
+      style={{
+        transform: `translateY(${(2 * HINGE * p).toFixed(2)}px) scaleY(${(1 - 2 * p).toFixed(4)})`,
+        transformBox: 'view-box',
+        transformOrigin: '0 0',
+        willChange: 'transform',
+      }}
     >
       <path d={FLAP} fill={`url(#${id('shadow')})`} opacity={lifted ? 1 : 0} />
       {!lifted ? <path d={FLAP} fill={`url(#${id('flapShut')})`} /> : null}
