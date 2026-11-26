@@ -74,6 +74,12 @@ export const config = {
   walletConnectProjectId: read('VITE_WALLETCONNECT_PROJECT_ID'),
   contactUrl: read('VITE_CONTACT_URL'),
   /**
+   * The campaign's treasury account, where a donation lands. Public, like everything
+   * else here. Empty = no Donate button: an address that has not been decided is not
+   * something a page may guess, and a wrong one would take money nowhere.
+   */
+  treasuryAccountId: read('VITE_TREASURY_ACCOUNT_ID'),
+  /**
    * The Merkle root the affected set is committed to, from a GitHub repository variable.
    * It is public by design — a root is a commitment, not a secret — and it is the one
    * value that pins the shipped list: if the variable and the list disagree, the build

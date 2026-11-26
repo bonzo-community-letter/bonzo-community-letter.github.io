@@ -6,6 +6,7 @@ import { signatureBy, type Signature } from '../lib/hcs'
 import { localSignature } from '../lib/signedHere'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
 import { Tip } from './Tip'
+import { DonateDialog } from './DonateDialog'
 import { SignDialog } from './SignDialog'
 import type { WalletApi } from '../hooks/useWallet'
 import { letterText, subject } from 'virtual:letter'
@@ -134,6 +135,7 @@ export function LetterSheet({
   const wrapper = useRef<HTMLDivElement | null>(null)
   const sheet = useRef<HTMLDivElement | null>(null)
   const [signOpen, setSignOpen] = useState(false)
+  const [donateOpen, setDonateOpen] = useState(false)
   // Signing is the one thing on this page that needs a wallet; without one the button is
   // disabled instead of opening a dialog that can only ask for the same thing.
   const connected = wallet.status === 'connected' && wallet.accountId !== null
@@ -199,7 +201,19 @@ export function LetterSheet({
               read as part of the text. `aria-disabled` rather than `disabled`: a disabled
               button takes no focus and no tap, and then the tooltip could never open on a
               phone, which is the one place it is needed. */}
-          <div className="mt-10">
+          {/* Both actions sit at the right edge, the quiet one first: the letter's own
+              action is the last thing the eye reaches, and Donate is an offer, not a step. */}
+          <div className="mt-10 flex flex-wrap items-center justify-end gap-3">
+            {config.treasuryAccountId ? (
+              <button
+                type="button"
+                onClick={() => setDonateOpen(true)}
+                aria-haspopup="dialog"
+                className="rounded-sm border border-sheet-rule px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet-ink transition-colors hover:border-sheet-ink"
+              >
+                Donate
+              </button>
+            ) : null}
             <Tip
               id="sign-needs-wallet"
               side="above"
@@ -234,6 +248,8 @@ export function LetterSheet({
           </div>
         </article>
       </div>
+
+      <DonateDialog open={donateOpen} onClose={() => setDonateOpen(false)} />
 
       <SignDialog
         open={signOpen}

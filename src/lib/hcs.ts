@@ -342,6 +342,12 @@ export function hashscanTopicUrl(network: HederaNetwork, topicId: string): strin
   return `https://${host}/topic/${topicId}`
 }
 
+/** Where a reader can watch an account — the treasury, in this campaign's case. */
+export function hashscanAccountUrl(network: HederaNetwork, accountId: string): string {
+  const host = network === 'mainnet' ? 'hashscan.io/mainnet' : 'hashscan.io/testnet'
+  return `https://${host}/account/${accountId}`
+}
+
 /**
  * HashScan wants `shard.realm.num-seconds-nanos`, while wallets hand the
  * transaction id back as `shard.realm.num@seconds.nanos`. Both are the same

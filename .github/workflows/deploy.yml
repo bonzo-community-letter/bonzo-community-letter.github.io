@@ -56,6 +56,7 @@ jobs:
           VITE_HCS_TOPIC_ID_MAINNET: ${{ vars.VITE_HCS_TOPIC_ID_MAINNET }}
           VITE_WALLETCONNECT_PROJECT_ID: ${{ vars.VITE_WALLETCONNECT_PROJECT_ID }}
           VITE_CONTACT_URL: ${{ vars.VITE_CONTACT_URL }}
+          VITE_TREASURY_ACCOUNT_ID: ${{ vars.VITE_TREASURY_ACCOUNT_ID }}
           VITE_AFFECTED_ROOT: ${{ vars.VITE_AFFECTED_ROOT }}
 
       - name: Configure Pages
