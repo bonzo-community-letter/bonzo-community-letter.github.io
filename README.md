@@ -406,7 +406,11 @@ piece of markup is easier to keep right than two that drift.
 
 Each entry opens with a recovery ring (`components/RecoveryRing.tsx`): a disc with the rate
 rounded to a whole percent, and an outline whose arc is that same rate, so the number and the
-shape cannot disagree. Under the account it says what is still missing — `100 − rate`, as
+shape cannot disagree. The date at the foot carries the signer's place in the order — `Signee #4 · 18 Nov 2026` — counted
+over every account that signed this letter version, not over the ones that left a comment, so a
+number means the same thing here as it does in the count. Ties fall back to the topic sequence.
+
+Under the account it says what is still missing — `100 − rate`, as
 "91% of net supply lost", or "Losses not stated" when the signer gave no rate. The ring shows
 what came back, the line what did not; they are complements of one number and cannot drift
 apart. The date sits under the comment, at the card's foot. The colour runs red → amber → green (`lib/recovery.ts`, interpolated in

@@ -8,6 +8,8 @@ import {
   parseMessages,
   payloadByteLength,
   sha256Hex,
+  signeeNumbers,
+  testimonials,
   type MirrorMessage,
   type SignaturePayload,
 } from './hcs'
@@ -16,6 +18,20 @@ import { describe, expect, it } from 'vitest'
 const HASH = 'a'.repeat(64)
 const LETTER = 'bonzo-exploit-open-letter'
 const input = { accountId: '0.0.1234', subject: LETTER, letterHash: HASH }
+
+/** A signature as the mirror hands it over, with only the fields the numbering reads. */
+const base = {
+  subject: LETTER,
+  letterHash: HASH,
+  version: 1,
+  comment: '',
+  recoveryRate: null,
+  payerAccountId: '0.0.1234',
+  consensusTimestamp: '0.0',
+  accountId: '0.0.1',
+  signedAt: '2026-11-15T10:00:00.000Z',
+  sequence: 1,
+} as const
 
 const toB64 = (s: string): string => {
   const bytes = new TextEncoder().encode(s)
@@ -249,5 +265,54 @@ describe('hashscanTransactionUrl', () => {
 describe('sha256Hex', () => {
   it('matches the known digest of the empty string', async () => {
     expect(await sha256Hex('')).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
+  })
+})
+
+describe('signeeNumbers', () => {
+  const at = (iso: string, accountId: string) => ({
+    ...base,
+    accountId,
+    signedAt: iso,
+    sequence: 0,
+  })
+
+  it('numbers signers by the order they signed, not by the order they arrived', () => {
+    const numbers = signeeNumbers([
+      at('2026-11-20T10:00:00.000Z', '0.0.3'),
+      at('2026-11-15T10:00:00.000Z', '0.0.1'),
+      at('2026-11-18T10:00:00.000Z', '0.0.2'),
+    ])
+    expect(numbers.get('0.0.1')).toBe(1)
+    expect(numbers.get('0.0.2')).toBe(2)
+    expect(numbers.get('0.0.3')).toBe(3)
+  })
+
+  it('counts every signer, including the ones who wrote nothing', () => {
+    const [entry] = testimonials([
+      at('2026-11-15T10:00:00.000Z', '0.0.1'),
+      { ...at('2026-11-16T10:00:00.000Z', '0.0.2'), comment: 'hello' },
+    ])
+    // the silent signer is #1, so the one who wrote is #2 — not #1
+    expect(entry?.signeeNumber).toBe(2)
+  })
+
+  it('breaks a tie on the topic sequence', () => {
+    const same = '2026-11-15T10:00:00.000Z'
+    const numbers = signeeNumbers([
+      { ...at(same, '0.0.9'), sequence: 7 },
+      { ...at(same, '0.0.8'), sequence: 3 },
+    ])
+    expect(numbers.get('0.0.8')).toBe(1)
+    expect(numbers.get('0.0.9')).toBe(2)
+  })
+
+  it('counts an account once, however many times it signed', () => {
+    const numbers = signeeNumbers([
+      at('2026-11-15T10:00:00.000Z', '0.0.1'),
+      at('2026-11-16T10:00:00.000Z', '0.0.1'),
+      at('2026-11-17T10:00:00.000Z', '0.0.2'),
+    ])
+    expect(numbers.size).toBe(2)
+    expect(numbers.get('0.0.2')).toBe(2)
   })
 })

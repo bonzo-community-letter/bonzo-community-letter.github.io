@@ -16,6 +16,8 @@ export function SignerComment({
   comment,
   signedAt,
   recoveryRate,
+  /** Place in the signing order, 1 for the first; omitted where it is not known. */
+  signeeNumber,
   /** Cut the comment at six lines, for the band; the dialog shows all of it. */
   clamp = false,
   /** The dialog gives the exact moment; the band is a strip and only needs the day. */
@@ -26,6 +28,7 @@ export function SignerComment({
   comment: string
   signedAt: string
   recoveryRate: number | null
+  signeeNumber?: number
   clamp?: boolean
   withTime?: boolean
   className?: string
@@ -52,8 +55,10 @@ export function SignerComment({
       ) : null}
 
       {/* mt-auto: the date sits at the card's foot, so dates line up whatever the
-          comment's length. */}
+          comment's length. The number before it is the signer's place in the order —
+          the one fact that ties a comment to a position in the count. */}
       <p className="mt-auto pt-3 whitespace-nowrap font-mono text-[0.625rem] text-ink-faint">
+        {signeeNumber ? <>Signee #{signeeNumber} · </> : null}
         {signedWhen(signedAt, { time: withTime })}
       </p>
     </div>

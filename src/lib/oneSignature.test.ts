@@ -90,6 +90,7 @@ describe('testimonials', () => {
       comment: 'hello',
       recoveryRate: null,
       signedAt: '2026-11-24T08:38:18.738Z',
+      signeeNumber: 1,
     })
   })
 })

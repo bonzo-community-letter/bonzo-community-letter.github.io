@@ -273,6 +273,31 @@ export interface Testimonial {
   signedAt: string
   /** percent recovered, or null when the signer did not say */
   recoveryRate: number | null
+  /** position among all signers, 1 for the earliest signature of this letter */
+  signeeNumber: number
+}
+
+/**
+ * Who signed first.
+ *
+ * A signer's number is their place in the order the signatures were made, counted over
+ * every account that signed this letter version — not over the ones that left a comment,
+ * so a number means the same thing here as it does in the count. Ties fall back to the
+ * topic sequence, which is the order the network itself saw.
+ */
+export function signeeNumbers(signatures: readonly Signature[]): Map<string, number> {
+  const ordered = uniqueSigners(signatures).sort((a, b) => {
+    const at = Date.parse(a.signedAt)
+    const bt = Date.parse(b.signedAt)
+    if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) return at - bt
+    return (a.sequence ?? 0) - (b.sequence ?? 0)
+  })
+
+  const numbers = new Map<string, number>()
+  ordered.forEach((signature, index) => {
+    numbers.set(signature.accountId.trim().toLowerCase(), index + 1)
+  })
+  return numbers
 }
 
 /**
@@ -284,6 +309,7 @@ export interface Testimonial {
  * a hand-edited message from carrying stray whitespace onto the page.
  */
 export function testimonials(signatures: readonly Signature[]): Testimonial[] {
+  const numbers = signeeNumbers(signatures)
   return uniqueSigners(signatures)
     .filter((signature) => signature.comment.trim().length > 0)
     .map((signature) => ({
@@ -291,6 +317,7 @@ export function testimonials(signatures: readonly Signature[]): Testimonial[] {
       comment: signature.comment.trim(),
       signedAt: signature.signedAt,
       recoveryRate: signature.recoveryRate ?? null,
+      signeeNumber: numbers.get(signature.accountId.trim().toLowerCase()) ?? 0,
     }))
 }
 

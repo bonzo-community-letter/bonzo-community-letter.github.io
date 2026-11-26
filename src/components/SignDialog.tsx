@@ -10,6 +10,7 @@ import {
   commentByteLength,
   fetchTransactionResult,
   hashscanTopicUrl,
+  signeeNumbers,
   hashscanTransactionUrl,
   prettyPayload,
   signatureBy,
@@ -405,6 +406,7 @@ export function SignDialog({
                 comment={'comment' in already ? already.comment : ''}
                 signedAt={already.signedAt}
                 recoveryRate={'recoveryRate' in already ? (already.recoveryRate ?? null) : null}
+                signeeNumber={signeeNumbers(signatures).get(already.accountId.trim().toLowerCase())}
                 withTime
                 className="mt-5 rounded-sm border border-rule/70 bg-page/40 px-4 py-4"
               />
