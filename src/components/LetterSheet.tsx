@@ -157,10 +157,12 @@ export function LetterSheet({
         />
 
         <article className="relative rounded-[3px] border border-sheet-rule bg-sheet px-7 py-10 shadow-[0_2px_4px_rgba(0,0,0,0.5),0_60px_100px_-60px_rgba(0,0,0,0.95)] sm:min-h-[900px] sm:px-20 sm:py-16 lg:px-24">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-sheet-rule pb-4">
-            <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-sheet-ink-faint">
-              {/* the same words as on the envelope's flap */}
-              {page.from.name}
+          {/* Stacked on a phone: side by side, the date took the room the sender needed
+              and the line broke after "the", leaving "Exploit" alone. */}
+          <div className="flex flex-col items-start gap-y-1 border-b border-sheet-rule pb-4 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-x-6">
+            <span className="whitespace-nowrap text-[0.6875rem] uppercase tracking-[0.08em] text-sheet-ink-faint sm:tracking-[0.14em]">
+              {/* the same words as on the envelope's flap, with the label the flap has */}
+              From: {page.from.name}
             </span>
             <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-sheet-ink-faint">
               {page.letterhead.date}

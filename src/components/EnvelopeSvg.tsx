@@ -91,8 +91,8 @@ const SOFT_BANDS = [
 ]
 
 /** The sender's name is written on the flap, and a single line of it would be set
- *  too small to read on a phone. It breaks after "of the". */
-const FLAP_BREAK = ' of the '
+ *  too small to read on a phone. It breaks after "Users". */
+const FLAP_BREAK = 'Users '
 const fromName = page.from.name
 const breakAt = fromName.indexOf(FLAP_BREAK)
 const fromLines =
