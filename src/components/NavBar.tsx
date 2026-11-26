@@ -1,5 +1,6 @@
 import type { WalletApi } from '../hooks/useWallet'
 import { config } from '../config'
+import { standingOf } from '../lib/affected'
 import { prefetchWallet } from '../lib/wallet'
 import { Spinner } from './Spinner'
 
@@ -8,11 +9,16 @@ import { Spinner } from './Spinner'
  * action that belongs on every screen — connecting the wallet that will sign —
  * and says which network it signs on, because that is the fact a signer most
  * needs to see and the easiest one to get wrong.
+ *
+ * The badge beside the account is the answer to "what am I here": it is decided from
+ * the connected account, not from anything the reader picks, so it appears the moment
+ * the wallet connects and cannot be set to the wrong one.
  */
 export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: () => void }) {
   const connected = wallet.status === 'connected' && wallet.accountId !== null
   const busy = wallet.status === 'connecting' || wallet.status === 'restoring'
   const label = connected ? wallet.accountId : busy ? 'Connecting…' : 'Connect'
+  const standing = connected && wallet.accountId ? standingOf(wallet.accountId) : null
 
   return (
     <header className="sticky top-0 z-40 border-b border-rule/70 bg-page/85 backdrop-blur">
@@ -25,6 +31,17 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
           <span className="hidden text-[0.625rem] uppercase tracking-[0.16em] text-ink-faint sm:inline">
             {config.network}
           </span>
+          {standing ? (
+            <span
+              className={`rounded-full border px-2 py-[0.1875rem] text-[0.5625rem] font-semibold uppercase tracking-[0.1em] ${
+                standing === 'affected'
+                  ? 'border-accent/60 bg-accent/10 text-accent'
+                  : 'border-accent/35 text-accent/75'
+              }`}
+            >
+              {standing === 'affected' ? 'Affected User' : 'Supporter'}
+            </span>
+          ) : null}
           <button
             type="button"
             onClick={onConnect}
