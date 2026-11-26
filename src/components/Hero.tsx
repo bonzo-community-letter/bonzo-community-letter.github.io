@@ -3,6 +3,25 @@ import { addressees } from '../content/addressees'
 import { page } from '../content/page'
 
 /**
+ * Where each name sits in the phone's two-column block.
+ *
+ * The list in `content/addressees.ts` is in the order the desktop row wants — the three
+ * Hedera entities first, because that line breaks after them. On a phone the same seven
+ * names read better in pairs, with the longest one given the full width at the end, so
+ * the placement is stated here instead of being derived from the order.
+ */
+const PHONE_GRID: Record<string, string> = {
+  'Hedera Foundation': 'col-start-1 row-start-1',
+  'Hedera Hashgraph': 'col-start-2 row-start-1',
+  'Hashgraph Foundry': 'col-start-1 row-start-2',
+  'Supra Labs': 'col-start-2 row-start-2',
+  'Entropy Foundation': 'col-start-1 row-start-3',
+  'Bonzo Finance Labs': 'col-start-2 row-start-3',
+  // the full-width name is centred: left-aligned it reads as another left-column entry
+  'Bonzo Finance Foundation': 'col-span-2 row-start-4 justify-center text-center',
+}
+
+/**
  * The hero is the front of the envelope: title, what this is about, and who it goes
  * to. The sender is not here — it is written on the envelope's flap, as on a real
  * one, and only appears in the document for screen readers.
@@ -25,8 +44,9 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
         <div className="mt-7 sm:mt-10">
           <p className="eyebrow" style={{ fontSize: '0.875rem' }}>To</p>
           {/* Two columns on a phone: seven names stacked read as a wall, and the block
-              is short enough that the envelope stays in view. `w-fit` keeps the columns
-              as narrow as their longest name instead of stretching to the page. */}
+              is short enough that the envelope stays in view. The order in the content is
+              the desktop order; a phone needs a different arrangement, so each name is
+              placed explicitly rather than left to row-wise flow. */}
           <ul className="mx-auto mt-3 grid w-fit max-w-full grid-cols-2 gap-x-6 gap-y-1.5 text-left sm:flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2 sm:text-center">
             {addressees.map((addressee, i) => (
               <Fragment key={addressee.name}>
@@ -35,7 +55,7 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
                     side instead: the three Hedera entities above, the four that follow
                     below, and the stack on a phone is unaffected. */}
                 {i === 3 ? <li aria-hidden="true" className="hidden basis-full sm:block" /> : null}
-                <li className="flex items-start gap-2.5">
+                <li className={`flex items-start gap-2.5 ${PHONE_GRID[addressee.name] ?? ''} sm:col-auto sm:row-auto`}>
                   {/* the marks come back on a wider screen: in a two-column block on a
                       phone they cost the width the longer names need */}
                   {addressee.logoSrc ? (
@@ -45,7 +65,11 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
                       className="hidden h-4 w-auto shrink-0 opacity-80 grayscale sm:block"
                     />
                   ) : null}
-                  <span className="font-serif text-[0.875rem] leading-snug text-ink min-[360px]:text-[0.9375rem] sm:text-lg">
+                  {/* The largest size that fits the column without breaking a name, measured:
+                      16px wraps three names at 390px, 15px fits; below 380px the column is
+                      ~10px narrower, and 14px is what fits there. The spanning name gets the
+                      full width, so it is never the constraint. */}
+                  <span className="font-serif text-[0.875rem] leading-snug text-ink min-[380px]:text-[0.9375rem] sm:text-lg">
                     {addressee.name}
                   </span>
                 </li>
