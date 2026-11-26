@@ -14,5 +14,5 @@ export const SUBJECT = 'bonzo-exploit-open-letter'
 /** Not written yet — keep empty until the text is signed off. */
 export const letterText = ''
 
-/** True while the text is a draft. Must block signing once the UI exists. */
-export const letterIsDraft = true
+/** True while the text is a draft. False: the letter is published. */
+export const letterIsDraft = false

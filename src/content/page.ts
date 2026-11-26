@@ -19,7 +19,7 @@ export const page = {
       'After Hedera’s multi-million-dollar oracle exploit: A critical community letter on what was promised and what was delivered.',
   },
 
-  status: 'Draft — not yet published',
+  status: 'Published',
 
   letterhead: {
     date: '15 November 2026',
