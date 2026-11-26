@@ -1,4 +1,6 @@
 import { page } from '../content/page'
+import { config } from '../config'
+import { hashscanTopicUrl } from '../lib/hcs'
 
 export function SiteFooter() {
   return (
@@ -9,6 +11,22 @@ export function SiteFooter() {
         <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint">{page.status}</span>
         <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-faint">
           Signed on the Hedera Consensus Service
+          {/* The topic a signature lands on, read from the build's own configuration —
+              the one fact a reader can check afterwards, and it has to be the topic this
+              build actually writes to, not one typed in by hand. */}
+          {config.topicId ? (
+            <>
+              {' · '}
+              <a
+                href={hashscanTopicUrl(config.network, config.topicId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono normal-case tracking-normal underline decoration-rule underline-offset-4 transition-colors hover:text-ink-soft hover:decoration-accent"
+              >
+                {config.topicId} ↗
+              </a>
+            </>
+          ) : null}
         </span>
       </div>
     </footer>
