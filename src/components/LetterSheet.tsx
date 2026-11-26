@@ -205,14 +205,21 @@ export function LetterSheet({
               action is the last thing the eye reaches, and Donate is an offer, not a step. */}
           <div className="mt-10 flex flex-wrap items-center justify-end gap-3">
             {config.treasuryAccountId ? (
-              <button
-                type="button"
-                onClick={() => setDonateOpen(true)}
-                aria-haspopup="dialog"
-                className="rounded-sm border border-sheet-rule px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet-ink transition-colors hover:border-sheet-ink"
+              <Tip
+                id="donate-hint"
+                side="above"
+                panel="Donate HBAR to the campaign to help raise awareness by posting this letter with up to 100 TPS on the hashgraph."
               >
-                Donate
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setDonateOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-describedby="donate-hint"
+                  className="rounded-sm border border-sheet-rule px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sheet-ink transition-colors hover:border-sheet-ink"
+                >
+                  Donate
+                </button>
+              </Tip>
             ) : null}
             {/* The tooltip says what the button will do in whichever state it is in: with no
                 wallet the action is connecting one, with a wallet it is the signature itself. */}
