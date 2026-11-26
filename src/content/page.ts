@@ -16,7 +16,7 @@ export const page = {
   from: {
     name: 'Affected users of the Bonzo Lend and Supra exploit',
     note:
-      'After Hedera’s multi-million-dollar oracle exploit: A critical community letter on what was promised and what was not delivered.',
+      'After Hedera’s multi-million-dollar oracle exploit: A critical community letter on what was promised and what was delivered.',
   },
 
   status: 'Draft — not yet published',
