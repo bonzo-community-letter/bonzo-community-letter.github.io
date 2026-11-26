@@ -214,10 +214,16 @@ export function LetterSheet({
                 Donate
               </button>
             ) : null}
+            {/* The tooltip says what the button will do in whichever state it is in: with no
+                wallet the action is connecting one, with a wallet it is the signature itself. */}
             <Tip
               id="sign-needs-wallet"
               side="above"
-              panel="Connect a wallet to sign."
+              panel={
+                connected
+                  ? 'Sign this letter with your wallet on the Hedera Consensus Service as a sign of support.'
+                  : 'Connect a wallet to sign.'
+              }
             >
               <button
                 type="button"
@@ -226,7 +232,7 @@ export function LetterSheet({
                 }}
                 aria-disabled={!connected}
                 aria-haspopup="dialog"
-                aria-describedby={connected ? undefined : 'sign-needs-wallet'}
+                aria-describedby="sign-needs-wallet"
                 className={`rounded-sm border px-5 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-opacity ${
                   connected
                     ? 'border-sheet-ink bg-sheet-ink text-sheet hover:opacity-85'
