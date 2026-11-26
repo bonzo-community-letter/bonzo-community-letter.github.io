@@ -12,7 +12,7 @@ import { sampleSignatures } from './content/demo'
 import { useSignatures } from './hooks/useSignatures'
 import { uniqueSigners } from './lib/hcs'
 import { useWallet } from './hooks/useWallet'
-import { letterHash, subject } from 'virtual:letter'
+import { isDraft, letterHash, subject } from 'virtual:letter'
 
 export function App() {
   const signatures = useSignatures({ subject, letterHash })
@@ -58,7 +58,9 @@ export function App() {
             signatures={sample ? [...sampleSignatures(subject, letterHash), ...signers] : signers}
             sample={sample}
           />
-          <DevStatus state={signatures} />
+          {/* The status box is a build-time instrument, not part of the letter: it exists
+              while the text is a draft and leaves with it. */}
+          {isDraft ? <DevStatus state={signatures} /> : null}
         </main>
         <SiteFooter />
       </div>

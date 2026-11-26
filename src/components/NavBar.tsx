@@ -23,20 +23,23 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
   return (
     <header className="sticky top-0 z-40 border-b border-rule/70 bg-page/85 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
-        <span className="font-serif text-[0.9375rem] leading-none tracking-wide text-ink-soft">
-          Open letter
+        {/* One line, and it gives way first: with a wallet connected the bar carries the
+            badge and a full account id beside it, and a wrapped title in a 56px bar reads
+            as a broken header. On a phone the name truncates rather than pushing them off. */}
+        <span className="min-w-0 truncate whitespace-nowrap font-serif text-[0.8125rem] leading-none tracking-wide text-ink-soft sm:text-[0.9375rem]">
+          Bonzo Community Letter
         </span>
 
         {/* items-stretch, not items-center: the badge takes its height from the button it
             sits beside, at every breakpoint, instead of guessing the same padding and
             landing nine pixels short. */}
-        <div className="flex items-stretch gap-3">
+        <div className="flex shrink-0 items-stretch gap-3">
           <span className="hidden self-center text-[0.625rem] uppercase tracking-[0.16em] text-ink-faint sm:inline">
             {config.network}
           </span>
           {standing ? (
             <span
-              className={`inline-flex items-center rounded-full border px-2 text-[0.5625rem] font-semibold uppercase tracking-[0.1em] ${
+              className={`hidden items-center rounded-full border px-2 text-[0.5625rem] font-semibold uppercase tracking-[0.1em] sm:inline-flex ${
                 standing === 'affected'
                   ? 'border-accent/60 bg-accent/10 text-accent'
                   : 'border-accent/35 text-accent/75'

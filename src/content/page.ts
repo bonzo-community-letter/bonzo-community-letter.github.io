@@ -6,8 +6,7 @@
 export const page = {
   eyebrow: 'Bonzo Lend & Supra Exploit',
 
-  /** Working title — still to be decided. */
-  title: 'Open Letter',
+  title: 'A Open Letter',
 
   /**
    * The hero is a letter's address block: who writes, and to whom.
@@ -18,8 +17,6 @@ export const page = {
     note:
       'After Hedera’s multi-million-dollar oracle exploit: A critical community letter on what was promised and what was delivered.',
   },
-
-  status: 'Published',
 
   letterhead: {
     date: '15 November 2026',
