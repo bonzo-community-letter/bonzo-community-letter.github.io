@@ -37,6 +37,15 @@ export const HERO_CLEARANCE = 28
 
 export const envelopeHidden = (): number => BODY_HIDDEN
 
+/** How much the envelope may rise on a phone, in pixels.
+ *
+ *  The addressees sit in two columns there now, which freed about 130px under the hero —
+ *  the envelope may use some of it instead of leaving a band of empty page above the flap.
+ *  The lift is always clamped by the hero clearance the placement already computes, so it
+ *  can never carry the flap into the hero's own text.
+ */
+const PHONE_LIFT = 100
+
 /** On a phone there is no room to watch an envelope open: the hero fills the screen
  *  and the body is only ~230px tall. There it starts open — the flap stands up into
  *  the hero — and scrolling only carries it away. */
@@ -154,7 +163,12 @@ export function EnvelopeOverlay() {
       // the scroll, and a live reading would drop the envelope 460px in a single frame.
       const restLifted = !envelopeOpensOnScroll(width)
       const paintedTop = top + shiftPx + (restLifted ? 0 : ENVELOPE_VIEW.bodyTopShare * boxHeight)
-      const push = Math.max(0, Math.ceil(wanted - paintedTop))
+      // positive: the hero text forces the envelope down. negative: a phone lifts it into
+      // the space the two-column addressee list left free, never past that clearance.
+      const clearance = Math.max(0, Math.ceil(wanted - paintedTop))
+      const slack = Math.max(0, Math.ceil(paintedTop - wanted))
+      const lift = restLifted ? Math.min(PHONE_LIFT, slack) : 0
+      const push = clearance - lift
 
       placed.current = { width, top, push, heroBottom, boxHeight, shiftPx }
       // The resting fold, in viewport coordinates: box top, the drift the envelope carries

@@ -11,14 +11,16 @@ import { page } from '../content/page'
  * the placement is stated here instead of being derived from the order.
  */
 const PHONE_GRID: Record<string, string> = {
-  'Hedera Foundation': 'col-start-1 row-start-1',
-  'Hedera Hashgraph': 'col-start-2 row-start-1',
-  'Hashgraph Foundry': 'col-start-1 row-start-2',
-  'Supra Labs': 'col-start-2 row-start-2',
-  'Entropy Foundation': 'col-start-1 row-start-3',
-  'Bonzo Finance Labs': 'col-start-2 row-start-3',
+  // the two columns face each other across the gap — left column flush right, right
+  // column flush left — so the names read as one block rather than two ragged lists
+  'Hedera Foundation': 'col-start-1 row-start-1 justify-self-end text-right',
+  'Hedera Hashgraph': 'col-start-2 row-start-1 justify-self-start text-left',
+  'Hashgraph Foundry': 'col-start-1 row-start-2 justify-self-end text-right',
+  'Supra Labs': 'col-start-2 row-start-2 justify-self-start text-left',
+  'Entropy Foundation': 'col-start-1 row-start-3 justify-self-end text-right',
+  'Bonzo Finance Labs': 'col-start-2 row-start-3 justify-self-start text-left',
   // the full-width name is centred: left-aligned it reads as another left-column entry
-  'Bonzo Finance Foundation': 'col-span-2 row-start-4 justify-center text-center',
+  'Bonzo Finance Foundation': 'col-span-2 row-start-4 justify-self-center text-center',
 }
 
 /**
@@ -51,7 +53,7 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
               organisation names need those 24px more than the surrounding paragraph does, and
               they are what lets the type stay at 16px instead of dropping to 15. */}
           <div className="-mx-3 sm:mx-0">
-          <ul className="mt-3 grid grid-cols-2 justify-items-center gap-x-6 gap-y-1.5 text-center sm:flex sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2">
+          <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 sm:flex sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-center sm:gap-x-6 sm:gap-y-2 sm:text-center">
             {addressees.map((addressee, i) => (
               <Fragment key={addressee.name}>
                 {/* Seven names never share a line inside max-w-5xl, and letting the
@@ -59,7 +61,7 @@ export function Hero({ signatureCount }: { signatureCount: number | null }) {
                     side instead: the three Hedera entities above, the four that follow
                     below, and the stack on a phone is unaffected. */}
                 {i === 3 ? <li aria-hidden="true" className="hidden basis-full sm:block" /> : null}
-                <li className={`flex items-start justify-center gap-2.5 text-center ${PHONE_GRID[addressee.name] ?? ''} sm:col-auto sm:row-auto`}>
+                <li className={`flex items-start gap-2.5 ${PHONE_GRID[addressee.name] ?? ''} sm:col-auto sm:row-auto sm:justify-self-auto sm:text-center`}>
                   {/* the marks come back on a wider screen: in a two-column block on a
                       phone they cost the width the longer names need */}
                   {addressee.logoSrc ? (
