@@ -41,7 +41,7 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
               control, and a second outline beside it read as two buttons. */}
           {standing ? (
             <span
-              className={`hidden self-center text-[0.5625rem] font-semibold uppercase tracking-[0.1em] sm:inline ${
+              className={`self-center whitespace-nowrap text-[0.5rem] font-semibold uppercase tracking-[0.06em] sm:text-[0.5625rem] sm:tracking-[0.1em] ${
                 standing === 'affected' ? 'text-accent' : 'text-accent/75'
               }`}
             >
@@ -54,7 +54,7 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
             onPointerEnter={prefetchWallet}
             onFocus={prefetchWallet}
             aria-haspopup="dialog"
-            className="flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-accent hover:text-ink sm:py-1.5"
+            className="flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-accent hover:text-ink sm:gap-2 sm:px-4 sm:py-1.5 sm:text-[0.6875rem] sm:tracking-[0.14em]"
           >
             {connected ? (
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
