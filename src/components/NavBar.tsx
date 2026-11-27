@@ -3,6 +3,7 @@ import { config } from '../config'
 import { standingOf } from '../lib/affected'
 import { prefetchWallet } from '../lib/wallet'
 import { Spinner } from './Spinner'
+import { Tip } from './Tip'
 
 /**
  * A thin bar, not a website chrome: the letter is the page. It carries the one
@@ -19,6 +20,34 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
   const busy = wallet.status === 'connecting' || wallet.status === 'restoring'
   const label = connected ? wallet.accountId : busy ? 'Connecting…' : 'Connect'
   const standing = connected && wallet.accountId ? standingOf(wallet.accountId) : null
+
+  const accountButton = (
+    <button
+      type="button"
+      onClick={() => {
+        if (!config.readOnly) onConnect()
+      }}
+      onPointerEnter={config.readOnly ? undefined : prefetchWallet}
+      onFocus={config.readOnly ? undefined : prefetchWallet}
+      aria-haspopup={config.readOnly ? undefined : 'dialog'}
+      aria-disabled={config.readOnly || undefined}
+      aria-describedby={config.readOnly ? 'connect-read-only' : undefined}
+      className={`flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-ink-soft sm:gap-2 sm:px-4 sm:py-1.5 sm:text-[0.6875rem] sm:tracking-[0.14em] ${
+        config.readOnly
+          ? 'cursor-not-allowed opacity-55'
+          : 'transition-colors hover:border-accent hover:text-ink'
+      }`}
+    >
+      {connected ? (
+        <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
+      ) : busy ? (
+        <Spinner className="text-accent" />
+      ) : null}
+      <span className={connected ? 'font-mono text-[0.6875rem] tracking-normal normal-case' : ''}>
+        {label}
+      </span>
+    </button>
+  )
 
   return (
     <header className="sticky top-0 z-40 border-b border-rule/70 bg-page/85 backdrop-blur">
@@ -48,31 +77,20 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
               {standing === 'affected' ? 'Affected User' : 'Supporter'}
             </span>
           ) : null}
-          <button
-            type="button"
-            onClick={() => {
-              if (!config.readOnly) onConnect()
-            }}
-            onPointerEnter={config.readOnly ? undefined : prefetchWallet}
-            onFocus={config.readOnly ? undefined : prefetchWallet}
-            aria-haspopup={config.readOnly ? undefined : 'dialog'}
-            aria-disabled={config.readOnly || undefined}
-            title={config.readOnly ? 'The letter is read-only right now.' : undefined}
-            className={`flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-ink-soft sm:gap-2 sm:px-4 sm:py-1.5 sm:text-[0.6875rem] sm:tracking-[0.14em] ${
-              config.readOnly
-                ? 'cursor-not-allowed opacity-55'
-                : 'transition-colors hover:border-accent hover:text-ink'
-            }`}
-          >
-            {connected ? (
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
-            ) : busy ? (
-              <Spinner className="text-accent" />
-            ) : null}
-            <span className={connected ? 'font-mono text-[0.6875rem] tracking-normal normal-case' : ''}>
-              {label}
-            </span>
-          </button>
+          {/* Only while read-only: in the live page the button opens the dialog, and a panel
+              explaining that it does not would be a lie. */}
+          {config.readOnly ? (
+            <Tip
+              id="connect-read-only"
+              side="below"
+              width={300}
+              panel="The letter is currently read-only and still being drafted. As soon as the campaign starts, you will be able to connect and sign the letter."
+            >
+              {accountButton}
+            </Tip>
+          ) : (
+            accountButton
+          )}
         </div>
       </div>
     </header>
