@@ -22,6 +22,13 @@ describe('sample comments', () => {
     }
   })
 
+  it('puts at least half of the accounts at the published floor', () => {
+    // The floor is where most real accounts sit: 56.1 % is what an account that supplied only
+    // HBAR or USDC received. A reel where the floor is the exception would misrepresent it.
+    const atFloor = entries.filter((entry) => entry.recoveryRate === 56.1).length
+    expect(atFloor / entries.length).toBeGreaterThanOrEqual(0.5)
+  })
+
   it('never shows a recovery rate below the published floor', () => {
     for (const entry of entries) {
       if (entry.recoveryRate === null) continue
