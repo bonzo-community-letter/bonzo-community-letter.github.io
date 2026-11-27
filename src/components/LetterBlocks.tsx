@@ -17,14 +17,16 @@ function Citation({ number, source }: { number: string; source: string }) {
   const id = useId()
   return (
     <Tip id={id} side="above" width={320} panel={<Inline text={source} sources={new Map()} />}>
-      <sup
+      {/* `[N]` in the line, not a superscript: the number carries the accent, the brackets the
+          text's own colour, so the citation reads as part of the sentence it belongs to. */}
+      <span
         tabIndex={0}
         aria-describedby={id}
         aria-label={`Source ${number}`}
-        className="cursor-help rounded-[2px] px-[0.15em] font-sans text-[0.625rem] font-semibold text-accent transition-colors hover:text-sheet-ink focus:outline-none focus-visible:text-sheet-ink"
+        className="cursor-help whitespace-nowrap focus:outline-none"
       >
-        {number}
-      </sup>
+        [<span className="text-accent">{number}</span>]
+      </span>
     </Tip>
   )
 }
