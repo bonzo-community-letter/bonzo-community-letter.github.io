@@ -56,7 +56,7 @@ We are sure that there are multiple funding sources; we only list two of them to
    - the first 50% (3,500,000,000 HBAR) were released to the Hedera Foundation on 14 February 2025 and around 68% have not yet been spent;[13][11]
    - the second 50% (3,500,000,000 HBAR) were re-allocated to the Hedera Council's general Ecosystem & Open Source Development fund on 29 October 2025.[13]
 
-2. From Supra Labs and Entropy Foundation, whose oracle technology and uncoordinated security patches[4] **publicly exposed** the Hedera ecosystem's lending protocol to extreme risk, eventually leading to the exploit. The $100,000 offered to the hacker by Joshua D. Tobkin should be re-allocated to affected users as the minimum support.
+2. From Supra Labs and Entropy Foundation, whose oracle technology and uncoordinated security patches[4] **publicly exposed** the Hedera ecosystem's lending protocol to extreme risk, eventually leading to the exploit. The $100,000 offered to the hacker by CEO Joshua D. Tobkin could be re-allocated to the affected users as the minimum support.
 
 We — the holders of the 2,466 accounts that used Bonzo Lend — are, to a large part, Hedera's DeFi layer. We put our trust in the DeFi and oracle technology endorsed, advertised, and supported by Hedera Hashgraph and Hedera Foundation.
 
