@@ -27,9 +27,38 @@ const ORDERED = /^(\d+)\.\s+(.*)$/
 const BULLET = /^[-*]\s+(.*)$/
 const RULE = /^-{3,}$/
 
-/** True for the numbered source entries, which the sheet sets smaller than the letter. */
+/** True for the numbered source entries. */
 export const isSource = (block: LetterBlock): boolean =>
   block.kind === 'paragraph' && /^\*\*\d+\*\*\s+—/.test(block.text)
+
+/** What a citation number points at, keyed by the number as written in the text. */
+export type LetterSources = Map<string, string>
+
+/**
+ * Lift the trailing "Sources" section out of the flow.
+ *
+ * The sheet does not print it: a citation is a tooltip on the number that carries it, so the
+ * sources are read where they are cited instead of forty lines below. They stay in the text
+ * that is signed — a letter keeps its sources — they are only not laid out as a list.
+ */
+export function splitSources(blocks: LetterBlock[]): { body: LetterBlock[]; sources: LetterSources } {
+  const sources: LetterSources = new Map()
+  const at = blocks.findIndex((block) => block.kind === 'heading' && block.level === 3 && /^sources$/i.test(block.text))
+  if (at === -1) return { body: blocks, sources }
+
+  const body = blocks.slice(0, at)
+  // the rule that opened the section goes with it
+  const last = body[body.length - 1]
+  if (last && last.kind === 'rule') body.pop()
+
+  for (const block of blocks.slice(at + 1)) {
+    if (block.kind !== 'paragraph') continue
+    const match = /^\*\*(\d+)\*\*\s+—\s+([\s\S]*)$/.exec(block.text)
+    if (match?.[1] && match[2]) sources.set(match[1], match[2].trim())
+  }
+
+  return { body, sources }
+}
 
 export function parseLetter(text: string): LetterBlock[] {
   const lines = text.replace(/\r\n/g, '\n').split('\n')

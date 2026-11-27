@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { LETTER_BODY } from '../content/letter-body'
-import { isSource, paginate, parseLetter, type LetterBlock } from './letterBlocks'
+import { isSource, paginate, parseLetter, splitSources, type LetterBlock } from './letterBlocks'
 
 const text = (block: LetterBlock): string => {
   switch (block.kind) {
@@ -101,5 +101,28 @@ describe('paginate', () => {
     const pages = paginate([{ kind: 'paragraph', text: 'x'.repeat(500) }, { kind: 'rule' }], 100)
     expect(pages).toHaveLength(2)
     expect(pages[0]).toHaveLength(1)
+  })
+})
+
+describe('splitSources', () => {
+  const parsed = parseLetter(LETTER_BODY)
+
+  it('lifts the sources out of the body', () => {
+    const { body, sources } = splitSources(parsed)
+    expect(sources.size).toBe(13)
+    expect(body.some((block) => block.kind === 'heading' && /^sources$/i.test(block.text))).toBe(false)
+    expect(sources.get('1')).toContain('Bonzo Lend Incident Report')
+    expect(sources.get('13')).toContain('hederacouncil.org')
+  })
+
+  it('takes the rule that opened the section with it', () => {
+    const { body } = splitSources(parsed)
+    expect(body[body.length - 1]?.kind).not.toBe('rule')
+  })
+
+  it('leaves a letter without a sources section alone', () => {
+    const blocks = parseLetter('## A heading\n\ntext')
+    expect(splitSources(blocks).body).toEqual(blocks)
+    expect(splitSources(blocks).sources.size).toBe(0)
   })
 })

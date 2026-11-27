@@ -6,7 +6,7 @@ import { signatureBy, type Signature } from '../lib/hcs'
 import { localSignature } from '../lib/signedHere'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
 import { LetterBlocks } from './LetterBlocks'
-import { paginate, parseLetter } from '../lib/letterBlocks'
+import { paginate, parseLetter, splitSources } from '../lib/letterBlocks'
 import { Tip } from './Tip'
 import { DonateDialog } from './DonateDialog'
 import { SignDialog } from './SignDialog'
@@ -150,8 +150,12 @@ export function LetterSheet({
     localSignature(wallet.accountId, subject, letterHash, config.network) !== null
   useStartDepth(wrapper, sheet)
 
-  const blocks = useMemo(() => (letterText.trim().length > 0 ? parseLetter(letterText) : []), [])
-  const pages = useMemo(() => (blocks.length > 0 ? paginate(blocks, PAGE_BUDGET) : []), [])
+  // the sources are lifted out of the flow: they open on the number that cites them
+  const { body, sources } = useMemo(
+    () => (letterText.trim().length > 0 ? splitSources(parseLetter(letterText)) : { body: [], sources: new Map() }),
+    [],
+  )
+  const pages = useMemo(() => (body.length > 0 ? paginate(body, PAGE_BUDGET) : []), [body])
 
   /** Who it is from and to, the subject, the salutation: page one, where a letter opens. */
   const letterhead = (
@@ -304,7 +308,7 @@ export function LetterSheet({
               <article className={sheetClass}>
                 {first ? letterhead : null}
                 <div className="letter-body mt-5 space-y-5">
-                  <LetterBlocks blocks={pageBlocks} />
+                  <LetterBlocks blocks={pageBlocks} sources={sources} />
                 </div>
                 {last ? actions : null}
                 {pages.length > 1 ? (
