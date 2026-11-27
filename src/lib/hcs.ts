@@ -1,4 +1,4 @@
-export const PAYLOAD_VERSION = 1 as const
+export const PAYLOAD_VERSION = 2 as const
 
 export type HederaNetwork = 'mainnet' | 'testnet'
 
@@ -16,10 +16,15 @@ export const MAX_COMMENT_BYTES = 512
  * primitive Bonzo used for the recovery portal's termsHash, and small enough to
  * stay far under HCS's 1 KB cap. `letter` names the campaign; `letterHash` pins
  * the exact version of the text.
+ *
+ * It deliberately carries **no account id**. Who signed is the one fact the
+ * message cannot be trusted about: the topic has no submit key, so anyone can
+ * post a message claiming any id. The network, by contrast, will not accept a
+ * topic message from an account that did not sign and pay for it — so the
+ * signer is read from `payer_account_id` on the mirror's envelope and never from
+ * the JSON inside it. See `parseMessages`.
  */
 export interface SignaturePayload {
-  /** signer's Hedera account id, e.g. 0.0.1234 */
-  accountId: string
   /** campaign subject, e.g. "bonzo-exploit-open-letter" */
   subject: string
   /** SHA-256 of the letter text, lowercase hex — computed at build time */
@@ -39,8 +44,14 @@ export interface SignaturePayload {
 }
 
 export interface Signature extends SignaturePayload {
+  /**
+   * The signer, taken from the transaction's payer — the account the network
+   * charged and required a signature from. Not a claim made inside the message.
+   */
+  accountId: string
   sequence: number
   consensusTimestamp: string
+  /** Same value as `accountId`; kept because the mirror calls it the payer. */
   payerAccountId: string
 }
 
@@ -52,7 +63,6 @@ export interface MirrorMessage {
 }
 
 export interface SignatureInput {
-  accountId: string
   subject: string
   letterHash: string
   comment?: string
@@ -86,13 +96,16 @@ const byteLength = (s: string): number => new TextEncoder().encode(s).length
 
 /**
  * The exact field order a signature message is serialised in:
- * `accountId`, `subject`, `version`, `letterHash`, `signedAt`, `comment`.
+ * `subject`, `version`, `letterHash`, `signedAt`, `comment`, `recoveryRate`.
  *
  * A fixed order — rather than sorted keys — is what makes the bytes
  * reproducible: every client emits the same string for the same values.
+ *
+ * Version 2 dropped `accountId`: the signer is the transaction's payer, read
+ * from the mirror envelope, and a message that names an account is a message
+ * that can lie about it. Version 1 messages are therefore not read at all.
  */
 export const FIELD_ORDER = [
-  'accountId',
   'subject',
   'version',
   'letterHash',
@@ -131,7 +144,6 @@ export function commentByteLength(comment: string): number {
 export function buildSignature(input: SignatureInput): BuildResult {
   const errors: string[] = []
 
-  if (!ACCOUNT_ID.test(input.accountId)) errors.push('accountId must look like 0.0.1234')
   if (!SLUG.test(input.subject)) errors.push('subject must be a lowercase slug')
   if (!SHA256_HEX.test(input.letterHash)) errors.push('letterHash must be 64 lowercase hex characters')
 
@@ -165,7 +177,6 @@ export function buildSignature(input: SignatureInput): BuildResult {
   if (errors.length > 0) return { ok: false, errors }
 
   const payload: SignaturePayload = {
-    accountId: input.accountId,
     subject: input.subject,
     letterHash: input.letterHash,
     signedAt: input.signedAt ?? new Date().toISOString(),
@@ -191,7 +202,6 @@ function isSignaturePayload(value: unknown): value is SignaturePayload {
   const p = value as Record<string, unknown>
   return (
     p.version === PAYLOAD_VERSION &&
-    typeof p.accountId === 'string' &&
     typeof p.subject === 'string' &&
     typeof p.letterHash === 'string' &&
     typeof p.signedAt === 'string' &&
@@ -218,6 +228,13 @@ export function decodeMessage(base64: string): SignaturePayload | null {
 /**
  * Keep only messages that are signatures of *this* letter version.
  * Anything else on the topic (older drafts, other campaigns, junk) is ignored.
+ *
+ * **Who signed comes from the envelope, never from the message.** The topic has
+ * no submit key, so anyone can post JSON claiming any account id; what nobody
+ * can do is post a topic message without the claimed account signing and paying
+ * for it. `payer_account_id` is that account — the mirror's own record of the
+ * transaction's payer — so it is the only field here that a stranger cannot
+ * choose. A message with no valid payer is not a signature and is dropped.
  */
 export function parseMessages(
   messages: readonly MirrorMessage[],
@@ -225,16 +242,19 @@ export function parseMessages(
 ): Signature[] {
   const out: Signature[] = []
   for (const m of messages) {
+    const accountId = (m.payer_account_id ?? '').trim().toLowerCase()
+    if (!ACCOUNT_ID.test(accountId)) continue
     const payload = decodeMessage(m.message)
     if (!payload) continue
     if (payload.subject !== opts.subject) continue
     if (payload.letterHash !== opts.letterHash) continue
     out.push({
       ...payload,
+      accountId,
       comment: payload.comment ?? '',
       sequence: m.sequence_number,
       consensusTimestamp: m.consensus_timestamp,
-      payerAccountId: m.payer_account_id ?? payload.accountId,
+      payerAccountId: accountId,
     })
   }
   return out.sort((a, b) => Number(a.consensusTimestamp) - Number(b.consensusTimestamp))
@@ -437,24 +457,35 @@ export interface FetchOptions {
   sinceSequence?: number
   signal?: AbortSignal
   fetchImpl?: typeof fetch
+  /**
+   * Called after every page with the signatures it held and the number of pages read
+   * so far. A long topic is a walk of up to `maxPages` requests; the caller can show
+   * what has arrived instead of waiting for the last page.
+   */
+  onPage?: (page: readonly Signature[], pagesRead: number) => void
 }
 
 /** The mirror answers at most 100 messages per page; there is no "everything" call. */
 export const PAGE_SIZE = 100
 /**
- * How far back the page is willing to read. 20 pages is 2 000 messages — a letter with
- * more signatures than that is a different problem, but the page must not stop at a few
- * hundred without saying so, which is what a 5-page bound did.
+ * How far back the page is willing to read — 200 pages, 20 000 messages.
+ *
+ * The read walks the topic **oldest first**, so the first signers are never the
+ * ones a growing topic pushes out of view; what a very long topic costs instead
+ * is its newest messages on a first load, which the minute-by-minute refresh
+ * picks up by sequence number. The bound is a request budget, not a policy: 200
+ * pages is 200 sequential GETs on a cold load, and the page says so when it
+ * stops there (`truncated`).
  */
-export const MAX_PAGES = 20
+export const MAX_PAGES = 200
 
 /**
  * Read the topic from the public mirror node (no key, no backend).
  *
- * Newest first, following the cursor until the topic is exhausted or MAX_PAGES is hit.
+ * Oldest first, following the cursor until the topic is exhausted or MAX_PAGES is hit.
  * `sinceSequence` reads only what is newer than a message already held, which is what a
- * refresh does: the first load may walk twenty pages, the minute-by-minute one asks for
- * what has been written since and usually gets an empty answer.
+ * refresh does: the first load may walk two hundred pages, the minute-by-minute one asks
+ * for what has been written since and usually gets an empty answer.
  */
 export async function fetchSignatures(opts: FetchOptions): Promise<Signature[]> {
   const { network, topicId, subject, letterHash, maxPages = MAX_PAGES, sinceSequence, signal } = opts
@@ -463,7 +494,7 @@ export async function fetchSignatures(opts: FetchOptions): Promise<Signature[]> 
 
   const after = sinceSequence !== undefined ? `&sequenceNumber=gt:${sinceSequence}` : ''
   let url: string | null =
-    `${MIRROR_BASE[network]}/topics/${encodeURIComponent(topicId)}/messages?limit=${PAGE_SIZE}&order=desc${after}`
+    `${MIRROR_BASE[network]}/topics/${encodeURIComponent(topicId)}/messages?limit=${PAGE_SIZE}&order=asc${after}`
   const collected: Signature[] = []
   let pages = 0
 
@@ -474,7 +505,9 @@ export async function fetchSignatures(opts: FetchOptions): Promise<Signature[]> 
       messages?: MirrorMessage[]
       links?: { next?: string | null }
     }
-    collected.push(...parseMessages(body.messages ?? [], { subject, letterHash }))
+    const page = parseMessages(body.messages ?? [], { subject, letterHash })
+    collected.push(...page)
+    opts.onPage?.(page, pages + 1)
     const next = body.links?.next
     url = next ? (next.startsWith('http') ? next : `${MIRROR_BASE[network]}${next.replace(/^\/api\/v1/, '')}`) : null
     pages += 1

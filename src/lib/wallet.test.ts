@@ -101,18 +101,26 @@ describe('walletLink', () => {
     expect(link).toBe('hashpack://')
   })
 
-  it('falls back to the universal link when the wallet publishes no scheme', async () => {
+  it('does not follow a universal link — a website is not the wallet', async () => {
     const link = await walletLink('hashpack', projectId, (async () =>
       jsonResponse(listing({ slug: 'hashpack', mobile: { universal: 'https://link.hashpack.app' } }))) as unknown as typeof fetch)
-    expect(link).toBe('https://link.hashpack.app')
+    expect(link).toBeNull()
+  })
+
+  it('refuses a native link whose scheme is not that wallet', async () => {
+    for (const native of ['javascript:alert(1)//', 'https://evil.example/', 'hashpackk://', 'wc://']) {
+      const link = await walletLink('hashpack', projectId, (async () =>
+        jsonResponse(listing({ slug: 'hashpack', mobile: { native } }))) as unknown as typeof fetch)
+      expect(link).toBeNull()
+    }
   })
 
   it('finds Kabila by its slug, which is not its name', async () => {
     const link = await walletLink('kabila', projectId, (async () =>
       jsonResponse(
-        listing({ slug: 'kabila-wallet', mobile: { universal: 'https://wallet.kabila.app' } }),
+        listing({ slug: 'kabila-wallet', mobile: { universal: 'https://wallet.kabila.app', native: 'kabila-wallet://' } }),
       )) as unknown as typeof fetch)
-    expect(link).toBe('https://wallet.kabila.app')
+    expect(link).toBe('kabila-wallet://')
   })
 
   it('falls back to the native scheme', async () => {
@@ -124,9 +132,9 @@ describe('walletLink', () => {
   it('matches by display name when the slug moved', async () => {
     const link = await walletLink('hashpack', projectId, (async () =>
       jsonResponse(
-        listing({ slug: 'hashpack-2', name: 'HashPack', mobile: { universal: 'https://link.hashpack.app' } }),
+        listing({ slug: 'hashpack-2', name: 'HashPack', mobile: { native: 'hashpack:' } }),
       )) as unknown as typeof fetch)
-    expect(link).toBe('https://link.hashpack.app')
+    expect(link).toBe('hashpack:')
   })
 
   it('asks the registry by search, not by slug', async () => {

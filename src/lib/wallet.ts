@@ -134,6 +134,43 @@ export interface WalletLinks {
   universal: string | null
 }
 
+/**
+ * The schemes each wallet's own app is opened with. A link is only followed if its
+ * scheme is in this list for the wallet the reader picked.
+ *
+ * The registry entry is data from a third party, read at runtime, and it ends up in
+ * `window.location.href` with the pairing URI attached. Without this list, a tampered
+ * or typosquatted entry could send the reader — and the pairing code — to an app that
+ * is not their wallet, where a fake approval screen asks for a seed phrase. A scheme
+ * that is not one of these is not that wallet, so the page falls back to the pairing
+ * dialog instead, which always works.
+ */
+const WALLET_SCHEMES: Partial<Record<WalletKind, readonly string[]>> = {
+  hashpack: ['hashpack'],
+  kabila: ['kabila', 'kabila-wallet'],
+}
+
+/** The scheme of a link (`hashpack://x` → `hashpack`), or null when it has none. */
+export function schemeOf(link: string): string | null {
+  const match = /^([a-z][a-z0-9+.-]*):/i.exec(link.trim())
+  return match?.[1] ? match[1].toLowerCase() : null
+}
+
+/**
+ * The link to open for a wallet, if the registry published one that is *that* wallet.
+ *
+ * Deliberately never returns a universal (https) link: it opens the wallet's website,
+ * not the wallet, and it is indistinguishable from any other site once it is a string
+ * from an API. No scheme the list knows means no deep link — the reader gets the QR.
+ */
+export function safeWalletLink(kind: WalletKind, links: WalletLinks): string | null {
+  const allowed = WALLET_SCHEMES[kind]
+  const native = links.native?.trim()
+  if (!allowed || !native) return null
+  const scheme = schemeOf(native)
+  return scheme !== null && allowed.includes(scheme) ? native : null
+}
+
 /** Both mobile links the registry publishes, or two nulls. */
 export async function walletLinks(
   kind: WalletKind,
@@ -164,11 +201,12 @@ export async function walletLinks(
 }
 
 /**
- * The link to open on a phone: the wallet's own scheme, because that opens the
- * app in one step. The registry's https link lands on the wallet's *website*
- * first — the user then has to find "open app" there, and stays on that site
- * afterwards. The universal link stays as the fallback for wallets that
- * publish nothing else.
+ * The link to open on a phone: the wallet's own scheme, because that opens the app in
+ * one step — and only if the registry's entry names a scheme this wallet is opened
+ * with. The registry's https link is not a fallback: it lands on the wallet's *website*,
+ * where the user has to find "open app", and a string from an API that can become any
+ * URL is not something to navigate to with a pairing code attached. No link means the
+ * caller shows the pairing dialog instead.
  */
 export async function walletLink(
   kind: WalletKind,
@@ -176,7 +214,7 @@ export async function walletLink(
   fetchImpl: typeof fetch = fetch,
 ): Promise<string | null> {
   const links = await walletLinks(kind, projectId, fetchImpl)
-  return links.native ?? links.universal
+  return safeWalletLink(kind, links)
 }
 
 /**

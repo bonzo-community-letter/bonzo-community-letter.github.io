@@ -18,7 +18,7 @@ function Row({ label, value }: { label: string; value: string }) {
  * Collapsed by default: this is for development, not for readers.
  */
 export function DevStatus({ state }: { state: SignatureState }) {
-  const draft = buildSignature({ accountId: '0.0.1234', subject, letterHash })
+  const draft = buildSignature({ subject, letterHash })
 
   const signatureValue =
     state.status === 'closed'
@@ -27,7 +27,7 @@ export function DevStatus({ state }: { state: SignatureState }) {
         ? 'reading…'
         : state.status === 'error'
           ? `error: ${state.error ?? 'unknown'}`
-          : `${state.signatures.length}`
+          : `${state.signatures.length}${state.reading ? ' (reading…)' : ''}`
 
   return (
     <section className="mx-auto w-full max-w-5xl px-4 pb-20 pt-10 sm:px-6">

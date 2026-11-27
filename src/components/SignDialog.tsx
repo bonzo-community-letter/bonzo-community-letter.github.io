@@ -178,7 +178,6 @@ export function SignDialog({
   const alreadySigned = already !== null
 
   const preview = prettyPayload({
-    accountId: wallet.accountId ?? '0.0.x',
     subject,
     version: PAYLOAD_VERSION,
     letterHash,
@@ -194,7 +193,6 @@ export function SignDialog({
     setNotice(null)
     const accountId = wallet.accountId
     const built = buildSignature({
-      accountId,
       subject,
       letterHash,
       comment: trimmed,
@@ -530,6 +528,11 @@ export function SignDialog({
               <pre className="mt-2 max-h-40 overflow-auto rounded-sm border border-rule bg-page/40 px-3 py-2 font-mono text-[0.6875rem] leading-relaxed text-ink-soft">
                 {preview}
               </pre>
+              <p className="mt-2 text-[0.75rem] leading-relaxed text-ink-faint">
+                Your account is not in the message. The network records it as the transaction&rsquo;s
+                payer, and only the account that signs and pays can post — so nobody can submit a
+                message in your name.
+              </p>
             </details>
 
             {notice ? (

@@ -8,6 +8,8 @@ export interface SignatureState {
   error?: string
   /** True when the read stopped at its page bound: there are older messages unread. */
   truncated?: boolean
+  /** True while a first walk of the topic is still in progress; the list grows as it goes. */
+  reading?: boolean
 }
 
 export interface SignatureQuery {
@@ -32,6 +34,14 @@ function newestSequence(signatures: readonly Signature[]): number | undefined {
 
 /** Merge a fresh page into what is held, by sequence number, oldest first. */
 function merge(held: readonly Signature[], incoming: readonly Signature[]): Signature[] {
+  if (incoming.length === 0) return held as Signature[]
+  // The topic is walked oldest first, so a page usually continues where the last one
+  // stopped. Appending then is linear; sorting twenty thousand signatures per page two
+  // hundred times is not.
+  const lastHeld = held.length > 0 ? Number(held[held.length - 1]!.sequence) : -1
+  const firstIncoming = Number(incoming[0]!.sequence)
+  if (firstIncoming > lastHeld) return [...held, ...incoming]
+
   const bySequence = new Map<number, Signature>()
   for (const signature of held) bySequence.set(Number(signature.sequence), signature)
   for (const signature of incoming) bySequence.set(Number(signature.sequence), signature)
@@ -58,7 +68,10 @@ export function useSignatures({ subject, letterHash }: SignatureQuery): Signatur
   // The feed the loop reads from. State would do, but this is what the next request is
   // built from, and it must not lag a render behind.
   const held = useRef<Signature[]>([])
-  const complete = useRef(false)
+  /** True once a first read has finished; after that every read asks only for what is new. */
+  const loaded = useRef(false)
+  /** Sticky: the first read stopped at its page bound, so the topic is longer than shown. */
+  const truncated = useRef(false)
 
   useEffect(() => {
     if (!config.topicId || !letterHash) {
@@ -71,7 +84,8 @@ export function useSignatures({ subject, letterHash }: SignatureQuery): Signatur
 
     const load = async (): Promise<void> => {
       try {
-        const since = complete.current ? newestSequence(held.current) : undefined
+        const since = loaded.current ? newestSequence(held.current) : undefined
+        const walking = since === undefined
         const incoming = await fetchSignatures({
           network: config.network,
           topicId: config.topicId,
@@ -79,28 +93,47 @@ export function useSignatures({ subject, letterHash }: SignatureQuery): Signatur
           letterHash,
           sinceSequence: since,
           signal: controller.signal,
+          onPage: (page) => {
+            if (cancelled) return
+            // Each page is merged and shown before the next request goes out, so the
+            // count climbs while the topic is walked instead of appearing all at once.
+            const merged = merge(held.current, page)
+            held.current = merged
+            setState({
+              status: 'ready',
+              signatures: merged,
+              reading: walking,
+              truncated: truncated.current,
+            })
+          },
         })
         if (cancelled) return
 
         const merged = since === undefined ? incoming : merge(held.current, incoming)
         held.current = merged
-        // A full read that came back shorter than its own page bound saw the whole topic.
-        const truncated = since === undefined && incoming.length >= MAX_PAGES * PAGE_SIZE
-        if (since === undefined) complete.current = !truncated
-        setState({ status: 'ready', signatures: merged, truncated })
+        // A first read that came back at its own page bound did not see the whole topic.
+        // The flag is sticky, and the next read still asks only for what is new — a bound
+        // that made every refresh walk two hundred pages again would be a load of its own.
+        if (since === undefined) {
+          truncated.current = incoming.length >= MAX_PAGES * PAGE_SIZE
+          loaded.current = true
+        }
+        setState({ status: 'ready', signatures: merged, reading: false, truncated: truncated.current })
       } catch (error) {
         if (cancelled || controller.signal.aborted) return
         setState((previous) => ({
           status: 'error',
           signatures: previous.signatures,
+          reading: false,
           error: error instanceof Error ? error.message : 'unknown error',
         }))
       }
     }
 
     held.current = []
-    complete.current = false
-    setState({ status: 'loading', signatures: [] })
+    loaded.current = false
+    truncated.current = false
+    setState({ status: 'loading', signatures: [], reading: true })
     void load()
     const timer = window.setInterval(() => void load(), 60_000)
 

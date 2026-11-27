@@ -3,7 +3,7 @@ import { MAX_PAGES, PAGE_SIZE, buildSignature, encodePayload, fetchSignatures, t
 
 const HASH = 'a'.repeat(64)
 const LETTER = 'bonzo-exploit-open-letter'
-const input = { accountId: '0.0.1234', subject: LETTER, letterHash: HASH }
+const input = { subject: LETTER, letterHash: HASH }
 
 const toB64 = (s: string): string => {
   const bytes = new TextEncoder().encode(s)
@@ -11,7 +11,7 @@ const toB64 = (s: string): string => {
 }
 
 function message(sequence: number, accountId = '0.0.1234'): MirrorMessage {
-  const built = buildSignature({ ...input, accountId, signedAt: '2026-11-15T18:00:00.000Z' })
+  const built = buildSignature({ ...input, signedAt: '2026-11-15T18:00:00.000Z' })
   if (!built.ok) throw new Error('fixture failed')
   return {
     consensus_timestamp: `${1700000000 + sequence}.000000000`,
@@ -41,11 +41,30 @@ function fakeFetch(pages: { messages: MirrorMessage[]; next?: string | null }[])
 const base = { network: 'mainnet' as const, topicId: '0.0.10965772', subject: LETTER, letterHash: HASH }
 
 describe('fetchSignatures', () => {
-  it('asks for a page of a hundred, newest first', async () => {
+  it('asks for a page of a hundred, oldest first', async () => {
     const { impl, urls } = fakeFetch([{ messages: [message(1)] }])
     await fetchSignatures({ ...base, fetchImpl: impl })
     expect(urls[0]).toContain(`limit=${PAGE_SIZE}`)
-    expect(urls[0]).toContain('order=desc')
+    expect(urls[0]).toContain('order=asc')
+  })
+
+  it('reports each page as it arrives, so a long walk can be shown while it runs', async () => {
+    const { impl } = fakeFetch([
+      { messages: [message(1)], next: '/api/v1/topics/0.0.10965772/messages?limit=100&sequenceNumber=gt:1' },
+      { messages: [message(2), message(3)] },
+    ])
+    const pages: number[] = []
+    const sequences: number[] = []
+    await fetchSignatures({
+      ...base,
+      fetchImpl: impl,
+      onPage: (page, pagesRead) => {
+        pages.push(pagesRead)
+        sequences.push(...page.map((s) => s.sequence))
+      },
+    })
+    expect(pages).toEqual([1, 2])
+    expect(sequences).toEqual([1, 2, 3])
   })
 
   it('follows the cursor until the topic is exhausted', async () => {

@@ -17,13 +17,13 @@ import { describe, expect, it } from 'vitest'
 
 const HASH = 'a'.repeat(64)
 const LETTER = 'bonzo-exploit-open-letter'
-const input = { accountId: '0.0.1234', subject: LETTER, letterHash: HASH }
+const input = { subject: LETTER, letterHash: HASH }
 
 /** A signature as the mirror hands it over, with only the fields the numbering reads. */
 const base = {
   subject: LETTER,
   letterHash: HASH,
-  version: 1,
+  version: 2,
   comment: '',
   recoveryRate: null,
   payerAccountId: '0.0.1234',
@@ -38,10 +38,10 @@ const toB64 = (s: string): string => {
   return btoa(String.fromCharCode(...bytes))
 }
 
-const mirror = (payload: string, seq: number): MirrorMessage => ({
+const mirror = (payload: string, seq: number, payer = '0.0.1234'): MirrorMessage => ({
   consensus_timestamp: `${1700000000 + seq}.000000000`,
   message: toB64(payload),
-  payer_account_id: '0.0.1234',
+  payer_account_id: payer,
   sequence_number: seq,
 })
 
@@ -95,9 +95,8 @@ describe('recoveryRate', () => {
 
   it('still reads a message written before the field existed', () => {
     const old = JSON.stringify({
-      accountId: '0.0.1234',
       subject: LETTER,
-      version: 1,
+      version: 2,
       letterHash: HASH,
       signedAt: '2026-11-15T18:00:00.000Z',
       comment: 'Test',
@@ -113,7 +112,7 @@ describe('encodePayload', () => {
   it('serialises fields in the documented order, compactly', () => {
     const payload = payloadOf()
     expect(encodePayload(payload)).toBe(
-      `{"accountId":"0.0.1234","subject":"${LETTER}","version":1,"letterHash":"${HASH}",` +
+      `{"subject":"${LETTER}","version":2,"letterHash":"${HASH}",` +
         `"signedAt":"2026-11-15T18:00:00.000Z","comment":"","recoveryRate":null}`,
     )
   })
@@ -130,17 +129,25 @@ describe('buildSignature', () => {
     if (!result.ok) return
 
     expect(result.payload).toEqual({
-      accountId: '0.0.1234',
       subject: LETTER,
       letterHash: HASH,
       signedAt: '2026-11-15T18:00:00.000Z',
-      version: 1,
+      version: 2,
       comment: '',
       recoveryRate: null,
     })
     expect(Object.keys(result.payload).sort()).toEqual(
-      ['accountId', 'subject', 'letterHash', 'signedAt', 'version', 'comment', 'recoveryRate'].sort(),
+      ['subject', 'letterHash', 'signedAt', 'version', 'comment', 'recoveryRate'].sort(),
     )
+  })
+
+  it('never puts an account id in the message', () => {
+    const result = buildSignature({ ...input, signedAt: '2026-11-15T18:00:00.000Z' })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.payload).not.toHaveProperty('accountId')
+    expect(result.encoded).not.toContain('accountId')
+    expect(result.encoded).not.toContain('0.0.')
   })
 
   it('carries the hash of the letter, never the letter itself', () => {
@@ -163,12 +170,6 @@ describe('buildSignature', () => {
     if (!result.ok) return
     expect(result.payload.comment).toBe('')
     expect(result.encoded).toContain('"comment":""')
-  })
-
-  it('rejects an account id that is not a Hedera account', () => {
-    for (const accountId of ['', '1234', '0.0', 'abc', '0.0.12a']) {
-      expect(buildSignature({ ...input, accountId }).ok).toBe(false)
-    }
   })
 
   it('rejects anything that is not a 64-character lowercase sha-256', () => {
@@ -214,10 +215,23 @@ describe('decoding', () => {
 
   it('rejects other versions and foreign payloads', () => {
     const payload = payloadOf()
-    expect(decodeMessage(toB64(JSON.stringify({ ...payload, version: 2 })))).toBeNull()
+    expect(decodeMessage(toB64(JSON.stringify({ ...payload, version: 1 })))).toBeNull()
+    expect(decodeMessage(toB64(JSON.stringify({ ...payload, version: 3 })))).toBeNull()
     expect(decodeMessage(toB64(JSON.stringify({ hello: 'world' })))).toBeNull()
     expect(decodeMessage(toB64('not json'))).toBeNull()
     expect(decodeMessage('!!!!')).toBeNull()
+  })
+
+  it('ignores a version 1 message, whose signer was a claim inside the JSON', () => {
+    const v1 = JSON.stringify({
+      accountId: '0.0.1234',
+      subject: LETTER,
+      version: 1,
+      letterHash: HASH,
+      signedAt: '2026-11-15T18:00:00.000Z',
+      comment: 'Test',
+    })
+    expect(decodeMessage(toB64(v1))).toBeNull()
   })
 })
 
@@ -226,8 +240,8 @@ describe('parseMessages', () => {
 
   it('keeps only signatures of this exact letter version, in consensus order', () => {
     const rows = [
-      mirror(encodePayload(payloadOf({ accountId: '0.0.2' })), 2),
-      mirror(encodePayload(payloadOf({ accountId: '0.0.1' })), 1),
+      mirror(encodePayload(payloadOf()), 2, '0.0.2'),
+      mirror(encodePayload(payloadOf()), 1, '0.0.1'),
       mirror(encodePayload(payloadOf({ letterHash: 'b'.repeat(64) })), 3), // other draft
       mirror(encodePayload(payloadOf({ subject: 'other-letter' })), 4),
       mirror('{"hello":"world"}', 5),
@@ -238,12 +252,29 @@ describe('parseMessages', () => {
     expect(out.map((s) => s.sequence)).toEqual([1, 2])
   })
 
+  it('takes the signer from the payer, not from anything the message says', () => {
+    // A message that names another account, posted and paid for by the attacker.
+    const forged = JSON.stringify({ ...payloadOf(), accountId: '0.0.10248067' })
+    const [sig] = parseMessages([mirror(forged, 9, '0.0.99999999')], opts)
+    expect(sig?.accountId).toBe('0.0.99999999')
+    expect(sig?.payerAccountId).toBe('0.0.99999999')
+  })
+
+  it('drops a message the mirror gives no payer for', () => {
+    const built = buildSignature(input)
+    if (!built.ok) throw new Error('fixture failed')
+    const row = { ...mirror(built.encoded, 3), payer_account_id: undefined }
+    expect(parseMessages([row], opts)).toHaveLength(0)
+    expect(parseMessages([mirror(built.encoded, 4, 'not-an-account')], opts)).toHaveLength(0)
+  })
+
   it('carries consensus metadata and the comment through', () => {
     const built = buildSignature({ ...input, comment: 'a supplier' })
     if (!built.ok) throw new Error('fixture failed')
     const [sig] = parseMessages([mirror(built.encoded, 7)], opts)
     expect(sig?.comment).toBe('a supplier')
     expect(sig?.consensusTimestamp).toBe('1700000007.000000000')
+    expect(sig?.accountId).toBe('0.0.1234')
     expect(sig?.payerAccountId).toBe('0.0.1234')
   })
 })

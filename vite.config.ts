@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { letterHashPlugin } from './build/letter-hash.ts'
@@ -27,9 +27,33 @@ const hmr =
 // have to match the repository name ('/open-letter/'), or every asset 404s.
 const base = process.env.VITE_BASE?.trim() || '/open-letter/'
 
+/**
+ * The CSP lives in `index.html`, where it is visible and a test can read it. Vite's
+ * dev server injects an inline module (React refresh) and talks to an HMR WebSocket,
+ * neither of which exists in a production build — so dev gets the same policy with
+ * exactly those two allowances added, and nothing else. The build is untouched.
+ */
+function devCsp(): Plugin {
+  return {
+    name: 'dev-csp',
+    apply: 'serve',
+    transformIndexHtml(html) {
+      return html.replace(
+        /(<meta\s+http-equiv="Content-Security-Policy"\s+content=")([^"]+)(")/,
+        (_match, open: string, policy: string, close: string) =>
+          open +
+          policy
+            .replace("script-src 'self'", "script-src 'self' 'unsafe-inline'")
+            .replace("connect-src 'self'", "connect-src 'self' ws: http://localhost:* http://127.0.0.1:*") +
+          close,
+      )
+    },
+  }
+}
+
 export default defineConfig({
   base,
-  plugins: [react(), tailwindcss(), letterHashPlugin()],
+  plugins: [react(), tailwindcss(), letterHashPlugin(), devCsp()],
   build: {
     target: 'es2022',
     sourcemap: true,

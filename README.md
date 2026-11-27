@@ -316,20 +316,28 @@ Modelled on what Bonzo actually submitted for the recovery portal's terms — ve
 ```
 
 That topic has `admin_key: null` and `submit_key: null`: anyone can submit, nobody can censor or delete.
-Ours keeps the parts that carry meaning for an open letter — the account, the hash, the timestamp — and
+Ours keeps the parts that carry meaning for an open letter — the hash, the timestamp, the comment — and
 drops the parts that do not (`app`, `agreement`, a date-versioned letter id):
 
 ```json
-{"accountId":"0.0.1234","subject":"bonzo-exploit-open-letter","version":1,
+{"subject":"bonzo-exploit-open-letter","version":2,
  "letterHash":"<sha-256 of the letter>","signedAt":"2026-11-15T18:00:00.000Z","comment":"",
  "recoveryRate":8.8}
 ```
 
+Our topic is `0.0.10965772` on mainnet, and its `submit_key` is null as well: anyone can submit.
+
+- **No account id in the message.** The signer is the transaction's **payer** — the account the
+  network charged and required a signature from — read from the mirror envelope, never from the JSON
+  inside it. A topic with no submit key lets anyone post a message claiming any id; it does not let
+  anyone post one from an account that did not sign and pay for it. So the claim moved out of the
+  payload and onto the one field a stranger cannot choose. Version 1 messages, which carried
+  `accountId`, are ignored.
 - **The message carries the hash, never the letter.** Same primitive as the portal's `termsHash`, and
   small enough that one message always fits.
 - **`subject`** is the campaign slug, constant for the whole campaign; **`letterHash`** pins the exact
   version of the text. Both come from the build.
-- **Fixed field order** — `accountId`, `subject`, `version`, `letterHash`, `signedAt`, `comment`,
+- **Fixed field order** — `subject`, `version`, `letterHash`, `signedAt`, `comment`,
   `recoveryRate` — and no
   whitespace, so the bytes are reproducible. `FIELD_ORDER` in `src/lib/hcs.ts` is the single definition,
   and a test asserts the exact string.
@@ -430,11 +438,13 @@ itself and can be scrolled, dragged or stopped on. The rule is the same one the 
 wrote nothing does not appear at all.
 
 The topic is read from the mirror in pages of 100 (the API's maximum — there is no "everything"
-call), following the cursor until it is exhausted or `MAX_PAGES` (20 pages, 2 000 messages) is
-reached. The first load walks the topic; every later load asks only for `sequenceNumber=gt:<highest
-held>` and merges by sequence, so watching a topic with a thousand signatures costs one request a
-minute that is usually empty. If a read ever stops at the bound, `DevStatus` says so rather than
-showing a quietly short list.
+call), **oldest first**, following the cursor until it is exhausted or `MAX_PAGES` (200 pages,
+20 000 messages) is reached. Oldest first is the point: a growing topic then pushes its *newest*
+messages out of a bounded read, never the first people who signed, and the refresh below picks
+those up by sequence number anyway. The first load walks the topic; every later load asks only for
+`sequenceNumber=gt:<highest held>` and merges by sequence, so watching a topic with a thousand
+signatures costs one request a minute that is usually empty. If a read ever stops at the bound,
+`DevStatus` says so rather than showing a quietly short list.
 
 The band never shows an edge: the set of comments is laid out twice, and once the strip has travelled
 exactly one set it is rewound by that much, which is invisible because the next copy is identical
@@ -483,9 +493,9 @@ makes about themselves and not a guess about who lost money — it is a fact abo
 id, fixed before the first signature was collected.
 
 The page does not ship account ids. `content/affected.ts` holds **salted leaf hashes**
-— `SHA-256(salt ‖ "bonzo-affected-user:v1\n" ‖ accountId)` — so the repository carries no
-readable roster of who used Bonzo and a diff shows hashes, not account numbers. Membership
-is one hash of the connected account and a set lookup: no network, no proof, no flicker.
+— `SHA-256(salt ‖ "bonzo-affected-user:v1\n" ‖ accountId)` — so a diff shows hashes, not
+account numbers. Membership is one hash of the connected account and a set lookup: no
+network, no proof, no flicker.
 
 What makes the set checkable is the root. It lives in the repository variable
 `VITE_AFFECTED_ROOT`; `scripts/affected-set.mjs` regenerates the file and the root from a

@@ -2,6 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Content Security Policy. GitHub Pages cannot send headers, so this is the only
+      place a policy can live — and it is worth having even though `frame-ancestors`
+      is ignored in a meta tag (framing needs a header, or a proxy that sets one).
+
+      What it does buy, on every browser that honours meta CSP:
+        - no inline or remote script, and no `unsafe-eval`: a script that gets injected
+          cannot run, and the Function()-based code-generation bugs in bundled parsers
+          (protobufjs) cannot reach the engine. The build has no inline scripts, so this
+          costs nothing.
+        - a fixed set of hosts for fetch/XHR/WebSocket: the mirror node, WalletConnect's
+          relay, registry, RPC and verify endpoints. Anything else a compromised
+          dependency might try to contact is refused by the browser.
+        - object/base/form locked down.
+
+      `style-src 'unsafe-inline'` is required: the WalletConnect modal injects its own
+      styles. If a wallet ever fails to open its dialog, the browser console names the
+      blocked directive — add that host to `connect-src` or `img-src`, nothing else.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://explorer-api.walletconnect.com https://explorer.walletconnect.com https://walletconnect.com https://walletconnect.org; font-src 'self'; connect-src 'self' https://mainnet-public.mirrornode.hedera.com https://testnet.mirrornode.hedera.com https://explorer-api.walletconnect.com https://rpc.walletconnect.org https://rpc.walletconnect.com https://verify.walletconnect.org https://verify.walletconnect.com https://pulse.walletconnect.org https://echo.walletconnect.com wss://relay.walletconnect.com wss://relay.walletconnect.org; frame-src https://verify.walletconnect.org https://verify.walletconnect.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bonzo Community Letter – Bonzo Lend &amp; Supra oracle exploit</title>
     <meta name="robots" content="noindex" />

@@ -6,9 +6,8 @@
  * itself calls, `app.bonzo.finance/api/redemption/claims/<evmAddress>`, returns the Merkle
  * leaves the contract will pay. The set was derived by walking every account that could have
  * had a position — pool calls, on-behalf deposits, liquidations, aToken transfers — and
- * asking that endpoint for each one; the collector that does it is kept **out** of this
- * repository on purpose, so the repository does not hand anyone a ready-made way to
- * enumerate affected accounts. `scripts/affected-set.mjs` turns a list into
+ * asking that endpoint for each one; the collector that does it is kept out of this
+ * repository because it is a one-off. `scripts/affected-set.mjs` turns a list into
  * `content/affected.ts` without ever writing an account id into it.
  *
  * Three things the page depends on:
