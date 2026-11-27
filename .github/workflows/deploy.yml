@@ -58,6 +58,9 @@ jobs:
           VITE_CONTACT_URL: ${{ vars.VITE_CONTACT_URL }}
           VITE_TREASURY_ACCOUNT_ID: ${{ vars.VITE_TREASURY_ACCOUNT_ID }}
           VITE_AFFECTED_ROOT: ${{ vars.VITE_AFFECTED_ROOT }}
+          # "true" turns the page read-only: letter and comments stay, Connect, Donate and
+          # Sign go dead. Set at build time — changing it needs a rebuild.
+          VITE_READ_ONLY: ${{ vars.VITE_READ_ONLY }}
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

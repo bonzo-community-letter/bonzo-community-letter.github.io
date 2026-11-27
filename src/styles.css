@@ -79,14 +79,15 @@ body {
  * treasury page, down to the two opt-outs: the dialog backdrops are click-away
  * surfaces, and a disabled control says so.
  */
-button:not(:disabled):not(.cursor-default),
-[role='button']:not(:disabled):not(.cursor-default),
+button:not(:disabled):not(.cursor-default):not([aria-disabled='true']),
+[role='button']:not(:disabled):not(.cursor-default):not([aria-disabled='true']),
 summary,
 select {
   cursor: pointer;
 }
 
 button:disabled,
+button[aria-disabled='true'],
 [role='button'][aria-disabled='true'] {
   cursor: not-allowed;
 }

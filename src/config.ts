@@ -87,6 +87,13 @@ export const config = {
    * verify. Empty in a local checkout, where the generated constant stands in.
    */
   affectedRoot: read('VITE_AFFECTED_ROOT'),
+  /**
+   * Read-only mode, from a repository variable. The letter and its comments stay on the
+   * page; nothing on it can be connected, funded or signed. Set at build time, like every
+   * other value here — flipping the variable needs a rebuild.
+   */
+  readOnly: read('VITE_READ_ONLY').trim().toLowerCase() === 'true',
 }
 
-export const signingOpen = config.topicId.length > 0 && config.walletConnectProjectId.length > 0
+export const signingOpen =
+  !config.readOnly && config.topicId.length > 0 && config.walletConnectProjectId.length > 0

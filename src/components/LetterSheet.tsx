@@ -122,6 +122,9 @@ function useStartDepth(
 /** Characters of letter per sheet — measured: about 1300px of page at this type size. */
 const PAGE_BUDGET = 2300
 
+/** Said by the two buttons that write to the chain, when the page is read-only. */
+const READ_ONLY_NOTE = 'The letter is read-only right now.'
+
 export function LetterSheet({
   letterHash,
   wallet,
@@ -241,14 +244,25 @@ export function LetterSheet({
               <Tip
                 id="donate-hint"
                 side="above"
-                panel="Donate HBAR to the campaign to help raise awareness by posting this letter with up to 100 TPS on the hashgraph."
+                panel={
+                  config.readOnly
+                    ? READ_ONLY_NOTE
+                    : 'Donate HBAR to the campaign to help raise awareness by posting this letter with up to 100 TPS on the hashgraph.'
+                }
               >
                 <button
                   type="button"
-                  onClick={() => setDonateOpen(true)}
-                  aria-haspopup="dialog"
+                  onClick={() => {
+                    if (!config.readOnly) setDonateOpen(true)
+                  }}
+                  aria-haspopup={config.readOnly ? undefined : 'dialog'}
+                  aria-disabled={config.readOnly || undefined}
                   aria-describedby="donate-hint"
-                  className="whitespace-nowrap rounded-sm border border-sheet-rule px-3 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-sheet-ink transition-colors hover:border-accent hover:text-accent sm:px-5 sm:text-[0.6875rem] sm:tracking-[0.14em]"
+                  className={`whitespace-nowrap rounded-sm border border-sheet-rule px-3 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-sheet-ink sm:px-5 sm:text-[0.6875rem] sm:tracking-[0.14em] ${
+                    config.readOnly
+                      ? 'cursor-not-allowed opacity-55'
+                      : 'transition-colors hover:border-accent hover:text-accent'
+                  }`}
                 >
                   Donate
                 </button>
@@ -260,23 +274,27 @@ export function LetterSheet({
               id="sign-needs-wallet"
               side="above"
               panel={
-                connected
-                  ? 'Sign this letter with your wallet on the Hedera Consensus Service as a sign of support.'
-                  : 'Connect a wallet to sign.'
+                config.readOnly
+                  ? READ_ONLY_NOTE
+                  : connected
+                    ? 'Sign this letter with your wallet on the Hedera Consensus Service as a sign of support.'
+                    : 'Connect a wallet to sign.'
               }
             >
               <button
                 type="button"
                 onClick={() => {
-                  if (connected) setSignOpen(true)
+                  if (connected && !config.readOnly) setSignOpen(true)
                 }}
-                aria-disabled={!connected}
-                aria-haspopup="dialog"
+                aria-disabled={!connected || config.readOnly}
+                aria-haspopup={config.readOnly ? undefined : 'dialog'}
                 aria-describedby="sign-needs-wallet"
-                className={`whitespace-nowrap rounded-sm border px-3 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] transition-colors sm:px-5 sm:text-[0.6875rem] sm:tracking-[0.14em] ${
-                  connected
-                    ? 'border-sheet-ink bg-sheet-ink text-sheet hover:border-accent hover:bg-accent'
-                    : 'cursor-not-allowed border-sheet-rule bg-transparent text-sheet-ink-faint'
+                className={`whitespace-nowrap rounded-sm border px-3 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] sm:px-5 sm:text-[0.6875rem] sm:tracking-[0.14em] ${
+                  config.readOnly
+                    ? 'cursor-not-allowed border-sheet-rule bg-transparent text-sheet-ink-faint opacity-55'
+                    : connected
+                      ? 'border-sheet-ink bg-sheet-ink text-sheet transition-colors hover:border-accent hover:bg-accent'
+                      : 'cursor-not-allowed border-sheet-rule bg-transparent text-sheet-ink-faint'
                 }`}
               >
                 {alreadySigned ? 'You have signed' : 'Sign the Letter'}

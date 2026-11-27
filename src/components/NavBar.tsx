@@ -50,11 +50,19 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
           ) : null}
           <button
             type="button"
-            onClick={onConnect}
-            onPointerEnter={prefetchWallet}
-            onFocus={prefetchWallet}
-            aria-haspopup="dialog"
-            className="flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-accent hover:text-ink sm:gap-2 sm:px-4 sm:py-1.5 sm:text-[0.6875rem] sm:tracking-[0.14em]"
+            onClick={() => {
+              if (!config.readOnly) onConnect()
+            }}
+            onPointerEnter={config.readOnly ? undefined : prefetchWallet}
+            onFocus={config.readOnly ? undefined : prefetchWallet}
+            aria-haspopup={config.readOnly ? undefined : 'dialog'}
+            aria-disabled={config.readOnly || undefined}
+            title={config.readOnly ? 'The letter is read-only right now.' : undefined}
+            className={`flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-ink-soft sm:gap-2 sm:px-4 sm:py-1.5 sm:text-[0.6875rem] sm:tracking-[0.14em] ${
+              config.readOnly
+                ? 'cursor-not-allowed opacity-55'
+                : 'transition-colors hover:border-accent hover:text-ink'
+            }`}
           >
             {connected ? (
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
