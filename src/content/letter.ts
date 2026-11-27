@@ -11,7 +11,7 @@
 import { LETTER_BODY } from './letter-body'
 
 /** Identifies this letter on the topic. Stable for the life of the campaign. */
-export const SUBJECT = 'bonzo-exploit-open-letter'
+export const SUBJECT = 'bonzo-communit-letter'
 
 /** The letter, as signed. Its SHA-256 is what every signature commits to. */
 export const letterText = LETTER_BODY
