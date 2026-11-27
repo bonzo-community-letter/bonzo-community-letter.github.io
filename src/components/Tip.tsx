@@ -12,6 +12,35 @@ import { createPortal } from 'react-dom'
  * The trigger keeps its own aria wiring. The caller passes the panel's `id` to whatever is
  * focusable inside, so the explanation is read as a description rather than a label.
  */
+/**
+ * Close every open tip.
+ *
+ * A dialog is opened by the same click that opens the tip on its trigger, and the panel is
+ * portalled above everything — so it would hang in front of the dialog it just opened. Any
+ * control that opens something above the page calls this first.
+ */
+/**
+ * Whether the last thing the reader did was use the keyboard. A tip opens on focus only when
+ * it was — after a dialog closes, focus returns to the button that opened it, and a panel
+ * there would be the one the reader just dismissed. `:focus-visible` is not reliable enough
+ * inside the focus event itself, so the input that caused the focus is remembered instead.
+ */
+let focusedByKeyboard = false
+if (typeof window !== 'undefined') {
+  window.addEventListener(
+    'keydown',
+    (event) => {
+      if (event.key === 'Tab' || event.key.startsWith('Arrow')) focusedByKeyboard = true
+    },
+    true,
+  )
+  window.addEventListener('pointerdown', () => (focusedByKeyboard = false), true)
+}
+
+export function closeTips() {
+  window.dispatchEvent(new Event('letter:close-tips'))
+}
+
 export function Tip({
   id,
   side = 'above',
@@ -57,6 +86,13 @@ export function Tip({
     if (open) place()
   }, [open])
 
+  // Listening whether or not it is open: a tip that is closed has nothing to do.
+  useEffect(() => {
+    const close = () => setOpen(false)
+    window.addEventListener('letter:close-tips', close)
+    return () => window.removeEventListener('letter:close-tips', close)
+  }, [])
+
   useEffect(() => {
     if (!open) return
     // the sheet scrolls and the window can resize while the panel is open; either would
@@ -90,7 +126,9 @@ export function Tip({
         className="inline-flex"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          if (focusedByKeyboard) setOpen(true)
+        }}
         onBlur={() => setOpen(false)}
         onClick={() => setOpen(true)}
       >

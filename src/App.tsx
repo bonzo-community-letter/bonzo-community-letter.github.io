@@ -6,6 +6,7 @@ import { Hero } from './components/Hero'
 import { LetterSheet } from './components/LetterSheet'
 import { NavBar } from './components/NavBar'
 import { SiteFooter } from './components/SiteFooter'
+import { closeTips } from './components/Tip'
 import { Testimonials } from './components/Testimonials'
 import { Backdrop } from './components/Backdrop'
 import { sampleSignatures } from './content/demo'
@@ -20,7 +21,11 @@ export function App() {
   // disagree about who is connected.
   const wallet = useWallet()
   const [connectOpen, setConnectOpen] = useState(false)
-  const openConnect = useCallback(() => setConnectOpen(true), [])
+  const openConnect = useCallback(() => {
+    // the tip that explains the button is behind the dialog now, not over it
+    closeTips()
+    setConnectOpen(true)
+  }, [])
 
   // One signature per account, whoever wrote it: a second message from the same wallet
   // is on the topic for good, but it does not count twice.

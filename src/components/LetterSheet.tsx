@@ -7,7 +7,7 @@ import { localSignature } from '../lib/signedHere'
 import { ENVELOPE_VIEW } from './EnvelopeSvg'
 import { LetterBlocks } from './LetterBlocks'
 import { paginate, parseLetter, splitSources } from '../lib/letterBlocks'
-import { Tip } from './Tip'
+import { Tip, closeTips } from './Tip'
 import { DonateDialog } from './DonateDialog'
 import { SignDialog } from './SignDialog'
 import type { WalletApi } from '../hooks/useWallet'
@@ -253,7 +253,9 @@ export function LetterSheet({
                 <button
                   type="button"
                   onClick={() => {
-                    if (!config.readOnly) setDonateOpen(true)
+                    if (config.readOnly) return
+                    closeTips()
+                    setDonateOpen(true)
                   }}
                   aria-haspopup={config.readOnly ? undefined : 'dialog'}
                   aria-disabled={config.readOnly || undefined}
@@ -284,7 +286,9 @@ export function LetterSheet({
               <button
                 type="button"
                 onClick={() => {
-                  if (connected && !config.readOnly) setSignOpen(true)
+                  if (!connected || config.readOnly) return
+                  closeTips()
+                  setSignOpen(true)
                 }}
                 aria-disabled={!connected || config.readOnly}
                 aria-haspopup={config.readOnly ? undefined : 'dialog'}
