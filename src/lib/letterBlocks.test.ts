@@ -63,7 +63,7 @@ describe('parseLetter', () => {
     const joined = blocks.map(text).join(' ')
     // every paragraph, heading and item of the source is in the parse, in order
     for (const phrase of [
-      'theft of over $9,061,019',
+      'took over $9,061,019 directly',
       'What happened?',
       'SAUCE/wHBAR (pair 425)',
       'We ask Hedera Foundation to keep its promise',
