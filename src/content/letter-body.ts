@@ -46,7 +46,7 @@ We are grateful for the **partial** recovery that happened thanks to four months
 
 4. **Hashgraph Foundry**, **Hedera Hashgraph**, and **Hedera Foundation** should support a relaunch of a security-hardened Bonzo v2 as the only lending and borrowing protocol on Hedera. If the trust of users is restored, many of us will return. Otherwise, many of us will leave the Hedera ecosystem forever.
 
-   **We ask Hashgraph Foundry, Hedera Hashgraph, and Hedera Foundation to commit funding to, and to support, a re-launch of a security-hardened Bonzo v2. You asked for a plan and Bonzo provided you with one – now act.**
+   **We ask Hashgraph Foundry, Hedera Hashgraph, and Hedera Foundation to commit funding to, and to support a re-launch of a security-hardened Bonzo v2. You asked for a re-launch plan and we know the Bonzo team provided you with one – now act.**
 
 ## Where could the recovery funding come from?
 
