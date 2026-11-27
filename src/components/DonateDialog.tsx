@@ -103,10 +103,11 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
         </h2>
 
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          Donations fund the transactions that will bring this letter on-chain. We aim to boost
-          Hedera’s TPS from ~3 to 6 TPS, targeting up to 100 TPS. This will cost $864 per 24 hour
-          duration. Increased TPS enhances on-chain activity, and make the campaign visible. This
-          will make it harder to ignore us.
+          Donations will fund transactions that will post this letter on-chain. We aim to boost
+          Hedera’s TPS from ~3 to 6 TPS and target up to 100 TPS. This will cost $864 per 24 hour
+          duration – the more funds, the longer we can run the campaign. Increased TPS enhances
+          on-chain activity, which hopefully will draw attention and make the campaign more
+          visible – and harder to ignore.
         </p>
 
         <div className="mt-5 flex justify-center">
