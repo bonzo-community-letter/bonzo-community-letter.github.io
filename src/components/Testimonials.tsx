@@ -27,10 +27,13 @@ const RESUME_AFTER = 2600
 export function Testimonials({
   signatures,
   sample = false,
+  demo = false,
 }: {
   signatures: readonly Signature[]
   /** `?demo=1`: the entries include invented comments, and the section says so. */
   sample?: boolean
+  /** Read-only page: the reel stands in for comments nobody can leave, and says so. */
+  demo?: boolean
 }) {
   const entries = testimonials(signatures)
 
@@ -108,7 +111,9 @@ export function Testimonials({
     <section className="border-y border-rule/40 bg-hero/80 pb-16 pt-16">
       <div className="mx-auto w-full max-w-5xl px-4 text-center sm:px-6">
         <p className="eyebrow">From the signees</p>
-        <h2 className="mt-2 font-serif text-2xl leading-tight text-ink">Personal Messages</h2>
+        <h2 className="mt-2 font-serif text-2xl leading-tight text-ink">
+          Personal Messages{demo ? ' (Demo)' : ''}
+        </h2>
         {/* The heading says what the section is, whatever mode the page is in; the
             disclosure sits under it, where it cannot be mistaken for the title. */}
         {sample ? (

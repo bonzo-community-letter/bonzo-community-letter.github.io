@@ -11,6 +11,7 @@ import { Testimonials } from './components/Testimonials'
 import { Backdrop } from './components/Backdrop'
 import { sampleSignatures } from './content/demo'
 import { useSignatures } from './hooks/useSignatures'
+import { config } from './config'
 import { uniqueSigners } from './lib/hcs'
 import { useWallet } from './hooks/useWallet'
 import { isDraft, letterHash, subject } from 'virtual:letter'
@@ -35,7 +36,14 @@ export function App() {
   // `?demo=1` puts ten sample comments under the letter, so the section can be looked at
   // before it has signers. They are not signatures: the count above ignores them and the
   // section says they are samples.
-  const sample = typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo')
+  //
+  // In read-only mode the same reel stands in for the comments: nobody can sign, so the
+  // section would otherwise be an empty box on a page that is otherwise complete. It says
+  // "(Demo)" in its heading there, because on that page it is not a stand-in for a preview —
+  // it is the only content, and a reader must not take invented comments for real ones.
+  const demoReel = config.readOnly
+  const sample =
+    demoReel || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo'))
 
   return (
     <div className="relative min-h-dvh bg-page">
@@ -66,6 +74,7 @@ export function App() {
             <Testimonials
               signatures={sample ? [...sampleSignatures(subject, letterHash), ...signers] : signers}
               sample={sample}
+              demo={demoReel}
             />
           </div>
           {/* The status box is a build-time instrument, not part of the letter: it exists
