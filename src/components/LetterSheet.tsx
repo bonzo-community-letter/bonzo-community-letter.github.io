@@ -209,13 +209,33 @@ export function LetterSheet({
                 them on a phone, where the two buttons already take the width. */}
             {/* Always on: the page is a campaign, and a campaign with no visible count reads
                 as abandoned. At zero it says zero. */}
-            <a
-              href="#personal-messages"
-              className="text-center font-script text-[1.3125rem] leading-[1.2] text-ink-blue transition-colors hover:text-accent min-[340px]:text-[1.5625rem] min-[380px]:text-[1.75rem] sm:mr-auto sm:text-left sm:text-[1.75rem] lg:text-[2rem]"
-            >
-              Signed by {(signatureCount ?? 0).toLocaleString('en-US')} Hedera{' '}
-              {(signatureCount ?? 0) === 1 ? 'account' : 'accounts'}
-            </a>
+            {/* The count is the link into the comments; the topic id beside it is the link
+                out — to the log where every signature can be read, so a reader can check the
+                number instead of trusting it. */}
+            <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 sm:mr-auto sm:justify-start">
+              <a
+                href="#personal-messages"
+                className="text-center font-script text-[1.3125rem] leading-[1.2] text-ink-blue transition-colors hover:text-accent min-[340px]:text-[1.5625rem] min-[380px]:text-[1.75rem] sm:text-left sm:text-[1.75rem] lg:text-[2rem]"
+              >
+                {(signatureCount ?? 0).toLocaleString('en-US')} Signature
+                {(signatureCount ?? 0) === 1 ? '' : 's'}
+              </a>
+              {config.topicId ? (
+                <>
+                  <span aria-hidden="true" className="text-sheet-ink-faint">
+                    ·
+                  </span>
+                  <a
+                    href={`${config.profile.hashscanBase}/topic/${config.topicId}`}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="whitespace-nowrap font-mono text-[0.6875rem] text-sheet-ink-faint transition-colors hover:text-accent"
+                  >
+                    {config.topicId} ↗
+                  </a>
+                </>
+              ) : null}
+            </div>
             <div className="flex items-center justify-center gap-3">
             {config.treasuryAccountId ? (
               <Tip
