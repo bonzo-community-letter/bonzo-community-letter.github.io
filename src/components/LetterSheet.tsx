@@ -270,7 +270,32 @@ export function LetterSheet({
               <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-sheet-ink-faint">
                 Signed on the Hedera Consensus Service
               </span>
-              <span className="font-mono text-[0.6875rem] text-sheet-ink-faint">{letterHash.slice(0, 16)}…</span>
+              {/* The short form is what fits the line; the full hash is what a reader can
+                  check against the topic, so it opens on the number itself. */}
+              <Tip
+                id="letter-hash"
+                side="above"
+                width={360}
+                panel={
+                  <>
+                    <span className="block text-[0.5625rem] uppercase tracking-[0.14em] text-ink-faint">
+                      Letter hash
+                    </span>
+                    <span className="mt-1 block break-all font-mono text-[0.6875rem] leading-relaxed">
+                      {letterHash}
+                    </span>
+                  </>
+                }
+              >
+                <span
+                  tabIndex={0}
+                  aria-describedby="letter-hash"
+                  aria-label={`Letter hash ${letterHash}`}
+                  className="cursor-help font-mono text-[0.6875rem] text-sheet-ink-faint transition-colors hover:text-sheet-ink focus:outline-none focus-visible:text-sheet-ink"
+                >
+                  {letterHash.slice(0, 16)}…
+                </span>
+              </Tip>
             </div>
           </div>
     </>
