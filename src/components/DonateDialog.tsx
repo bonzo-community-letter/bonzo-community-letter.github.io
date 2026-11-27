@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import QRCode from 'qrcode'
 import { config } from '../config'
 import { hashscanAccountUrl } from '../lib/hcs'
@@ -74,8 +75,11 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
 
   if (!open || !account) return null
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
+  // Portalled, and at the same z as the signature dialog: rendered in place it would sit
+  // inside the letter sheet's stacking context, which is below the envelope overlay — the
+  // dialog would come up behind the paper.
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <button
         type="button"
         aria-label="Close"
@@ -89,9 +93,11 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
         role="dialog"
         aria-modal="true"
         aria-labelledby="donate-title"
-        className="relative m-3 max-h-[85dvh] w-full max-w-sm overflow-y-auto border border-rule bg-hero p-6 shadow-2xl shadow-black/60 sm:m-0"
+        className="relative m-3 max-h-[85dvh] w-full max-w-md overflow-y-auto border border-rule bg-hero p-6 shadow-2xl shadow-black/60 sm:m-0"
       >
-        <p className="eyebrow">{config.network} network</p>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className="eyebrow">{config.network} network</p>
+        </div>
         <h2 id="donate-title" className="mt-2 font-serif text-2xl leading-tight text-ink">
           Support this campaign
         </h2>
@@ -156,6 +162,7 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
           Close
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
