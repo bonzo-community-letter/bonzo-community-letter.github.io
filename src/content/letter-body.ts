@@ -10,7 +10,7 @@
  */
 export const LETTER_BODY = `This open letter was written, coordinated, and signed by users affected by the exploit of the Supra Labs oracle on Hedera, which led to the theft of over $9,061,019[1][2] worth of assets from Hedera's only lending and borrowing platform, Bonzo Lend. This letter is directed at the companies and institutions that are responsible for what led to the exploit, that publicly promised full recovery right after it, that endorsed those promises, and those that stayed silent.
 
-We are grateful for the **partial** recovery that happened thanks to four months of effort by Bonzo Labs employees and we are aware that many DeFi exploits in the past resulted in no recovery for users at all. But we are also aware of DeFi exploits in which users were made whole — restoring trust and keeping the affected chain's DeFi infrastructure intact.
+We are grateful for the **partial** recovery that happened thanks to four months of effort by Bonzo Labs employees and we are aware that many DeFi exploits in the past resulted in no recovery for users at all. But we are also aware of DeFi exploits in which users were made whole — restoring trust and keeping the affected chain's DeFi infrastructure intact. We are asking for what was promised right after the exploit.
 
 **This letter is about broken promises and destroyed trust on Hedera — the "trust layer of the digital economy".[3]**
 
