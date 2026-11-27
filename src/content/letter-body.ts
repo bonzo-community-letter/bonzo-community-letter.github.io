@@ -32,7 +32,7 @@ We are grateful for the **partial** recovery that happened thanks to four months
 
 ## What do we ask for?
 
-1. **Hedera Foundation** promised **_advances covering the full value of the losses_ to the affected positions of all users[7]** while the crypto press was watching. But it stepped away from that promise once the press moved on, leaving a shortfall of over $1,000,000 for affected users.
+1. **Hedera Foundation** promised **_advances covering the full value of the losses_ to the affected positions of all users[7]** while the crypto press was watching. But it stepped away from that promise once the press moved on, leaving a shortfall of $1,065,255.68 for affected users.
 
    **We ask Hedera Foundation to keep its promise and to cover the full value of losses to all affected positions!**
 
