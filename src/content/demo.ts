@@ -49,8 +49,10 @@ export function sampleSignatures(subject: string, letterHash: string): Signature
       sequence: 9001 + index,
       consensusTimestamp: `17955${String(10000 + index * 37)}.${String(100000000 + index * 1234567)}`,
       payerAccountId: accountId,
-      // the samples carry a spread of rates, as the real topic will
-      recoveryRate: [null, 0, 4.2, 8.8, 12.5, 0, 21, 8.8, 3.1, 100][index % 10] ?? null,
+      // A spread across the range the portal actually pays — 56.1 % to 100 %. Nothing lower:
+      // a sample that shows 8 % would put a number on the page that the recovery does not
+      // support, and a demo is not a licence to invent a worse outcome than the real one.
+      recoveryRate: [null, 56.1, 62, 68.4, 75, 81.39, 88, 91.2, 96.5, 100][index % 10] ?? null,
     }
   })
 }

@@ -18,16 +18,22 @@ function hueOf(colour: string): number {
 
 describe('recoveryColour', () => {
   it('starts red, passes amber and ends green', () => {
-    expect(hueOf(recoveryColour(0))).toBeLessThan(12)
-    expect(hueOf(recoveryColour(50))).toBeGreaterThan(35)
-    expect(hueOf(recoveryColour(50))).toBeLessThan(50)
+    // the scale starts at the published floor: red at 50, green at 100
+    expect(hueOf(recoveryColour(0))).toBeLessThan(20)
+    expect(hueOf(recoveryColour(50))).toBeLessThan(20)
+    expect(hueOf(recoveryColour(75))).toBeGreaterThan(50)
+    expect(hueOf(recoveryColour(75))).toBeLessThan(100)
     expect(hueOf(recoveryColour(100))).toBeGreaterThan(120)
   })
 
-  it('moves in one direction as the rate rises', () => {
-    const hues = [0, 10, 25, 50, 75, 90, 100].map((rate) => hueOf(recoveryColour(rate)))
-    for (let i = 1; i < hues.length; i++) {
-      expect(hues[i]!).toBeGreaterThan(hues[i - 1]!)
+  it('holds still below the floor, then moves in one direction', () => {
+    // everything under 50 is the same red: the scale does not invent a worse outcome
+    const below = [0, 10, 25, 50].map((rate) => hueOf(recoveryColour(rate)))
+    for (const hue of below) expect(hue).toBeCloseTo(below[0]!, 5)
+
+    const above = [50, 60, 75, 90, 100].map((rate) => hueOf(recoveryColour(rate)))
+    for (let i = 1; i < above.length; i++) {
+      expect(above[i]!).toBeGreaterThan(above[i - 1]!)
     }
   })
 

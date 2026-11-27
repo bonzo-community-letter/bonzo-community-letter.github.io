@@ -1,9 +1,13 @@
 /**
  * How a recovery rate is shown, in numbers rather than in a component.
  *
- * The scale runs red → amber → green: nothing back, half back, all back. It is
- * interpolated in HSL because that is what makes the middle read as yellow rather than
- * as a muddy brown — a straight RGB blend from red to green passes through grey.
+ * The scale runs from the published floor to whole: 50 % is red, 100 % is green, and the
+ * range in between is spread across those fifty points. Below 50 the colour does not get
+ * redder — the published range starts at 56.1 %, so a deeper red would invent a worse
+ * outcome than the portal ever pays out.
+ *
+ * It is interpolated in HSL because that is what makes the middle read as yellow rather
+ * than as a muddy brown — a straight RGB blend from red to green passes through grey.
  *
  * A missing rate is not a zero and must not look like one: it gets its own colour
  * (brown, the palette's own quiet tone) and a dash instead of a number.
@@ -15,10 +19,16 @@ export const NO_RATE_COLOUR = 'hsl(26 26% 40%)'
 /** The same brown, light enough to read as text on the page's dark ground. */
 export const NO_RATE_INK = 'hsl(26 30% 64%)'
 
-/** Red, amber, green — the three points the scale passes through. */
-const RED = { at: 0, hue: 5, saturation: 58, lightness: 50 } as const
-const AMBER = { at: 50, hue: 42, saturation: 68, lightness: 55 } as const
+/** The two ends of the scale: red at the floor, green at whole. */
+const FLOOR = 50
+const RED = { at: FLOOR, hue: 12, saturation: 62, lightness: 52 } as const
 const GREEN = { at: 100, hue: 134, saturation: 38, lightness: 47 } as const
+
+/** How far along the scale a rate sits, 0 at the floor and 1 at whole. */
+function scalePosition(rate: number): number {
+  const value = Math.min(100, Math.max(FLOOR, clampRate(rate)))
+  return (value - FLOOR) / (100 - FLOOR)
+}
 
 /** Clamped to 0–100; anything else in the payload is treated as the nearest end. */
 export function clampRate(rate: number): number {
@@ -35,15 +45,11 @@ export function clampRate(rate: number): number {
 export function recoveryColour(rate: number | null): string {
   if (rate === null || !Number.isFinite(rate)) return NO_RATE_COLOUR
 
-  const value = clampRate(rate)
-  // two straight segments: red → amber, then amber → green
-  const from = value <= AMBER.at ? RED : AMBER
-  const to = value <= AMBER.at ? AMBER : GREEN
-  const t = (value - from.at) / (to.at - from.at)
-
-  const hue = from.hue + (to.hue - from.hue) * t
-  const saturation = from.saturation + (to.saturation - from.saturation) * t
-  const lightness = from.lightness + (to.lightness - from.lightness) * t
+  // one straight run from red to green, over the fifty points that carry meaning
+  const t = scalePosition(rate)
+  const hue = RED.hue + (GREEN.hue - RED.hue) * t
+  const saturation = RED.saturation + (GREEN.saturation - RED.saturation) * t
+  const lightness = RED.lightness + (GREEN.lightness - RED.lightness) * t
 
   return `hsl(${hue.toFixed(1)} ${saturation.toFixed(1)}% ${lightness.toFixed(1)}%)`
 }
@@ -56,11 +62,8 @@ export function recoveryColour(rate: number | null): string {
  */
 export function recoveryInkColour(rate: number | null): string {
   if (rate === null || !Number.isFinite(rate)) return NO_RATE_INK
-  const value = clampRate(rate)
-  const from = value <= AMBER.at ? RED : AMBER
-  const to = value <= AMBER.at ? AMBER : GREEN
-  const t = (value - from.at) / (to.at - from.at)
-  const hue = from.hue + (to.hue - from.hue) * t
+  const t = scalePosition(rate)
+  const hue = RED.hue + (GREEN.hue - RED.hue) * t
   return `hsl(${hue.toFixed(1)} 58% 76%)`
 }
 
