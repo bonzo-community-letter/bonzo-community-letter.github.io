@@ -1,4 +1,4 @@
-export const PAYLOAD_VERSION = 2 as const
+export const PAYLOAD_VERSION = 1 as const
 
 export type HederaNetwork = 'mainnet' | 'testnet'
 
@@ -16,15 +16,10 @@ export const MAX_COMMENT_BYTES = 512
  * primitive Bonzo used for the recovery portal's termsHash, and small enough to
  * stay far under HCS's 1 KB cap. `letter` names the campaign; `letterHash` pins
  * the exact version of the text.
- *
- * It deliberately carries **no account id**. Who signed is the one fact the
- * message cannot be trusted about: the topic has no submit key, so anyone can
- * post a message claiming any id. The network, by contrast, will not accept a
- * topic message from an account that did not sign and pay for it — so the
- * signer is read from `payer_account_id` on the mirror's envelope and never from
- * the JSON inside it. See `parseMessages`.
  */
 export interface SignaturePayload {
+  /** signer's Hedera account id, e.g. 0.0.1234 */
+  accountId: string
   /** campaign subject, e.g. "bonzo-exploit-open-letter" */
   subject: string
   /** SHA-256 of the letter text, lowercase hex — computed at build time */
@@ -44,14 +39,8 @@ export interface SignaturePayload {
 }
 
 export interface Signature extends SignaturePayload {
-  /**
-   * The signer, taken from the transaction's payer — the account the network
-   * charged and required a signature from. Not a claim made inside the message.
-   */
-  accountId: string
   sequence: number
   consensusTimestamp: string
-  /** Same value as `accountId`; kept because the mirror calls it the payer. */
   payerAccountId: string
 }
 
@@ -63,6 +52,7 @@ export interface MirrorMessage {
 }
 
 export interface SignatureInput {
+  accountId: string
   subject: string
   letterHash: string
   comment?: string
@@ -96,16 +86,13 @@ const byteLength = (s: string): number => new TextEncoder().encode(s).length
 
 /**
  * The exact field order a signature message is serialised in:
- * `subject`, `version`, `letterHash`, `signedAt`, `comment`, `recoveryRate`.
+ * `accountId`, `subject`, `version`, `letterHash`, `signedAt`, `comment`.
  *
  * A fixed order — rather than sorted keys — is what makes the bytes
  * reproducible: every client emits the same string for the same values.
- *
- * Version 2 dropped `accountId`: the signer is the transaction's payer, read
- * from the mirror envelope, and a message that names an account is a message
- * that can lie about it. Version 1 messages are therefore not read at all.
  */
 export const FIELD_ORDER = [
+  'accountId',
   'subject',
   'version',
   'letterHash',
@@ -144,6 +131,7 @@ export function commentByteLength(comment: string): number {
 export function buildSignature(input: SignatureInput): BuildResult {
   const errors: string[] = []
 
+  if (!ACCOUNT_ID.test(input.accountId)) errors.push('accountId must look like 0.0.1234')
   if (!SLUG.test(input.subject)) errors.push('subject must be a lowercase slug')
   if (!SHA256_HEX.test(input.letterHash)) errors.push('letterHash must be 64 lowercase hex characters')
 
@@ -177,6 +165,7 @@ export function buildSignature(input: SignatureInput): BuildResult {
   if (errors.length > 0) return { ok: false, errors }
 
   const payload: SignaturePayload = {
+    accountId: input.accountId,
     subject: input.subject,
     letterHash: input.letterHash,
     signedAt: input.signedAt ?? new Date().toISOString(),
