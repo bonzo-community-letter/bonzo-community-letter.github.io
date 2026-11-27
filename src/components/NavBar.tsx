@@ -15,6 +15,10 @@ import { Tip } from './Tip'
  * the connected account, not from anything the reader picks, so it appears the moment
  * the wallet connects and cannot be set to the wrong one.
  */
+/** What a dead control says in read-only mode, wherever it is asked. */
+const READ_ONLY_PANEL =
+  'The letter is currently read-only and still being drafted. As soon as the campaign starts, you will be able to connect and sign the letter.'
+
 export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: () => void }) {
   const connected = wallet.status === 'connected' && wallet.accountId !== null
   const busy = wallet.status === 'connecting' || wallet.status === 'restoring'
@@ -55,9 +59,24 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
         {/* One line, and it gives way first: with a wallet connected the bar carries the
             badge and a full account id beside it, and a wrapped title in a 56px bar reads
             as a broken header. On a phone the name truncates rather than pushing them off. */}
-        <span className="min-w-0 truncate whitespace-nowrap font-serif text-[0.8125rem] leading-none tracking-wide text-ink-soft sm:text-[0.9375rem]">
-          Bonzo Community Letter
-        </span>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <span className="min-w-0 truncate whitespace-nowrap font-serif text-[0.8125rem] leading-none tracking-wide text-ink-soft sm:text-[0.9375rem]">
+            Bonzo Community Letter
+          </span>
+          {/* The page says what mode it is in, next to its own name — not only in the tooltip
+              of a button someone may never touch. */}
+          {config.readOnly ? (
+            <Tip id="read-only-marker" side="below" width={300} panel={READ_ONLY_PANEL}>
+              <span
+                tabIndex={0}
+                aria-describedby="read-only-marker"
+                className="shrink-0 cursor-help whitespace-nowrap rounded-full border border-accent/50 px-1.5 py-0.5 text-[0.4375rem] font-semibold uppercase tracking-[0.1em] text-accent focus:outline-none focus-visible:border-accent sm:text-[0.5rem]"
+              >
+                Read-only mode
+              </span>
+            </Tip>
+          ) : null}
+        </div>
 
         {/* items-stretch, not items-center: the badge takes its height from the button it
             sits beside, at every breakpoint, instead of guessing the same padding and
@@ -84,7 +103,7 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
               id="connect-read-only"
               side="below"
               width={300}
-              panel="The letter is currently read-only and still being drafted. As soon as the campaign starts, you will be able to connect and sign the letter."
+              panel={READ_ONLY_PANEL}
             >
               {accountButton}
             </Tip>
