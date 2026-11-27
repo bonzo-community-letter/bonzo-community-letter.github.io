@@ -50,7 +50,7 @@ We are grateful for the **partial** recovery that happened thanks to four months
 
 ## Where could the recovery funding come from?
 
-There are multiple options; we only list them to show that the recipients of this letter have the funds to re-establish trust with the affected users of Bonzo Lend. For example:
+We are sure that there are multiple funding sources; we only list two of them to show that the recipients of this letter have the funds to re-establish our trust by keeping the promise of a recovery:
 
 1. From the up to 7,000,000,000 HBAR (~$492,065,000 at pre-exploit prices) that the Hedera Council's non-binding term sheet granted to Hedera Foundation for ecosystem development,[13] of which
    - the first 50% (3,500,000,000 HBAR) were released to the Hedera Foundation on 14 February 2025 and around 68% have not yet been spent;[13][11]
