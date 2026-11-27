@@ -117,7 +117,11 @@ export function LetterBlocks({ blocks, sources }: { blocks: LetterBlock[]; sourc
               // Inline, not a block: the highlight follows the words line by line, the way a
               // selection does, instead of painting a rectangle behind a paragraph.
               <p key={index} className="!mt-9 text-center">
-                <span className="box-decoration-clone bg-accent px-1 py-0.5 font-serif text-[1.0625rem] font-semibold leading-[1.6] text-page">
+                {/* The vertical padding fills the leading exactly, so the lines of the mark
+                    touch: a selection has no gaps between its lines, and neither should this.
+                    `py` is 0.33em because the leading is 1.6 — half of the extra line box on
+                    each side. */}
+                <span className="box-decoration-clone bg-accent px-[0.18em] py-[0.33em] font-serif text-[1.0625rem] font-semibold leading-[1.6] text-page">
                   {block.text}
                 </span>
               </p>
