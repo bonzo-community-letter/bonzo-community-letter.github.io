@@ -427,8 +427,8 @@ export function SignDialog({
         ) : (
           <>
             <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-              Your signature and your (optional) comment are recorded on the hashgraph as a public and
-              permanent record of support for this open letter.
+              Your signature and your (optional) comment are recorded on the Hedera Consensus Service
+              as a public and permanent on-chain record of support for this open letter.
             </p>
 
 
