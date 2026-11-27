@@ -17,6 +17,25 @@
 }
 
 /*
+ * The letter's own face. Inter (SIL OFL 1.1, see src/assets/fonts/OFL-Inter.txt),
+ * self-hosted like the others — and chosen because the page had no webfont for the body
+ * at all: `ui-serif` meant New York on an iPhone, Georgia on Windows and Liberation Serif
+ * on Android, so the same letter was set differently for every reader.
+ *
+ * Variable, 400–700 in one file: the letter uses two weights, and a second file would
+ * cost 48 KB for one bold paragraph.
+ */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./assets/fonts/inter-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
  * The one calligraphic line on the page — the count of signatures. Great Vibes
  * (SIL OFL 1.1, see src/assets/fonts/OFL-GreatVibes.txt), self-hosted for the same reason
  * as Caveat above: a page that asks people to sign a letter about careless handling of
@@ -53,6 +72,9 @@
   --color-ink-blue: #1b2a4a;
 
   --font-serif: ui-serif, Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  /* The letter reads in Inter; the headings around it stay serif, which is what makes
+     the sheet look like paper dropped onto a page rather than a form. */
+  --font-letter: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-hand: 'Caveat', 'Bradley Hand', 'Snell Roundhand', 'Segoe Script', 'Apple Chancery', cursive;
@@ -154,7 +176,7 @@ button[aria-disabled='true'],
 
 /* The letter itself: a real page, not a card */
 @utility letter-body {
-  font-family: var(--font-serif);
+  font-family: var(--font-letter);
   /* A letter, not a poster: 15.5px on a phone, 18px on a wide screen. */
   font-size: clamp(0.96875rem, 0.3vw + 0.9rem, 1.125rem);
   line-height: 1.7;
