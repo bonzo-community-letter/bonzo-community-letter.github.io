@@ -28,7 +28,7 @@ We are grateful for the **partial** recovery that happened thanks to four months
 
 **On 12 November 2026**, the recovery portal opened. It nets each account's borrowing against its supplied assets at fixed 11 July prices and pays out in fixed token amounts, so every user carries whatever the market has done since — including those whose collateral was seized by liquidation bots during the exploit window.[2] After that netting, accounts that supplied only HBAR or USDC received **56.1%** of their net entitlement, against a published range of 56.1% to 100%.[12] The aggregate was **81.39%**. The Hedera Foundation's contribution was **795,431 USDC** — **42.8% of the $1,860,686.68 shortfall** borne by non-institutional users.[12][11]
 
-**This left 658 of the 2,466 eligible accounts (26.7%) short of their net entitlement, with $1,065,255.68 outstanding.[12] The damage is concentrated: of the 829 accounts that held $25 or more in pre-exploit net value in net supply, 622 are still short — 75%.[10] Because roughly half of all accounts held only HBAR or USDC, 50% of the active user base was capped at 56.1%.**
+**This left 658 of the 2,466 eligible accounts (26.7%) short of their net entitlement, with $1,065,255.68 outstanding.[12] The damage is concentrated: of the 829 accounts that held $25 or more in pre-exploit net value, 622 are still short — 75%.[10] Because roughly half of all accounts held only HBAR or USDC, 50% of the active user base was capped at 56.1%.**
 
 ## What do we ask for?
 
