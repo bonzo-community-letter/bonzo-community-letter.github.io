@@ -38,7 +38,7 @@ We are grateful for the **partial** recovery that happened thanks to four months
 
 2. **Supra Labs** and **Entropy Foundation** never took any public responsibility for user recovery. It was Supra's technology, their uncoordinated security patch on multiple public chains, and the patch that never reached Hedera, that exposed Bonzo Lend to this risk in the first place. Instead, Supra's founder, Joshua D. Tobkin, offered the hacker $100,000 and a job if they returned the stolen assets. A clever publicity stunt, with no effect, while the press was watching. But we — the affected users — never heard anything from Supra again.
 
-   **We ask Supra Labs and Entropy Foundation to take responsibility in supporting user recovery. Don't offer money to a hacker who will never respond – donate this money to make users whole instead!**
+   **We ask Supra Labs and Entropy Foundation to take responsibility and to support user recovery. Don't offer money to a hacker who will never respond and is unlikely to get caught – donate the money to make users whole instead!**
 
 3. **Bonzo Finance Labs** and **Bonzo Finance Foundation** promised a 10% bounty to Wallet B for returning the rescued assets. The white hat / Wallet B rescued over $1,000,000 worth of user assets in this exploit. He should get the same recovery rights as all other users. But since he had to waive his recovery claims, the bounty was effectively reduced to 8.1%. And those 8.1% were paid from our assets instead of being paid separately by the protocol owners and operators.
 
