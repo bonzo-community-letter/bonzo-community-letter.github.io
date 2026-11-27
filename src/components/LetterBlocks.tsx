@@ -94,12 +94,22 @@ export function LetterBlocks({ blocks, sources }: { blocks: LetterBlock[]; sourc
               <li key={itemIndex} className="pl-1">
                 <Inline text={item.text} sources={sources} />
                 {item.sub.length > 0 ? (
-                  <div className="mt-2 space-y-2 text-[0.9375rem] leading-relaxed text-sheet-ink-soft">
-                    {item.sub.map((sub, subIndex) => (
-                      <p key={subIndex}>
-                        <Inline text={sub} sources={sources} />
-                      </p>
-                    ))}
+                  <div className="mt-3 space-y-2">
+                    {item.sub.map((sub, subIndex) => {
+                      // The demands are the point of the list. They get a bar in the accent
+                      // colour and the letter's own type size — never smaller than the
+                      // paragraph that explains them.
+                      const demand = /^\*\*We ask\b/.test(sub)
+                      return demand ? (
+                        <p key={subIndex} className="border-l-[3px] border-accent pl-3">
+                          <Inline text={sub} sources={sources} />
+                        </p>
+                      ) : (
+                        <p key={subIndex} className="text-[0.9375rem] leading-relaxed text-sheet-ink-soft">
+                          <Inline text={sub} sources={sources} />
+                        </p>
+                      )
+                    })}
                   </div>
                 ) : null}
               </li>
