@@ -4,7 +4,7 @@
  * this file is free to change without invalidating anything.
  */
 export const page = {
-  eyebrow: 'Bonzo Lend & Supra Exploit',
+  eyebrow: 'Supra Oracle & Bonzo Lend Exploit',
 
   title: 'An Open Letter',
 
