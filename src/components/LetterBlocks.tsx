@@ -77,9 +77,16 @@ export function LetterBlocks({ blocks, sources }: { blocks: LetterBlock[]; sourc
                 {block.text}
               </h3>
             ) : (
-              <h4 key={index} className="!mt-7 font-serif text-[1rem] font-semibold italic leading-snug text-sheet-ink">
-                {block.text}
-              </h4>
+              // The closing statement, set the way selected text looks: the site's own
+              // selection colours are accent on page, and this is the sentence the reader is
+              // meant to leave with.
+              // Inline, not a block: the highlight follows the words line by line, the way a
+              // selection does, instead of painting a rectangle behind a paragraph.
+              <p key={index} className="!mt-9 text-center">
+                <span className="box-decoration-clone bg-accent px-1 py-0.5 font-serif text-[1.0625rem] font-semibold leading-[1.6] text-page">
+                  {block.text}
+                </span>
+              </p>
             )
           case 'rule':
             return <hr key={index} className="!mt-9 border-sheet-rule" />

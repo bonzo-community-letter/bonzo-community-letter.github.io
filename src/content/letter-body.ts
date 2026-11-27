@@ -60,7 +60,7 @@ There are multiple options; we only list them to show that the recipients of thi
 
 We — the holders of the 2,466 accounts that used Bonzo Lend — are, to a large part, Hedera's DeFi layer. We put our trust in the DeFi and oracle technology endorsed, advertised, and supported by Hedera Hashgraph and Hedera Foundation.
 
-### Hedera claims to be the trust layer of the digital economy. Broken promises do not build trust. This is your final chance to do better. Keep your promises!
+### Hedera claims to be the trust layer of the digital economy. Broken promises do not build trust. This is your final chance to do better. Keep your promises, keep us on Hedera!
 
 ---
 
