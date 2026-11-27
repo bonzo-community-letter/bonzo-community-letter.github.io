@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from 'react'
 import type { LetterBlock, LetterSources } from '../lib/letterBlocks'
 import { Tip } from './Tip'
+import { addressees } from '../content/addressees'
 
 /**
  * The letter's blocks, drawn on the sheet.
@@ -31,7 +32,37 @@ function Citation({ number, source }: { number: string; source: string }) {
   )
 }
 
-function Inline({ text, sources }: { text: string; sources: LetterSources }) {
+/**
+ * The names in the accent colour, longest first so that "Bonzo Finance Labs" is matched
+ * before anything shorter inside it. Used by the demands, where the party being asked is the
+ * point of the sentence.
+ */
+function withAccentNames(text: string, names: readonly string[]): ReactNode {
+  if (names.length === 0 || text.length === 0) return text
+  const ordered = [...names].sort((a, b) => b.length - a.length)
+  const pattern = new RegExp(`(${ordered.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`)
+  const pieces = text.split(pattern)
+  return pieces.map((piece, index) =>
+    ordered.includes(piece) ? (
+      <span key={index} className="text-accent">
+        {piece}
+      </span>
+    ) : (
+      piece
+    ),
+  )
+}
+
+function Inline({
+  text,
+  sources,
+  accent,
+}: {
+  text: string
+  sources: LetterSources
+  /** Names to set in the accent colour, where they appear in this run of text. */
+  accent?: readonly string[]
+}) {
   const parts = text.split(/(\*\*[^*]+\*\*|_[^_]+_|\[\d+\])/g).filter((part) => part.length > 0)
   return (
     <>
@@ -40,14 +71,14 @@ function Inline({ text, sources }: { text: string; sources: LetterSources }) {
           // bold can hold italic and citations — "_advances covering …_", "…all users[7]**"
           return (
             <strong key={index} className="font-semibold">
-              <Inline text={part.slice(2, -2)} sources={sources} />
+              <Inline text={part.slice(2, -2)} sources={sources} accent={accent} />
             </strong>
           )
         }
         if (part.startsWith('_') && part.endsWith('_') && part.length > 2) {
           return (
             <em key={index}>
-              <Inline text={part.slice(1, -1)} sources={sources} />
+              <Inline text={part.slice(1, -1)} sources={sources} accent={accent} />
             </em>
           )
         }
@@ -60,11 +91,14 @@ function Inline({ text, sources }: { text: string; sources: LetterSources }) {
             <span key={index}>{part}</span>
           )
         }
-        return <span key={index}>{part}</span>
+        return <span key={index}>{accent ? withAccentNames(part, accent) : part}</span>
       })}
     </>
   )
 }
+
+/** Who the letter is addressed to, as the demands name them. */
+const ADDRESSEE_NAMES: readonly string[] = addressees.map((entry) => entry.name)
 
 export function LetterBlocks({ blocks, sources }: { blocks: LetterBlock[]; sources: LetterSources }): ReactNode {
   return (
@@ -109,7 +143,7 @@ export function LetterBlocks({ blocks, sources }: { blocks: LetterBlock[]; sourc
                       const demand = /^\*\*We ask\b/.test(sub)
                       return demand ? (
                         <p key={subIndex} className="border-l-[3px] border-accent pl-3">
-                          <Inline text={sub} sources={sources} />
+                          <Inline text={sub} sources={sources} accent={ADDRESSEE_NAMES} />
                         </p>
                       ) : (
                         <p key={subIndex} className="text-[0.9375rem] leading-relaxed text-sheet-ink-soft">
