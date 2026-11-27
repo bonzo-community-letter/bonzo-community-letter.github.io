@@ -152,7 +152,11 @@ export function Testimonials({
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        className="mt-7 cursor-grab touch-pan-x overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden active:cursor-grabbing"
+        // `pan-x pan-y`, not `pan-x`: the strip must take the horizontal swipe and leave the
+        // vertical one to the page. `pan-x` alone tells the browser that a finger on this
+        // element may not scroll the page at all, which turns the band into a dead zone for
+        // anyone trying to get past it on a phone.
+        className="mt-7 cursor-grab overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:none] [touch-action:pan-x_pan-y] [&::-webkit-scrollbar]:hidden active:cursor-grabbing"
         style={{ scrollBehavior: 'auto' }}
       >
         <div className="flex w-max">
