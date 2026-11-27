@@ -19,7 +19,7 @@ export const page = {
   },
 
   letterhead: {
-    date: '15 November 2026',
+    date: '27 November 2026',
     // Legal names, one per line — a brand is not an entity, and a letter that drops the
     // suffix ("SEZC", "LLC", "FZCO") can be answered with "no such entity".
     // Verified 2026-11-21: Hedera Foundation SEZC (Cayman), Hedera Hashgraph, LLC
