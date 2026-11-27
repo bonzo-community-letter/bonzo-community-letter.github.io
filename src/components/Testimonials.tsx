@@ -74,8 +74,6 @@ export function Testimonials({
     return () => cancelAnimationFrame(frame)
   }, [entries.length])
 
-  if (entries.length === 0) return null
-
   // Dragging with a mouse: horizontal scrolling otherwise needs a trackpad.
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     const el = strip.current
@@ -120,6 +118,12 @@ export function Testimonials({
         ) : null}
       </div>
 
+      {entries.length === 0 ? (
+        <p className="mx-auto mt-7 max-w-md px-6 text-center text-sm leading-relaxed text-ink-faint">
+          Nobody has left a message yet. A signer can write one as they sign — it appears here,
+          one card per account.
+        </p>
+      ) : (
       <div
         className="relative"
         style={{
@@ -178,6 +182,7 @@ export function Testimonials({
           </div>
         </div>
       </div>
+      )}
     </section>
   )
 }

@@ -207,15 +207,15 @@ export function LetterSheet({
             {/* The count, in the one hand the page reserves for it, on the same line as the
                 actions — mr-auto holds it at the left edge and lets it wrap on its own above
                 them on a phone, where the two buttons already take the width. */}
-            {signatureCount !== null && signatureCount > 0 ? (
-              <a
-                href="#personal-messages"
-                className="text-center font-script text-[1.3125rem] leading-[1.2] text-ink-blue transition-colors hover:text-accent min-[340px]:text-[1.5625rem] min-[380px]:text-[1.75rem] sm:mr-auto sm:text-left sm:text-[1.75rem] lg:text-[2rem]"
-              >
-                Signed by {signatureCount.toLocaleString('en-US')} Hedera{' '}
-                {signatureCount === 1 ? 'account' : 'accounts'}
-              </a>
-            ) : null}
+            {/* Always on: the page is a campaign, and a campaign with no visible count reads
+                as abandoned. At zero it says zero. */}
+            <a
+              href="#personal-messages"
+              className="text-center font-script text-[1.3125rem] leading-[1.2] text-ink-blue transition-colors hover:text-accent min-[340px]:text-[1.5625rem] min-[380px]:text-[1.75rem] sm:mr-auto sm:text-left sm:text-[1.75rem] lg:text-[2rem]"
+            >
+              Signed by {(signatureCount ?? 0).toLocaleString('en-US')} Hedera{' '}
+              {(signatureCount ?? 0) === 1 ? 'account' : 'accounts'}
+            </a>
             <div className="flex items-center justify-center gap-3">
             {config.treasuryAccountId ? (
               <Tip
