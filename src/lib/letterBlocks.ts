@@ -71,19 +71,32 @@ export function parseLetter(text: string): LetterBlock[] {
     return list.items.length > 0 ? list.items[list.items.length - 1] ?? null : null
   }
 
+  /** Indentation is what marks a paragraph as belonging to the item above it. */
+  let paragraphIndented = false
+
+  const closeList = () => {
+    if (list && list.items.length > 0) blocks.push({ kind: 'list', ordered: list.ordered, items: list.items })
+    list = null
+  }
+
   const flushParagraph = () => {
     const joined = paragraph.join(' ').trim()
-    if (joined) {
-      const item = lastItem()
-      if (item) item.sub.push(joined)
-      else blocks.push({ kind: 'paragraph', text: joined })
-    }
+    const indented = paragraphIndented
     paragraph = []
+    paragraphIndented = false
+    if (!joined) return
+    // An indented paragraph continues the item it sits under; one that starts at the margin
+    // has left the list behind and is the letter speaking again.
+    if (indented && list) {
+      lastItem()?.sub.push(joined)
+      return
+    }
+    if (list) closeList()
+    blocks.push({ kind: 'paragraph', text: joined })
   }
   const flushList = () => {
     flushParagraph()
-    if (list && list.items.length > 0) blocks.push({ kind: 'list', ordered: list.ordered, items: list.items })
-    list = null
+    closeList()
   }
 
   for (const raw of lines) {
@@ -120,13 +133,15 @@ export function parseLetter(text: string): LetterBlock[] {
       }
       // a second item of the same kind continues the list, even when a blank line and a
       // continuation paragraph sit between them — that is how this letter is written
-      if (!list || list.ordered !== Boolean(ordered)) flushList()
+      flushParagraph()
+      if (!list || list.ordered !== Boolean(ordered)) closeList()
       const text = (ordered ? ordered[2] : bullet?.[1]) ?? ''
       if (!list) list = { ordered: Boolean(ordered), items: [] }
       list.items.push({ text: text.trim(), sub: [] })
       continue
     }
 
+    if (paragraph.length === 0) paragraphIndented = /^\s/.test(line)
     paragraph.push(trimmed)
   }
 
