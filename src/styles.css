@@ -181,6 +181,12 @@ button[aria-disabled='true'],
   font-size: clamp(0.96875rem, 0.3vw + 0.9rem, 1.125rem);
   line-height: 1.7;
   color: var(--color-sheet-ink);
+  /* Blocksatz. Justified only works with hyphenation — without it the gaps between
+     words open into rivers, and at 90 characters a line that is the whole page.
+     `lang="en"` on the document is what lets the browser break the words. */
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
 }
 
 /*
