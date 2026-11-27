@@ -21,7 +21,7 @@ function Citation({ number, source }: { number: string; source: string }) {
         tabIndex={0}
         aria-describedby={id}
         aria-label={`Source ${number}`}
-        className="cursor-help rounded-[2px] px-[0.15em] font-sans text-[0.625rem] font-semibold text-sheet-ink-faint transition-colors hover:text-accent focus:outline-none focus-visible:text-accent"
+        className="cursor-help rounded-[2px] px-[0.15em] font-sans text-[0.625rem] font-semibold text-accent transition-colors hover:text-sheet-ink focus:outline-none focus-visible:text-sheet-ink"
       >
         {number}
       </sup>
