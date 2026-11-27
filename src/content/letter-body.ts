@@ -40,7 +40,7 @@ We are grateful for the **partial** recovery that happened thanks to four months
 
    **We ask Supra Labs and Entropy Foundation to take responsibility in supporting user recovery. Don't offer money to a hacker who will never respond – donate this money to make users whole instead!**
 
-3. Provide the white hat — Wallet B — who rescued over $1,000,000 worth of assets in this exploit, with the same recovery rights as all other users. He was promised a 10% bounty for returning the assets. But since he had to waive his recovery claims, the bounty was effectively reduced to 8.1%. And those 8.1% were paid from the assets of users instead of by the protocol owners.
+3. **Bonzo Finance Labs** and **Bonzo Finance Foundation** promised a 10% bounty to Wallet B for returning the rescued assets. The white hat / Wallet B rescued over $1,000,000 worth of user assets in this exploit. He should get the same recovery rights as all other users. But since he had to waive his recovery claims, the bounty was effectively reduced to 8.1%. And those 8.1% were paid from our assets instead of being paid separately by the protocol owners and operators.
 
    **We ask the Bonzo Foundation and Bonzo Labs to fulfill the 10% bounty promise – and don't use customer money!**
 
