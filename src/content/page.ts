@@ -36,7 +36,7 @@ export const page = {
       'Entropy Foundation',
     ],
     subject: 'Supra Oracle & Bonzo Lend Exploit',
-    salutation: 'To the addressees above,',
+    salutation: 'To the companies and institutions named above,',
   },
 
   /** Shown inside the sheet while `letterText` is still empty. */
