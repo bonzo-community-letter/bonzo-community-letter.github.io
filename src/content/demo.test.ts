@@ -14,6 +14,14 @@ describe('sample comments', () => {
     expect(entries.length).toBeGreaterThan(5)
   })
 
+  it('keeps every comment inside what the field accepts, so the layout is tested', () => {
+    for (const entry of entries) {
+      const bytes = new TextEncoder().encode(entry.comment ?? '').length
+      expect(bytes, entry.accountId).toBeGreaterThanOrEqual(77)
+      expect(bytes, entry.accountId).toBeLessThanOrEqual(512)
+    }
+  })
+
   it('never shows a recovery rate below the published floor', () => {
     for (const entry of entries) {
       if (entry.recoveryRate === null) continue

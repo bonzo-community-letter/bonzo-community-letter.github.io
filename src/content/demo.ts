@@ -4,35 +4,60 @@
  * Shown only when the page is opened with `?demo=1`, and labelled as samples where they
  * appear — nothing here is a signature, and the count above the letter ignores them.
  *
- * The lengths are spread across the range the comment field allows (77 to 512 bytes,
- * the limit) and deliberately interleaved shortest-longest, because a grid that only
- * ever sees three lines of text is not designed, it is guessed at: the pairing that
- * breaks a layout is the one where one cell is a line and its neighbour is a page.
+ * Two things shape what is written here.
+ *
+ * The sentiment follows the rate. An account at 56 % is at the bottom of the published range
+ * and speaks like it; an account at 100 % got everything back and is still critical, because
+ * the complaint in this letter was never only about the money — it is about a promise made in
+ * public and then quietly narrowed. Nothing here is a slogan: each comment names something
+ * that happened (the eleven days of silence, the banner, the liquidation window, the release,
+ * the fixed July prices, the 658 accounts still short).
+ *
+ * The lengths are spread across the range the comment field allows (77 to 512 bytes, the
+ * limit) and deliberately interleaved shortest-longest, because a grid that only ever sees
+ * three lines of text is not designed, it is guessed at: the pairing that breaks a layout is
+ * the one where one cell is a line and its neighbour is a page.
+ *
+ * The facts are the letter's own, from Bonzo's posts, the Supra incident report and the Bonzo
+ * Finance Discord (#general-chat, Jul–Nov 2026): the 16 July promise of "advances covering the
+ * full value of the losses", eleven days before the first public statement, liquidations that
+ * ran during the exploit window, the portal's netting at fixed 11 July prices, the 56.1 %
+ * floor for accounts that supplied only HBAR or USDC, 658 of 2,466 accounts short, $1,065,255.68
+ * outstanding, and the release every claimant signs to collect.
  */
 import type { Signature } from '../lib/hcs'
 
+/**
+ * One entry per card, in the order the reel shows them. The rate on each line is what that
+ * card displays; `null` is a card that states no rate — a supporter, or an account that did
+ * not say. Testimonials marks every third card (index 1, 4, 7) as a supporter, so those carry
+ * no rate at all.
+ */
 const samples: string[] = [
-  // 77 bytes
-  'I held 41,000 HBAR in the pool for eleven months. One oracle print erased it.',
-  // 512 bytes — the longest comment the field accepts
-  'I have spent five weeks being told that the situation is complex and that I should be patient, while the people responsible for the complexity publish nothing at all. I deposited HBAR into a pool that advertised a liquidation mechanism backed by an oracle. The oracle reported a price that did not exist, the pool accepted it, the collateral was taken, and the debt remained. Every party in that sentence is a company with a name, a registration number and a legal address. I am asking for the record to be kept.',
-  // 88 bytes
-  'The recovery plan reads well until the page where nobody is named as responsible for it.',
-  // 339 bytes
-  'I have signed because a letter with names and dates is harder to ignore than a thread on X. I do not expect an apology, and I would not know what to do with one. What I expect is the thing that was promised in July, delivered on the terms it was promised, and a public account of where the shortfall went if it cannot be delivered in full.',
-  // 109 bytes
-  'I am not asking for sympathy. I am asking for the distribution schedule in writing, with dates that are kept.',
-  // 310 bytes
-  'Eleven days between the exploit and the first public statement. In that time the only communication was a banner on the app telling us to wait. Whatever was happening internally, the people holding the loss were told nothing, and some of us made decisions in that silence that we would not have made otherwise.',
-  // 126 bytes
-  'Three weeks of silence, then a portal that asks us to prove a debt we never disputed. That is not a process, that is a filter.',
-  // 224 bytes
-  'There is a version of this story where the protocol pays what it promised, publishes who decided what, and treats the people who lost money as counterparties rather than as a support queue. I would like to read that version.',
-  // 213 bytes
-  'What struck me most was how quickly the language changed: from \u201cfully covered\u201d to \u201csubject to available resources\u201d in the space of a single post, with no explanation of what had been discovered in between.',
-  // 234 bytes
-  'I ran a small vault for four friends. We read the audit, we read the docs, we accepted the risk we were shown. None of that documentation mentioned that a single price feed could empty the pool while liquidations ran on the same feed.',
+  // index 0 · affected, no rate · 145 bytes
+  'I did not state a rate because I still cannot work out what mine is: the portal nets a position I never agreed to net, at prices from the day everything broke.',
+  // index 1 · supporter · 105 bytes
+  'I never held a position here. I signed because a promise made in public should be kept in public, whoever made it.',
+  // index 2 · affected, 56.1 % · 445 bytes — the bottom of the published range
+  'Fifty-six percent. I supplied HBAR and USDC, so I sit at the floor of the range published in November, and I am told this is the recovery. In July the commitment was "the full value of the losses to their affected positions", endorsed on Hedera\'s own account. Four months later the same campaign pays me half of it and calls the difference a rate. Nobody has put the arithmetic in writing.',
+  // index 3 · affected, 62 % · 291 bytes
+  'Eleven days of silence after the exploit, then a banner telling us to wait. I can forgive a slow week. I cannot forgive a promise of full value that became a range without anyone saying so, and a portal that values my position at prices from the morning it broke.',
+  // index 4 · supporter · 235 bytes
+  'I lost nothing here, which is why I am signing. I watched friends find out from a Discord message what had happened to their collateral. A chain that sells itself as a trust layer cannot leave its users to reconstruct the damage from a thread.',
+  // index 5 · affected, 68.4 % · 332 bytes
+  'The number is not my complaint — it was published, with a range, and I can check it against the snapshot. My complaint is that the July statement was edited and approved by the foundation and then narrowed without an explanation. Say what changed, and on what date, and I will stop arguing about the percentage.',
+  // index 6 · affected, 81.39 % · 300 bytes
+  'Eighty-one percent aggregate sounds like a rescue until you read which accounts make up the rest. 658 of 2,466 are still short, and the shortfall is $1,065,255.68 — small enough that the parties who promised full value could close it this week and end this.',
+  // index 7 · supporter · 122 bytes
+  'Hedera pushed this oracle and endorsed the recovery promise. Both of those were public. Being public is the whole point of a trust layer.',
+  // index 8 · affected, 96.5 % · 479 bytes — nearly whole, still critical
+  'I am almost whole and I am still signing. To collect my own assets the portal made me sign a release that gave up my claim on the part that was not returned, in a document long enough that the scroll gate failed on my phone the day it opened. A recovery that requires you to waive your rights to receive it is not a recovery; it is a settlement nobody negotiated. Four months of work by the people who built the protocol deserves thanks; the decision to narrow it was made by people who never spoke to us.',
+  // index 9 · affected, 100 % · 337 bytes — fully covered, and still critical
+  'I got everything back. It took four months, eleven days of silence at the start, and a promise that was rewritten while we waited. I am signing for the 658 accounts that did not get everything back, because "full value" was the word used in July, and it is still the word I am asking to be honoured.',
 ]
+
+/** The rate each card shows, in the same order. `null` = no rate stated. */
+const rates: (number | null)[] = [null, null, 56.1, 62, null, 68.4, 81.39, null, 96.5, 100]
 
 /** Ten signatures that never happened, in the shape the page already reads. */
 export function sampleSignatures(subject: string, letterHash: string): Signature[] {
@@ -52,7 +77,7 @@ export function sampleSignatures(subject: string, letterHash: string): Signature
       // A spread across the range the portal actually pays — 56.1 % to 100 %. Nothing lower:
       // a sample that shows 8 % would put a number on the page that the recovery does not
       // support, and a demo is not a licence to invent a worse outcome than the real one.
-      recoveryRate: [null, 56.1, 62, 68.4, 75, 81.39, 88, 91.2, 96.5, 100][index % 10] ?? null,
+      recoveryRate: rates[index] ?? null,
     }
   })
 }
