@@ -10,7 +10,7 @@
  */
 export const LETTER_BODY = `This open letter was written, coordinated, and signed by users affected by the exploit of the Supra Labs oracle on Hedera, which led to the theft of over $9,061,019[1][2] worth of assets from Hedera's only lending and borrowing platform, Bonzo Lend. This letter is directed at the companies and institutions that are responsible for what led to the exploit, that publicly promised full recovery right after it, that endorsed those promises, and those that stayed silent.
 
-We are grateful for the **partial** recovery that happened thanks to four months of effort by Bonzo Labs employees and we are aware that many DeFi exploits in the past resulted in no recovery for users at all. But we are also aware of DeFi exploits in which users were made whole — restoring trust and keeping the affected chain's DeFi infrastructure intact. We are asking for what was promised right after the exploit.
+We are grateful for the **partial** recovery that happened thanks to four months of effort by Bonzo Finance Labs employees and we are aware that many DeFi exploits in the past resulted in no recovery for users at all. But we are also aware of DeFi exploits in which users were made whole — restoring trust and keeping the affected chain's DeFi infrastructure intact. We are asking for what was promised right after the exploit.
 
 **This letter is about broken promises and destroyed trust on Hedera — the "trust layer of the digital economy".[3]**
 
@@ -24,7 +24,7 @@ We are grateful for the **partial** recovery that happened thanks to four months
 
 **On 16 July 2026**, Bonzo published a commitment that affected users would receive "**advances covering the full value of the losses to their affected positions** [...] backed by a recovery facility committed by Hedera Foundation".[7] The announcement was endorsed by Hedera's official X account,[8] and Bonzo representatives have since stated that the post was "edited and approved by the Hedera Foundation and Hedera".[9]
 
-**On 6 August 2026**, a white hat — "Wallet B" — returned 90% of the $1,032,262 in assets he had borrowed to protect user funds. Bonzo Foundation and Bonzo Labs granted a bounty, letting him keep 10% of the rescued assets.[10][11] That bounty was not paid by Bonzo, Supra or Hedera; it came out of the recovered pool, and therefore from the users' funds. The release he signed also waived his own claim on Bonzo Lend, reducing his net bounty to **8.1%** — below the 10% of returned funds that Bonzo had described as an industry standard.[10][11]
+**On 6 August 2026**, a white hat — "Wallet B" — returned 90% of the $1,032,262 in assets he had borrowed to protect user funds. Bonzo Finance Foundation and Bonzo Finance Labs granted a bounty, letting him keep 10% of the rescued assets.[10][11] That bounty was not paid by Bonzo, Supra or Hedera; it came out of the recovered pool, and therefore from the users' funds. The release he signed also waived his own claim on Bonzo Lend, reducing his net bounty to **8.1%** — below the 10% of returned funds that Bonzo had described as an industry standard.[10][11]
 
 **On 12 November 2026**, the recovery portal opened. It nets each account's borrowing against its supplied assets at fixed 11 July prices and pays out in fixed token amounts, so every user carries whatever the market has done since — including those whose collateral was seized by liquidation bots during the exploit window.[2] After that netting, accounts that supplied only HBAR or USDC received **56.1%** of their net entitlement, against a published range of 56.1% to 100%.[12] The aggregate was **81.39%**. The Hedera Foundation's contribution was **795,431 USDC** — **42.8% of the $1,860,686.68 shortfall** borne by non-institutional users.[12][11]
 
@@ -42,7 +42,7 @@ We are grateful for the **partial** recovery that happened thanks to four months
 
 3. **Bonzo Finance Labs** and **Bonzo Finance Foundation** promised a 10% bounty to Wallet B for returning the rescued assets. The white hat / Wallet B rescued over $1,000,000 worth of user assets in this exploit. He should get the same recovery rights as all other users. But since he had to waive his recovery claims, the bounty was effectively reduced to 8.1%. And those 8.1% were paid from our assets instead of being paid separately by the protocol owners and operators.
 
-   **We ask the Bonzo Foundation and Bonzo Labs to fulfill the 10% bounty promise – and don't use customer money!**
+   **We ask Bonzo Finance Foundation and Bonzo Finance Labs to fulfill the 10% bounty promise – and don't use customer money!**
 
 4. **Hashgraph Foundry**, **Hedera Hashgraph**, and **Hedera Foundation** should support a relaunch of a security-hardened Bonzo v2 as the only lending and borrowing protocol on Hedera. If the trust of users is restored, many of us will return. Otherwise, many of us will leave the Hedera ecosystem forever.
 
