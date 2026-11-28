@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import QRCode from 'qrcode'
 import { config } from '../config'
 import { hashscanAccountUrl } from '../lib/hcs'
+import { CAMPAIGN_GOAL_USD, CAMPAIGN_TPS, MILESTONES, formatPercent, formatUsd, shareOf } from '../lib/campaign'
+import { useTreasuryBalance } from '../hooks/useTreasuryBalance'
 
 /**
  * Where a donation goes, and what it is spent on.
@@ -21,6 +23,7 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
   const [qr, setQr] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const account = config.treasuryAccountId
+  const treasury = useTreasuryBalance()
 
   useEffect(() => {
     if (!open) return
@@ -103,12 +106,32 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
         </h2>
 
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          Donations will fund transactions that will post this letter on-chain. We aim to boost
-          Hedera’s TPS from ~3 to 6 TPS and target up to 100 TPS. This will cost $864 per 24 hour
-          duration – the more funds, the longer we can run the campaign. Increased TPS enhances
-          on-chain activity, which hopefully will draw attention and make the campaign more
-          visible – and harder to ignore.
+          The campaign aims to increase Hedera’s mainnet TPS temporarily to {CAMPAIGN_TPS} TPS for
+          at least 24 h (milestone 1), better 48 h (milestone 2), and ideally 72 h (milestone 3).
+          To increase the TPS, we send 1 tinybar per transaction to Hedera’s staking rewards
+          account (<span className="font-mono text-ink">0.0.800</span>). We hope this TPS increase
+          will draw attention to this open letter, since each transaction memo will contain a link
+          to this website.
         </p>
+
+        <dl className="mt-4 grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 border-y border-rule/60 py-3 text-xs">
+          {MILESTONES.map((milestone, index) => (
+            <Fragment key={milestone.hours}>
+              <dt className="text-ink-faint">
+                Milestone {index + 1} · {milestone.hours} h at {CAMPAIGN_TPS} TPS
+              </dt>
+              <dd className="text-right font-mono text-ink tabular-nums">{formatUsd(milestone.usd)}</dd>
+            </Fragment>
+          ))}
+        </dl>
+
+        {treasury ? (
+          <p className="mt-3 text-[0.6875rem] uppercase tracking-[0.12em] text-ink-faint">
+            Raised so far <span className="text-ink tabular-nums">{formatUsd(treasury.usd)}</span>{' '}
+            of <span className="tabular-nums">{formatUsd(CAMPAIGN_GOAL_USD)}</span> (
+            <span className="tabular-nums">{formatPercent(shareOf(treasury.usd))}</span>)
+          </p>
+        ) : null}
 
         <div className="mt-5 flex justify-center">
           {qr ? (
