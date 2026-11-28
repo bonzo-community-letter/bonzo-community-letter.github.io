@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useTipPlacement } from '../hooks/useTipPlacement'
 
 /**
  * A small circled i that explains the thing next to it.
@@ -36,41 +37,15 @@ export function InfoTip({
   const [open, setOpen] = useState(false)
   const button = useRef<HTMLButtonElement | null>(null)
   const panel = useRef<HTMLSpanElement | null>(null)
-  const [at, setAt] = useState<{ top: number; left: number } | null>(null)
-
-  const place = () => {
-    const anchor = button.current?.getBoundingClientRect()
-    if (!anchor) return
-    const box = panel.current?.getBoundingClientRect()
-    const panelWidth = box?.width ?? width
-    const panelHeight = box?.height ?? 0
-    const gap = 8
-    const margin = 8
-
-    let left = align === 'left' ? anchor.left : anchor.right - panelWidth
-    left = Math.max(margin, Math.min(left, window.innerWidth - panelWidth - margin))
-
-    let top = side === 'below' ? anchor.bottom + gap : anchor.top - panelHeight - gap
-    if (top < margin) top = anchor.bottom + gap // no room above: open downwards instead
-
-    setAt({ top, left })
-  }
-
-  useLayoutEffect(() => {
-    if (open) place()
-  }, [open])
+  const at = useTipPlacement({ anchor: button, panel, open, side, align, width })
 
   useEffect(() => {
     if (!open) return
-    // The dialog scrolls and the window can resize while the panel is open; either would
-    // leave it pointing at where the icon used to be.
-    const follow = () => place()
-    window.addEventListener('scroll', follow, true)
-    window.addEventListener('resize', follow)
-    return () => {
-      window.removeEventListener('scroll', follow, true)
-      window.removeEventListener('resize', follow)
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setOpen(false)
     }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
   }, [open])
 
   return (
