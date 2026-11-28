@@ -98,28 +98,49 @@ export function SignDialog({
    */
   const [attemptAccount, setAttemptAccount] = useState<string | null>(null)
 
+  /**
+   * The callbacks as of the latest render.
+   *
+   * The effects below own side effects — a focus, a scroll lock, a listener — and must
+   * run when the dialog opens, not when the letter sheet happens to re-render. Depending
+   * on `onClose`/`onSigned` directly tied them to those re-renders, because a caller that
+   * writes `onClose={() => setOpen(false)}` inline hands over a new function every time.
+   */
+  const latest = useRef({ onClose, onSigned })
+  useEffect(() => {
+    latest.current = { onClose, onSigned }
+  })
+
+  // Once per opening: lock the page and put the caret where the reader types. Separate
+  // from the listener below, so a re-render of the parent cannot move the caret.
   useEffect(() => {
     if (!open) return
 
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onClose()
-      }
-    }
     const overflow = document.body.style.overflow
-
-    document.addEventListener('keydown', onKeyDown)
     document.body.style.overflow = 'hidden'
-    panel.current?.querySelector<HTMLElement>('textarea, button, a[href]')?.focus()
+    // The first field, not the first focusable: the topic link sits above the form, and a
+    // dialog that opens with the caret on a link has to be tabbed away from first.
+    const field = panel.current?.querySelector<HTMLElement>('textarea:not([disabled]), input:not([disabled])')
+    ;(field ?? panel.current)?.focus()
 
     return () => {
-      document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = overflow
       previous?.focus()
     }
-  }, [open, onClose])
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        latest.current.onClose()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [open])
 
   // A submission started in this tab is written down before the wallet is
   // asked. If the wallet app took the page away and sent it back as a fresh
@@ -142,12 +163,14 @@ export function SignDialog({
       if (cancelled || stopped.current || attempt.current !== resumedAt) return
       clearPending()
       setState({ status: 'result', outcome: outcomeOf(pending.transactionId, status) })
-      if (status === 'SUCCESS') onSigned()
+      if (status === 'SUCCESS') latest.current.onSigned()
     })
     return () => {
       cancelled = true
     }
-  }, [open, onSigned])
+    // The resume is a fact about the opening, not about the callback: a re-render must not
+    // start a second wait for the same transaction.
+  }, [open])
 
   if (!open) return null
 
@@ -298,6 +321,7 @@ export function SignDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="sign-dialog-title"
+        tabIndex={-1}
         className="relative m-3 max-h-[85dvh] w-full max-w-md overflow-y-auto border border-rule bg-hero p-6 shadow-2xl shadow-black/60 sm:m-0"
       >
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">

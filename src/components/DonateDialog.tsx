@@ -25,28 +25,38 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
   const account = config.treasuryAccountId
   const treasury = useTreasuryBalance()
 
+  /** The callback as of the latest render — see the same pattern in SignDialog. */
+  const latest = useRef({ onClose })
+  useEffect(() => {
+    latest.current = { onClose }
+  })
+
+  // Once per opening, so a re-render of the letter sheet cannot move the focus.
   useEffect(() => {
     if (!open) return
 
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onClose()
-      }
-    }
     const overflow = document.body.style.overflow
-
-    document.addEventListener('keydown', onKeyDown)
     document.body.style.overflow = 'hidden'
     panel.current?.querySelector<HTMLElement>('button, a[href]')?.focus()
 
     return () => {
-      document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = overflow
       previous?.focus()
     }
-  }, [open, onClose])
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        latest.current.onClose()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [open])
 
   // Dark modules on paper, not the other way round: an inverted code is a code many
   // scanners refuse, and this one is read off a phone screen at arm's length.
