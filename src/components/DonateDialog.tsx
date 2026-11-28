@@ -102,16 +102,16 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
           <p className="eyebrow">{config.network} network</p>
         </div>
         <h2 id="donate-title" className="mt-2 font-serif text-2xl leading-tight text-ink">
-          Support this campaign
+          Make a donation
         </h2>
 
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
           The campaign aims to increase Hedera’s mainnet TPS temporarily to {CAMPAIGN_TPS} TPS for
-          at least 24 h (milestone 1), better 48 h (milestone 2), and ideally 72 h (milestone 3).
-          To increase the TPS, we send 1 tinybar per transaction to Hedera’s staking rewards
-          account (<span className="font-mono text-ink">0.0.800</span>). We hope this TPS increase
-          will draw attention to this open letter, since each transaction memo will contain a link
-          to this website.
+          at least 24 h, better 48 h, and ideally 72 h. To increase the TPS, we send 1 tinybar per
+          transaction to Hedera’s staking rewards account (
+          <span className="font-mono text-ink">0.0.800</span>). We hope this TPS increase will draw
+          attention to this open letter, since each transaction memo will contain a link to this
+          website.
         </p>
 
         <dl className="mt-4 grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 border-y border-rule/60 py-3 text-xs">
@@ -140,10 +140,10 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
               alt={`QR code for the treasury account ${account}`}
               width={240}
               height={240}
-              className="h-[200px] w-[200px] rounded-sm border border-rule sm:h-[240px] sm:w-[240px]"
+              className="h-[144px] w-[144px] rounded-sm border border-rule sm:h-[168px] sm:w-[168px]"
             />
           ) : (
-            <div className="flex h-[200px] w-[200px] items-center justify-center rounded-sm border border-rule text-xs text-ink-faint sm:h-[240px] sm:w-[240px]">
+            <div className="flex h-[144px] w-[144px] items-center justify-center rounded-sm border border-rule text-center text-[0.625rem] leading-tight text-ink-faint sm:h-[168px] sm:w-[168px]">
               QR code unavailable
             </div>
           )}
@@ -174,8 +174,7 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
         </div>
 
         <p className="mt-3 text-xs leading-relaxed text-ink-faint">
-          Make an HBAR transfer to the campaign's treasury account. Any amount helps to give this
-          campaign visibility. Thank you!
+          Any amount helps to give this campaign visibility. Thank you!
         </p>
 
         <button
