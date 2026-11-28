@@ -8,9 +8,10 @@ import { useTipPlacement } from '../hooks/useTipPlacement'
 /**
  * How far the campaign's funding has come, as a hairline at the bottom edge of the bar.
  *
- * The marker at the end of the fill carries the currency and the share: the Hedera mark
- * inside the circle, the percentage beside it. Both are drawn as an overlay — the bar is
- * three pixels in a fifty-six pixel header, and nothing here may make the page taller.
+ * The marker at the end of the fill carries the currency: the Hedera mark inside the
+ * circle. It is drawn as an overlay — the bar is three pixels in a fifty-six pixel header,
+ * and nothing here may make the page taller. The share itself is not written beside it; the
+ * tooltip and the donate dialog say it.
  *
  * The circle is the only moving thing on the page: it says the number is live, not a
  * drawing. It pulses slowly — a heartbeat, not a spinner — and holds still for anyone who
@@ -27,11 +28,6 @@ export function CampaignProgress() {
   const goal = CAMPAIGN_GOAL_USD
   const share = shareOf(usd, goal)
   const percent = formatPercent(share)
-  // only at the very end, where a label to the right would leave the bar
-  const flipped = share > 0.94
-  // At a fraction of a percent the fill is thinner than the marker is wide, and centring
-  // the marker on it would push half of it out of the window.
-  const atEdge = share < 0.01
 
   const [open, setOpen] = useState(false)
   const button = useRef<HTMLButtonElement | null>(null)
@@ -48,7 +44,9 @@ export function CampaignProgress() {
   }, [open])
 
   return (
-    <div className="absolute inset-x-0 bottom-0 h-[3px] overflow-visible">
+    // Inset by the marker's own air: the track then starts where the marker can sit, so at
+    // 0% the fill is not a stray sliver to the left of a marker that has been pushed in.
+    <div className="absolute inset-x-1 bottom-0 h-[3px] overflow-visible">
       <div
         role="progressbar"
         aria-label="Campaign funding"
@@ -80,24 +78,14 @@ export function CampaignProgress() {
             onFocus={() => setOpen(true)}
             onBlur={() => setOpen(false)}
             onClick={() => setOpen((was) => !was)}
-            style={{ left: `${share * 100}%` }}
-            className={`campaign-dot absolute top-1/2 flex h-[20px] w-[20px] -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-accent text-page ${
-              atEdge ? '' : '-translate-x-1/2'
-            }`}
+            // The marker is centred on the fill, but never closer to an edge than its own
+            // half: at 0% and at 100% it would otherwise be cut by the window. `clamp`
+            // against the bar's width does that without a second rule.
+            style={{ left: `clamp(10px, ${share * 100}%, calc(100% - 10px))` }}
+            className="campaign-dot absolute top-1/2 flex h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-accent text-page"
           >
             <HbarMark className="h-[14px] w-auto" />
           </button>
-          {/* In the last few percent a label to the right of the marker would run off the
-              bar; there it moves to the other side, over the fill, in the page colour. */}
-          <span
-            aria-hidden="true"
-            style={{ left: `${share * 100}%` }}
-            className={`absolute top-1/2 -translate-y-1/2 whitespace-nowrap font-mono text-[0.5625rem] leading-none tracking-tight text-ink-soft tabular-nums ${
-              flipped ? 'mr-2 -translate-x-[calc(100%+14px)] text-page' : 'ml-[14px]'
-            }`}
-          >
-            {percent}
-          </span>
         </>
       ) : null}
 
