@@ -106,11 +106,11 @@ export function DonateDialog({ open, onClose }: { open: boolean; onClose: () => 
         </h2>
 
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          The campaign aims to increase Hedera’s mainnet TPS temporarily to {CAMPAIGN_TPS} TPS for
-          at least 24 h, better 48 h, and ideally 72 h. To increase the TPS, we send 1 tinybar per
-          transaction to Hedera’s staking rewards account (
-          <span className="font-mono text-ink">0.0.800</span>). We hope that this increase in the TPS
-          will draw attention to this open letter, since every transaction memo will link to it.
+          The campaign aims to increase Hedera’s mainnet throughput temporarily to {CAMPAIGN_TPS} TPS
+          for at least 24 h. To increase the TPS, we send 1 tinybar per transaction to Hedera’s
+          staking rewards account (<span className="font-mono text-ink">0.0.800</span>). Each
+          transaction memo will link here. We hope the TPS spike will draw attention to the open
+          letter.
         </p>
 
         <dl className="mt-4 grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 border-y border-rule/60 py-3 text-xs">
