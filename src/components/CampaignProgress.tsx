@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { HbarMark } from './HbarMark'
 import { CAMPAIGN_GOAL_USD, MILESTONES, formatPercent, formatUsd, shareOf } from '../lib/campaign'
@@ -82,10 +82,7 @@ export function CampaignProgress() {
             // half: at 0% and at 100% it would otherwise be cut by the window. The half
             // follows the size, so a resting dot does not sit four pixels away from a fill
             // that is thinner than itself, and a grown one still keeps its air.
-            style={{
-              left: `clamp(${open ? 10 : 4}px, ${share * 100}%, calc(100% - ${open ? 10 : 4}px))`,
-              '--campaign-ring': open ? '8px' : '3px',
-            } as CSSProperties}
+            style={{ left: `clamp(${open ? 10 : 4}px, ${share * 100}%, calc(100% - ${open ? 10 : 4}px))` }}
             // The button is a twenty-pixel target around an eight-pixel dot: the dot is
             // what the page shows, the target is what a pointer can find. Growing the dot
             // instead would make it either hard to hit or too loud at rest.
