@@ -128,6 +128,8 @@ export function CampaignProgress() {
             {MILESTONES.map((m) => `${m.hours} h ${formatUsd(m.usd)}`).join(' · ')} — the bar
             fills towards the last milestone.
           </span>
+          {/* The donate button is at the foot of the letter, and nothing in the bar says so. */}
+          <span className="mt-1.5 block text-ink">Scroll to the letter’s end to donate!</span>
         </span>,
         document.body,
       )}
