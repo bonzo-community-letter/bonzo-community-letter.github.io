@@ -62,6 +62,8 @@ We — the holders of the 2,466 accounts that used Bonzo Lend — are, to a larg
 
 ### Hedera claims to be the trust layer of the digital economy. Broken promises do not build trust. This is your final chance to do better. Keep your promises, keep us on Hedera!
 
+Reach out to us on the official Bonzo Finance Discord server!
+
 ---
 
 ### Sources

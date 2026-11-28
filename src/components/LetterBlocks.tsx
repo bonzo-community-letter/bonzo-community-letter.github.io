@@ -128,12 +128,18 @@ export function LetterBlocks({ blocks, sources }: { blocks: LetterBlock[]; sourc
             )
           case 'rule':
             return <hr key={index} className="!mt-9 border-sheet-rule" />
-          case 'paragraph':
+          case 'paragraph': {
+            // A paragraph directly under the closing statement belongs to it: it is the
+            // invitation that follows the demand, so it is centred with it — plain, not
+            // highlighted, because the highlight is the demand and not the invitation.
+            const previous = blocks[index - 1]
+            const afterClosing = previous?.kind === 'heading' && previous.level === 3
             return (
-              <p key={index}>
+              <p key={index} className={afterClosing ? 'text-center' : undefined}>
                 <Inline text={block.text} sources={sources} />
               </p>
             )
+          }
           case 'list': {
             const items = block.items.map((item, itemIndex) => (
               <li key={itemIndex} className="pl-1">
