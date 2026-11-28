@@ -45,6 +45,10 @@ function merge(held: readonly Signature[], incoming: readonly Signature[]): Sign
   const bySequence = new Map<number, Signature>()
   for (const signature of held) bySequence.set(Number(signature.sequence), signature)
   for (const signature of incoming) bySequence.set(Number(signature.sequence), signature)
+  // The map is keyed by sequence, so the same size means every message in the page was
+  // already held. Hand back the array that came in: a new one would be a new state, and
+  // React would redraw the sheet for a refresh that found nothing.
+  if (bySequence.size === held.length) return held as Signature[]
   return [...bySequence.values()].sort((a, b) => Number(a.sequence) - Number(b.sequence))
 }
 
@@ -82,10 +86,32 @@ export function useSignatures({ subject, letterHash }: SignatureQuery): Signatur
     const controller = new AbortController()
     let cancelled = false
 
+    /**
+     * The one place the topic's state is written.
+     *
+     * A poll that found nothing must not be a state change: the same array and the same
+     * flags mean the same picture, and React skips the render when the updater returns the
+     * state it was given. Without this the sheet redrew once a minute for an idle topic —
+     * and every redraw moved the caret out of whatever the reader was typing.
+     */
+    const publish = (signatures: readonly Signature[], reading: boolean): void => {
+      setState((previous) =>
+        previous.status === 'ready' &&
+        previous.signatures === signatures &&
+        previous.reading === reading &&
+        previous.truncated === truncated.current
+          ? previous
+          : { status: 'ready', signatures: signatures as Signature[], reading, truncated: truncated.current },
+      )
+    }
+
     const load = async (): Promise<void> => {
       try {
         const since = loaded.current ? newestSequence(held.current) : undefined
-        const walking = since === undefined
+        // "Reading" is the first read of the topic, not "the newest sequence is unknown":
+        // a topic with no signatures yet knows no sequence either, and that made every
+        // poll look like a first load — spinner on, spinner off, twice a minute.
+        const walking = !loaded.current
         const incoming = await fetchSignatures({
           network: config.network,
           topicId: config.topicId,
@@ -99,26 +125,24 @@ export function useSignatures({ subject, letterHash }: SignatureQuery): Signatur
             // count climbs while the topic is walked instead of appearing all at once.
             const merged = merge(held.current, page)
             held.current = merged
-            setState({
-              status: 'ready',
-              signatures: merged,
-              reading: walking,
-              truncated: truncated.current,
-            })
+            publish(merged, walking)
           },
         })
         if (cancelled) return
 
-        const merged = since === undefined ? incoming : merge(held.current, incoming)
+        // Always through `merge`, even on the first read: it hands back the array it was
+        // given when the page brought nothing, and a fresh empty array per poll was a new
+        // state — and a re-render of the whole sheet — once a minute.
+        const merged = merge(held.current, incoming)
         held.current = merged
         // A first read that came back at its own page bound did not see the whole topic.
         // The flag is sticky, and the next read still asks only for what is new — a bound
         // that made every refresh walk two hundred pages again would be a load of its own.
-        if (since === undefined) {
+        if (!loaded.current) {
           truncated.current = incoming.length >= MAX_PAGES * PAGE_SIZE
           loaded.current = true
         }
-        setState({ status: 'ready', signatures: merged, reading: false, truncated: truncated.current })
+        publish(merged, false)
       } catch (error) {
         if (cancelled || controller.signal.aborted) return
         setState((previous) => ({

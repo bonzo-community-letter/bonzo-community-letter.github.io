@@ -29,6 +29,10 @@ let started = false
 let inFlight = false
 
 function publish(value: Treasury): void {
+  // A poll that found the same balance is not news. Publishing it anyway re-rendered
+  // every subscriber once a minute for nothing — and, before the focus fix, moved the
+  // caret out of whatever was being typed in.
+  if (current !== null && current.hbar === value.hbar && current.usdPerHbar === value.usdPerHbar) return
   current = value
   for (const listener of listeners) listener(value)
 }
