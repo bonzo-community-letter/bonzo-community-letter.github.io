@@ -156,8 +156,10 @@ const file = `/**
  *   contract's 7,351-leaf Merkle tree, read from the same public endpoint the portal calls.
  *   \`AFFECTED_CLAIM_LIST_COUNT\` is that list's size.
  * - the **additions**: accounts that were affected but that the tree does not pay, each with
- *   its reason. Today that is Wallet B, the white-hat responder: a real position, a waived
- *   claim.
+ *   its reason. Two kinds today: Wallet B, the white-hat responder (a real position, a waived
+ *   claim), and the nine accounts the claim contract cannot pay because they cannot sign —
+ *   six smart contracts, two multisigs and one keyless system account, whose allocations are
+ *   held in the Foundation's reserve at 0.0.10901569 and settled manually.
  *
  * The root commits to both together — the badge answers "was this account affected", not
  * "will Bonzo pay this account". Snapshot: block 97,504,677 — 2026-07-11 00:51:36 UTC.

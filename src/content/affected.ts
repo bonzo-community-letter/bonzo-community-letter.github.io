@@ -16,21 +16,32 @@
  *   contract's 7,351-leaf Merkle tree, read from the same public endpoint the portal calls.
  *   `AFFECTED_CLAIM_LIST_COUNT` is that list's size.
  * - the **additions**: accounts that were affected but that the tree does not pay, each with
- *   its reason. Today that is Wallet B, the white-hat responder: a real position, a waived
- *   claim.
+ *   its reason. Two kinds today: Wallet B, the white-hat responder (a real position, a waived
+ *   claim), and the nine accounts the claim contract cannot pay because they cannot sign —
+ *   six smart contracts, two multisigs and one keyless system account, whose allocations are
+ *   held in the Foundation's reserve at 0.0.10901569 and settled manually.
  *
  * The root commits to both together — the badge answers "was this account affected", not
  * "will Bonzo pay this account". Snapshot: block 97,504,677 — 2026-07-11 00:51:36 UTC.
  * The set is closed: no account can join it later, which is what lets the page call
  * everyone else a supporter without asking.
  */
-export const AFFECTED_GENERATED_AT = '2026-11-26T16:29:18Z'
+export const AFFECTED_GENERATED_AT = '2026-11-27T23:20:08Z'
 export const AFFECTED_SOURCE = 'app.bonzo.finance/api/redemption/claims/<evmAddress>'
 export const AFFECTED_SALT = '3fe528e3d327d6b333e5984f746c979ea75f99f8439c8210f162c47283032cc0'
-export const AFFECTED_ROOT = '0x29d4e519bbdb969a352f8387abc25a31f851a3efac2dcc42be2c03be6238708e'
+export const AFFECTED_ROOT = '0xb371e0f27ac81776c29dc8a2aaaa73907cd762b2f899d8a3c81e60c9d0f1e5f6'
 export const AFFECTED_CLAIM_LIST_COUNT = 2455
 export const AFFECTED_ADDITIONS: readonly { leaf: string; reason: string }[] = [
   { leaf: 'b0922e4010407d05c8f1b5c6431ae7514779e69255d474adf3c36d6814aecc83', reason: "Wallet B, the white-hat responder. Held a real position at the snapshot (HBARX 429,941.59 / XSAUCE 220,133.71 / GRELF 10,063.15 / BONZO 120,301.11 / WETH 0.3621 / USDC 54.08 against WHBAR and SAUCE debt, net $19,668.68 at pre-exploit prices) and waived its claim under the release it signed to return the funds. Bonzo's claim list does not pay it; the account was affected all the same." },
+  { leaf: 'c4a80f6a0faa1329abd00d0852aca7c4d400319a6ce64eaf17c24b67b9c923df', reason: "Smart contract: eligible, but the claim contract pays only the address that signs the claim, and a contract cannot sign. Allocation held in the Foundation reserve at 0.0.10901569 and settled manually." },
+  { leaf: 'ad169979f53dedfe8650da9190fcf77b9d5f01ee22bd2c3b002da2ccfd3c5aca', reason: "Smart contract: eligible, but the claim contract pays only the address that signs the claim, and a contract cannot sign. Allocation held in the Foundation reserve at 0.0.10901569 and settled manually." },
+  { leaf: '8adac4f7c34c79fc55e08fc68552b73fecd08576b2d0864240a7b3a7eb29d44f', reason: "Smart contract: eligible, but the claim contract pays only the address that signs the claim, and a contract cannot sign. Allocation held in the Foundation reserve at 0.0.10901569 and settled manually." },
+  { leaf: '8a1182f192a8c3cbb34af3b7740a3ee3b62030e6002bd6c96978c0ac3e6e458c', reason: "Smart contract: eligible, but the claim contract pays only the address that signs the claim, and a contract cannot sign. Allocation held in the Foundation reserve at 0.0.10901569 and settled manually." },
+  { leaf: '82f91057e2ecec1daab2f3be288efb1ab506f2556ffbc53d1e3e8cac70542a5f', reason: "Smart contract: eligible, but the claim contract pays only the address that signs the claim, and a contract cannot sign. Allocation held in the Foundation reserve at 0.0.10901569 and settled manually." },
+  { leaf: '82cae335732f243d74424bb42c1db1f15489ca6596e26ba37b95f0f9edf76417', reason: "Smart contract: eligible, but the claim contract pays only the address that signs the claim, and a contract cannot sign. Allocation held in the Foundation reserve at 0.0.10901569 and settled manually." },
+  { leaf: '6a480faa53e9d1007ef7face136c5dda97a7e1a25eeebfb8f858f4dc07cb15a3', reason: "Multisig (threshold-key) account: eligible, but the portal needs a single-key signature the account cannot produce. Allocation held in the Foundation reserve at 0.0.10901569 and settled manually." },
+  { leaf: 'a99ff8182cd83de2e24e8c695369216911872942228b2ee062d9ccddaf6dbb4e', reason: "Multisig (threshold-key) account: eligible, but the portal needs a single-key signature the account cannot produce. Allocation held in the Foundation reserve at 0.0.10901569 and settled manually." },
+  { leaf: 'dea5279dbfbe2c1da1f9f755c72d77f35bd891e7c972ba81898a42c8a57aac12', reason: "Keyless system account: eligible, but has no key and cannot sign. Allocation (under $0.0001) held in the Foundation reserve at 0.0.10901569." },
 ]
 export const AFFECTED_LEAVES: readonly string[] = [
   '00501d03864899160ea965e5c4acace602cb7e2179540a6a82b5d28454187150',
@@ -1031,6 +1042,7 @@ export const AFFECTED_LEAVES: readonly string[] = [
   '69d2d6323f4f5884d6868796264f376d5bbbc0d01cdbe0c7dc952cf6fe0da2a8',
   '69f1b56051490fbc84064206a0a7a0174caf3f53addd0050facf6251c6fd7a5f',
   '6a41baf5ae0dcf234060852077a8de83dccd76bb7812bcba2da83328642f6415',
+  '6a480faa53e9d1007ef7face136c5dda97a7e1a25eeebfb8f858f4dc07cb15a3',
   '6a585d0c0bb1805d2954b7726e0bc5f6d0b7e32979474bca5de170a99e6f8969',
   '6a64b7fbecf344cdee3e46d5906e5fc51e63a28b85895c8920facdc3f47f2597',
   '6a79178ef4709284889014cad232f51bf486a470ec49b52412286d5ede3737a2',
@@ -1250,11 +1262,13 @@ export const AFFECTED_LEAVES: readonly string[] = [
   '829743067248e254e6348d0c105a58b65cf0f6f8839275731b5ec21f809c5e0f',
   '82b1a117c02908d2c3703ebf281d364b517cb667bd5fafd2e83ce8c7aa30b2bf',
   '82c90a943ea0ccf27deb8582b5e84f9af91216abd9769d2d1e7f756062146667',
+  '82cae335732f243d74424bb42c1db1f15489ca6596e26ba37b95f0f9edf76417',
   '82d4e914fc9e9cb9879ca441de937ff1a9c952ecad17933acfde2364012d3716',
   '82dff2ac7ebd3dd4e5d25d1a9569f585b84db5f032e6e887dacb31c1f8cc725e',
   '82e55c1267234a57b07f60f421d3d1cfd2f1d890e91bd7404268ea5d014e705d',
   '82e75cf20d6d2c6f7c88d80896b41997b784e9d0dc73ce783c02356f748f2d20',
   '82f788f6995bca507c9b87dd3372639d9a4bcc03e6defdbc4f620bc200003c2b',
+  '82f91057e2ecec1daab2f3be288efb1ab506f2556ffbc53d1e3e8cac70542a5f',
   '831e17a8c8bb63f5813a755d6c91dc2f918e299f9973ad667ec908767a34aadd',
   '83272cf98fcd5f9d927f6582d3c9c5e5b2fbd4b6547302fc8994e1255343de0a',
   '833b66dee8d70b3351af86c1bd7bcec370a519aafc3f671fbe113e5bdcdfd15b',
@@ -1327,10 +1341,12 @@ export const AFFECTED_LEAVES: readonly string[] = [
   '89ab9277413acb170749e0641b3dcf022fc12ccdafc4655af73fe7df818af53e',
   '89b3326cb8faeed65498f5e4bcf1ffd28189af6e9a39be75de2718ed53a3ae0f',
   '89df260c9d40a87cf0d6ba6b923c6c30dda525d057a47ec4ecb075b028e7f1d7',
+  '8a1182f192a8c3cbb34af3b7740a3ee3b62030e6002bd6c96978c0ac3e6e458c',
   '8a5c8931e98eb3a7fa90f397d1480286a0f408b23506d8795ee9a73e92039036',
   '8a6066d3478cf74314fe57f0a5a2308ae5fcc4603beff48946a37c5f990a000d',
   '8a699099ffdb443a3bbd3cacec201eb2556140431ac346ae20ac8de2a42e44ba',
   '8a899ef8fc2588a7a1bceec1f10ee0697cdc1ba4f97fde38209c03e27ced445e',
+  '8adac4f7c34c79fc55e08fc68552b73fecd08576b2d0864240a7b3a7eb29d44f',
   '8af7925f1506a59255dff99078055fdf8ec41906735709216c38376e064711f2',
   '8afca3a537386e1d187f7090fa6a214c2f0b7950d52d189204868a4c71c96e50',
   '8b00984c2311d8ecc2a8a27e1ff2c20c1b4a4d6e6bad6be9159e465858fddd98',
@@ -1611,6 +1627,7 @@ export const AFFECTED_LEAVES: readonly string[] = [
   'a95e9a3a643fd8fc75a7563d648b71a84d9430d6b02825ec47b69bc2ffffd3d4',
   'a96f770a4d22ebf1993932f8f22ad3e9a4c25c061948f6b41566b8adeba7c959',
   'a97942fbee7de2504089e0e7adab27d92f63c4745b043aad8fd011c143a8dd73',
+  'a99ff8182cd83de2e24e8c695369216911872942228b2ee062d9ccddaf6dbb4e',
   'a9b1168f2eed960db164937c2c4dc1430fd6400b027ee95be4ec2d1ae22948af',
   'a9b916f3d68d097766b89e7699c690673b04bfb4bd94ca7a5c640dd4f09a3a22',
   'aa04b261a31fa4fc68e6120fb4dacda78a4a13fcda1ef9c69654e8b9aed61e42',
@@ -1644,6 +1661,7 @@ export const AFFECTED_LEAVES: readonly string[] = [
   'acb1f21ba9be53531fbae5d8fac464ed5052516c5129b6cd2e296fc0cc101afd',
   'acdb1fadf43ffd4dfdbf1a0cc9cc9d7513fc6615e95055c6b2a765d134851829',
   'ad0fc68b66696ba063711f8c0d3af88b1cad21b57cbeb09d04f753335fb49e6a',
+  'ad169979f53dedfe8650da9190fcf77b9d5f01ee22bd2c3b002da2ccfd3c5aca',
   'ad1a0014cb652fd11cf17cfbb77ac00309f64cba7148e934c552964eadfe8ad8',
   'ad1e32208c67c3ce72987ef65a940e2aba5fd89b3c168a830d6a52b35a1621cc',
   'ad53642b8f6d0d60c8b881271b0b4d5b75cbc6014d00affd3010385276e761a3',
@@ -1883,6 +1901,7 @@ export const AFFECTED_LEAVES: readonly string[] = [
   'c4846050f7ab10c0fd0bba72d1cabe6dff0bd76ad4b87474c13d7a85b0633436',
   'c48e0533f344dd355584e55676f9570d818873a91e9d9beefd7be4244ff9f5fa',
   'c491fa6bad9f48e991bf5fa905d089cc536439aa491b89712e252abce92c23a4',
+  'c4a80f6a0faa1329abd00d0852aca7c4d400319a6ce64eaf17c24b67b9c923df',
   'c4aa004ffd296ea6eeea6494c48bd64ff7930411d843ff40faeadeb2ee618111',
   'c4c6e58ae30b6e09de05a388400ef7b616a07918262d76dc85d6581835a335ac',
   'c4d9306b3e26b48f51503215d657b4afa5eafce7c5017d96437a162cefcaeb8f',
@@ -2150,6 +2169,7 @@ export const AFFECTED_LEAVES: readonly string[] = [
   'de665208afb53cfa908341c3bf163092c5832f3495917344091d8e34ae7c083b',
   'de95150e2fc22d0101d1c03fd98a3ca8f09f613cff79a379970ed605f0358d68',
   'de9e0be82b9d9a0157295531b09132c187bd164f7471c0b6dc82ff359d3102d5',
+  'dea5279dbfbe2c1da1f9f755c72d77f35bd891e7c972ba81898a42c8a57aac12',
   'deb2fb3ecbc1f95570c84a6debd8c13149907ceed2b0ae32aa84bfcac195820e',
   'deb8839682e8340f64b019397bcd21121171ed7d39f3edf6572dbcf86b40af11',
   'dec06219f06e99a675ca3bbed01de4a0d24b72e295fec21bfcf36977833cbc6c',

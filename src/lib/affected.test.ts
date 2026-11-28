@@ -94,11 +94,15 @@ describe('standingOf', () => {
     expect(standingOf(undefined)).toBe('supporter')
   })
 
-  it('recognises the addition by its leaf', () => {
-    // The only hand-added account: a real position, a waived claim. Its id is not in this
-    // file — the leaf is what ships, and the leaf is what the set contains.
-    expect(ADDITIONS.length).toBe(1)
-    expect(AFFECTED_LEAVES).toContain(ADDITIONS[0]!.leaf)
+  it('recognises every addition by its leaf', () => {
+    // Hand-added accounts: real positions the claim list does not pay — Wallet B (waived claim)
+    // and the nine accounts the claim contract cannot pay because they cannot sign. Their ids
+    // are not in this file — the leaf is what ships, and the leaf is what the set contains.
+    expect(ADDITIONS.length).toBeGreaterThan(0)
+    for (const addition of ADDITIONS) {
+      expect(AFFECTED_LEAVES).toContain(addition.leaf)
+      expect(addition.reason.trim().length).toBeGreaterThanOrEqual(10)
+    }
   })
 
   it('ignores stray whitespace and case', () => {
