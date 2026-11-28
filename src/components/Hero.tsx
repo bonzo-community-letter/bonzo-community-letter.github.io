@@ -31,6 +31,9 @@ const PHONE_GRID: Record<string, string> = {
 export function Hero({ signatureCount }: { signatureCount: number | null }) {
   return (
     <header className="hero-height border-b border-rule bg-hero/80">
+      {/* The funding line is off for now — the marker in the progress bar explains the
+          campaign instead. Bringing it back means restoring the split padding below: the
+          line costs 28px, and the hero is content-height on a wide screen. */}
       <div className="mx-auto w-full max-w-5xl px-6 pt-10 pb-24 text-center sm:pt-20 sm:pb-32">
         <p className="eyebrow-mark">{page.eyebrow}</p>
 

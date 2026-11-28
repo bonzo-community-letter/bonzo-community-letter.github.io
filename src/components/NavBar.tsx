@@ -3,6 +3,7 @@ import { config } from '../config'
 import { standingOf } from '../lib/affected'
 import { prefetchWallet } from '../lib/wallet'
 import { Spinner } from './Spinner'
+import { CampaignProgress } from './CampaignProgress'
 import { Tip } from './Tip'
 
 /**
@@ -55,6 +56,7 @@ export function NavBar({ wallet, onConnect }: { wallet: WalletApi; onConnect: ()
 
   return (
     <header className="sticky top-0 z-40 border-b border-rule/70 bg-page/85 backdrop-blur">
+      <CampaignProgress />
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
         {/* One line, and it gives way first: with a wallet connected the bar carries the
             badge and a full account id beside it, and a wrapped title in a 56px bar reads

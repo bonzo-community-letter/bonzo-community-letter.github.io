@@ -190,6 +190,32 @@ button[aria-disabled='true'],
 }
 
 /*
+ * The campaign bar's dot. A heartbeat, not a spinner: a ring that grows out of the dot and
+ * fades, slowly enough to read as "live" rather than as "busy".
+ */
+@keyframes campaign-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(217 122 90 / 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgb(217 122 90 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(217 122 90 / 0);
+  }
+}
+
+.campaign-dot {
+  animation: campaign-pulse 2.6s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campaign-dot {
+    animation: none;
+  }
+}
+
+/*
  * The hero ends a little below the envelope's opening, so the envelope overlaps it the
  * way it does on a desktop instead of leaving a band of page between the two.
  *
