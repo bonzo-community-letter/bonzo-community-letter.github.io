@@ -116,7 +116,14 @@ export function CampaignProgress() {
             open ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <span className="block">
+          {/* The number the bar is drawing, in the words the donate panel uses for it: the
+              bar alone cannot be read to a dollar, and the marker is where people look. */}
+          {usd !== null ? (
+            <span className="block text-ink">
+              Raised so far: {formatUsd(usd)} ({percent})
+            </span>
+          ) : null}
+          <span className={usd !== null ? 'mt-1.5 block' : 'block'}>
             The campaign aims to lift Hedera’s mainnet to 100 TPS: 1 tinybar per transaction to
             the staking rewards account (0.0.800).
           </span>
