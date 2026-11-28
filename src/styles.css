@@ -198,7 +198,9 @@ button[aria-disabled='true'],
     box-shadow: 0 0 0 0 rgb(217 122 90 / 0.55);
   }
   70% {
-    box-shadow: 0 0 0 8px rgb(217 122 90 / 0);
+    /* the ring grows with the dot: five pixels around a small one, eight around the grown
+       one, so the halo never dwarfs the mark it belongs to */
+    box-shadow: 0 0 0 var(--campaign-ring, 8px) rgb(217 122 90 / 0);
   }
   100% {
     box-shadow: 0 0 0 0 rgb(217 122 90 / 0);

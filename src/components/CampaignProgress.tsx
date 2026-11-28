@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { HbarMark } from './HbarMark'
 import { CAMPAIGN_GOAL_USD, MILESTONES, formatPercent, formatUsd, shareOf } from '../lib/campaign'
@@ -46,7 +46,7 @@ export function CampaignProgress() {
   return (
     // Inset by the marker's own air: the track then starts where the marker can sit, so at
     // 0% the fill is not a stray sliver to the left of a marker that has been pushed in.
-    <div className="absolute inset-x-1 bottom-0 h-[3px] overflow-visible">
+    <div className="absolute inset-x-1 bottom-0 z-10 h-[3px] overflow-visible">
       <div
         role="progressbar"
         aria-label="Campaign funding"
@@ -79,12 +79,32 @@ export function CampaignProgress() {
             onBlur={() => setOpen(false)}
             onClick={() => setOpen((was) => !was)}
             // The marker is centred on the fill, but never closer to an edge than its own
-            // half: at 0% and at 100% it would otherwise be cut by the window. `clamp`
-            // against the bar's width does that without a second rule.
-            style={{ left: `clamp(10px, ${share * 100}%, calc(100% - 10px))` }}
-            className="campaign-dot absolute top-1/2 flex h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-accent text-page"
+            // half: at 0% and at 100% it would otherwise be cut by the window. The half
+            // follows the size, so a resting dot does not sit four pixels away from a fill
+            // that is thinner than itself, and a grown one still keeps its air.
+            style={{
+              left: `clamp(${open ? 10 : 4}px, ${share * 100}%, calc(100% - ${open ? 10 : 4}px))`,
+              '--campaign-ring': open ? '8px' : '3px',
+            } as CSSProperties}
+            // The button is a twenty-pixel target around an eight-pixel dot: the dot is
+            // what the page shows, the target is what a pointer can find. Growing the dot
+            // instead would make it either hard to hit or too loud at rest.
+            className="absolute top-1/2 flex h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 cursor-help items-center justify-center"
           >
-            <HbarMark className="h-[14px] w-auto" />
+            <span
+              // A dot on the line, not a badge: eight pixels until someone reaches for it.
+              // The tooltip state drives the size too, so the marker is never large with the
+              // explanation closed or small with it open — the two cannot disagree.
+              className={`campaign-dot flex items-center justify-center overflow-hidden rounded-full bg-accent text-page transition-[width,height] duration-200 ease-out ${
+                open ? 'h-[20px] w-[20px]' : 'h-[8px] w-[8px]'
+              }`}
+            >
+              <HbarMark
+                className={`h-[14px] w-auto shrink-0 transition-opacity duration-150 ${
+                  open ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+            </span>
           </button>
         </>
       ) : null}
