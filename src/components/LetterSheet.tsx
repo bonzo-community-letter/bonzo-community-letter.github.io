@@ -271,7 +271,9 @@ export function LetterSheet({
               </Tip>
             ) : null}
             {/* The tooltip says what the button will do in whichever state it is in: with no
-                wallet the action is connecting one, with a wallet it is the signature itself. */}
+                wallet the action is connecting one, with a wallet it is the signature itself.
+                `aria-haspopup` follows the same rule — it names a dialog only when a tap will
+                open one, because the Tip suppresses its own hint for such a trigger. */}
             <Tip
               id="sign-needs-wallet"
               side="above"
@@ -291,7 +293,7 @@ export function LetterSheet({
                   setSignOpen(true)
                 }}
                 aria-disabled={!connected || config.readOnly}
-                aria-haspopup={config.readOnly ? undefined : 'dialog'}
+                aria-haspopup={connected && !config.readOnly ? 'dialog' : undefined}
                 aria-describedby="sign-needs-wallet"
                 className={`whitespace-nowrap rounded-sm border px-3 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.1em] sm:px-5 sm:text-[0.6875rem] sm:tracking-[0.14em] ${
                   config.readOnly

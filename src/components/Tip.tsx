@@ -130,7 +130,13 @@ export function Tip({
           if (focusedByKeyboard) setOpen(true)
         }}
         onBlur={() => setOpen(false)}
-        onClick={() => setOpen(true)}
+        onClick={(event) => {
+          // A trigger that opens a dialog has already answered the tap. Opening the hint
+          // here would put a panel in front of the dialog it just opened: this handler
+          // runs after the trigger's own, so `closeTips()` there has already been undone.
+          if ((event.target as Element).closest('[aria-haspopup="dialog"]')) return
+          setOpen(true)
+        }}
       >
         {children}
       </span>
